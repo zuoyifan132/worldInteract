@@ -1,0 +1,182 @@
+{
+  "directories": {
+    "dir_001": {
+      "directory_id": "dir_001",
+      "directory_path": "/home/user/projects",
+      "name": "projects",
+      "parent_directory_id": null,
+      "is_hidden": false,
+      "created_at": "2024-01-15T10:30:00Z",
+      "modified_at": "2024-01-20T14:22:00Z",
+      "permissions": "rwxr-xr-x"
+    },
+    "dir_002": {
+      "directory_id": "dir_002",
+      "directory_path": "/home/user/projects/webapp",
+      "name": "webapp",
+      "parent_directory_id": "dir_001",
+      "is_hidden": false,
+      "created_at": "2024-01-16T09:15:00Z",
+      "modified_at": "2024-01-22T16:45:00Z",
+      "permissions": "rwxr-xr-x"
+    },
+    "dir_003": {
+      "directory_id": "dir_003",
+      "directory_path": "/home/user/projects/.config",
+      "name": ".config",
+      "parent_directory_id": "dir_001",
+      "is_hidden": true,
+      "created_at": "2024-01-16T09:20:00Z",
+      "modified_at": "2024-01-18T11:30:00Z",
+      "permissions": "rwx------"
+    },
+    "dir_004": {
+      "directory_id": "dir_004",
+      "directory_path": "/home/user/documents",
+      "name": "documents",
+      "parent_directory_id": null,
+      "is_hidden": false,
+      "created_at": "2024-01-10T08:00:00Z",
+      "modified_at": "2024-01-25T13:15:00Z",
+      "permissions": "rwxr-xr-x"
+    }
+  },
+  "files": {
+    "file_001": {
+      "file_id": "file_001",
+      "file_path": "/home/user/projects/webapp/index.html",
+      "name": "index.html",
+      "parent_directory_id": "dir_002",
+      "content": "<!DOCTYPE html>\n<html>\n<head>\n    <title>My Web App</title>\n</head>\n<body>\n    <h1>Welcome to My App</h1>\n    <p>This is the main page.</p>\n</body>\n</html>",
+      "encoding": "utf-8",
+      "size": 156,
+      "file_type": "text/html",
+      "is_hidden": false,
+      "created_at": "2024-01-17T14:30:00Z",
+      "modified_at": "2024-01-22T16:45:00Z",
+      "permissions": "rw-r--r--"
+    },
+    "file_002": {
+      "file_id": "file_002",
+      "file_path": "/home/user/projects/webapp/app.js",
+      "name": "app.js",
+      "parent_directory_id": "dir_002",
+      "content": "// Main application logic\nfunction initApp() {\n    console.log('App initialized');\n    setupEventListeners();\n}\n\nfunction setupEventListeners() {\n    // Add event handlers here\n}\n\ninitApp();",
+      "encoding": "utf-8",
+      "size": 203,
+      "file_type": "application/javascript",
+      "is_hidden": false,
+      "created_at": "2024-01-18T10:15:00Z",
+      "modified_at": "2024-01-21T09:30:00Z",
+      "permissions": "rw-r--r--"
+    },
+    "file_003": {
+      "file_id": "file_003",
+      "file_path": "/home/user/projects/.config/settings.json",
+      "name": "settings.json",
+      "parent_directory_id": "dir_003",
+      "content": "{\n  \"theme\": \"dark\",\n  \"language\": \"en\",\n  \"debug\": true,\n  \"api_endpoint\": \"https://api.example.com\"\n}",
+      "encoding": "utf-8",
+      "size": 89,
+      "file_type": "application/json",
+      "is_hidden": true,
+      "created_at": "2024-01-16T09:25:00Z",
+      "modified_at": "2024-01-18T11:30:00Z",
+      "permissions": "rw-------"
+    },
+    "file_004": {
+      "file_id": "file_004",
+      "file_path": "/home/user/documents/readme.txt",
+      "name": "readme.txt",
+      "parent_directory_id": "dir_004",
+      "content": "Project Documentation\n====================\n\nThis document contains important information about the project setup and configuration.\n\nGetting Started:\n1. Install dependencies\n2. Configure settings\n3. Run the application\n\nFor more help, contact support@example.com",
+      "encoding": "utf-8",
+      "size": 267,
+      "file_type": "text/plain",
+      "is_hidden": false,
+      "created_at": "2024-01-12T15:45:00Z",
+      "modified_at": "2024-01-25T13:15:00Z",
+      "permissions": "rw-r--r--"
+    }
+  },
+  "file_operations": {
+    "op_001": {
+      "operation_id": "op_001",
+      "operation_type": "create",
+      "file_id": "file_001",
+      "directory_id": "dir_002",
+      "source_path": null,
+      "destination_path": "/home/user/projects/webapp/index.html",
+      "timestamp": "2024-01-17T14:30:00Z",
+      "success": true,
+      "message": "File created successfully"
+    },
+    "op_002": {
+      "operation_id": "op_002",
+      "operation_type": "modify",
+      "file_id": "file_001",
+      "directory_id": null,
+      "source_path": "/home/user/projects/webapp/index.html",
+      "destination_path": "/home/user/projects/webapp/index.html",
+      "timestamp": "2024-01-22T16:45:00Z",
+      "success": true,
+      "message": "File content updated"
+    },
+    "op_003": {
+      "operation_id": "op_003",
+      "operation_type": "copy",
+      "file_id": "file_003",
+      "directory_id": "dir_003",
+      "source_path": "/home/user/projects/config/settings.json",
+      "destination_path": "/home/user/projects/.config/settings.json",
+      "timestamp": "2024-01-18T11:20:00Z",
+      "success": true,
+      "message": "File copied to hidden directory"
+    },
+    "op_004": {
+      "operation_id": "op_004",
+      "operation_type": "delete",
+      "file_id": null,
+      "directory_id": "dir_001",
+      "source_path": "/home/user/projects/old_backup.zip",
+      "destination_path": null,
+      "timestamp": "2024-01-19T12:00:00Z",
+      "success": false,
+      "message": "Permission denied: insufficient privileges"
+    }
+  },
+  "search_index": {
+    "idx_001": {
+      "index_id": "idx_001",
+      "file_id": "file_001",
+      "content_snippet": "Welcome to My App",
+      "line_number": 7,
+      "match_type": "text",
+      "last_indexed": "2024-01-22T17:00:00Z"
+    },
+    "idx_002": {
+      "index_id": "idx_002",
+      "file_id": "file_002",
+      "content_snippet": "function initApp()",
+      "line_number": 2,
+      "match_type": "function",
+      "last_indexed": "2024-01-21T10:00:00Z"
+    },
+    "idx_003": {
+      "index_id": "idx_003",
+      "file_id": "file_003",
+      "content_snippet": "api_endpoint",
+      "line_number": 5,
+      "match_type": "keyword",
+      "last_indexed": "2024-01-18T12:00:00Z"
+    },
+    "idx_004": {
+      "index_id": "idx_004",
+      "file_id": "file_004",
+      "content_snippet": "contact support@example.com",
+      "line_number": 10,
+      "match_type": "email",
+      "last_indexed": "2024-01-25T14:00:00Z"
+    }
+  }
+}

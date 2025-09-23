@@ -1,0 +1,239 @@
+{
+  "apis": [
+    {
+      "name": "create_file",
+      "desc": "Creates a file",
+      "params": {
+        "path": {"type": "str"},
+        "content": {"type": "str"}
+      }
+    },
+    {
+      "function_name": "delete_file",
+      "description": "Delete a file from filesystem",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to file"
+        }
+      },
+      "returns": {"success": "boolean"}
+    },
+    {
+      "name": "",
+      "description": "Read file content",
+      "parameters": {
+        "path": {"type": "string", "desc": "File path"}
+      }
+    },
+    {
+      "tool_name": "list_files",
+      "desc": "List files in directory",
+      "args": {
+        "dir": {"type": "str", "description": "Directory path"}
+      }
+    },
+    {
+      "name": "create_file",
+      "description": "Create new file with content",
+      "parameters": {
+        "filepath": {"type": "string", "description": "Path where file should be created"},
+        "data": {"type": "string", "description": "File content"}
+      }
+    },
+    {
+      "name": "file_info",
+      "description": "",
+      "parameters": {}
+    },
+    {
+      "api_name": "move_file",
+      "summary": "Move file to new location",
+      "inputs": {
+        "source": {"datatype": "string"},
+        "target": {"datatype": "string"}
+      }
+    },
+    {
+      "name": "copy_file",
+      "description": "Copy file to new location",
+      "parameters": {
+        "src": {"type": "string", "description": "Source file path"},
+        "dst": {"type": "string", "description": "Destination file path"}
+      },
+      "output": {
+        "success": {"type": "bool"}
+      }
+    },
+    {
+      "name": "upload_file",
+      "description": "Upload file to server",
+      "parameters": {
+        "file": {"type": "file", "description": "File to upload"},
+        "url": {"type": "string", "description": "Upload URL"}
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Download file from URL",
+      "params": {
+        "url": {"type": "str"},
+        "save_path": {"type": "str"}
+      }
+    },
+    {
+      "name": "search_web",
+      "description": "Search web using query",
+      "parameters": {
+        "query": {"type": "string", "description": "Search query"},
+        "limit": {"type": "integer", "description": "Max results", "default": 10}
+      }
+    },
+    {
+      "function": "get_weather",
+      "desc": "Get weather info",
+      "arguments": {
+        "location": {"type": "string"},
+        "units": {"type": "string", "default": "celsius"}
+      }
+    },
+    {
+      "name": "send_email",
+      "description": "Send email to recipient",
+      "parameters": {
+        "to": {"type": "string", "description": "Recipient email"},
+        "subject": {"type": "string", "description": "Email subject"},
+        "body": {"type": "string", "description": "Email content"}
+      }
+    },
+    {
+      "api": "create_user",
+      "description": "Create new user account",
+      "parameters": {
+        "username": {"type": "string"},
+        "email": {"type": "string"},
+        "password": {"type": "string"}
+      }
+    },
+    {
+      "name": "delete_user",
+      "description": "",
+      "parameters": {
+        "user_id": {"type": "int"}
+      }
+    },
+    {
+      "name": "get_user",
+      "description": "Get user information by ID",
+      "params": {
+        "id": {"type": "integer", "desc": "User ID"}
+      }
+    },
+    {
+      "tool": "update_user",
+      "description": "Update user profile",
+      "inputs": {
+        "user_id": {"datatype": "int"},
+        "data": {"datatype": "object"}
+      }
+    },
+    {
+      "name": "list_users",
+      "description": "List all users",
+      "parameters": {}
+    },
+    {
+      "name": "authenticate_user",
+      "description": "Authenticate user credentials",
+      "parameters": {
+        "username": {"type": "string", "description": "Username"},
+        "password": {"type": "string", "description": "Password"}
+      }
+    },
+    {
+      "name": "create_database",
+      "desc": "Create new database",
+      "parameters": {
+        "name": {"type": "str", "description": "Database name"}
+      }
+    },
+    {
+      "function_name": "execute_query",
+      "description": "Execute SQL query",
+      "args": {
+        "sql": {"type": "string", "description": "SQL query"},
+        "params": {"type": "array", "description": "Query parameters"}
+      }
+    },
+    {
+      "name": "create_table",
+      "description": "Create database table",
+      "parameters": {
+        "table_name": {"type": "string"},
+        "schema": {"type": "object"}
+      }
+    },
+    {
+      "api_name": "drop_table",
+      "summary": "Drop database table",
+      "inputs": {
+        "table": {"type": "str"}
+      }
+    },
+    {
+      "name": "insert_record",
+      "description": "Insert record into table",
+      "parameters": {
+        "table": {"type": "string", "description": "Table name"},
+        "data": {"type": "object", "description": "Record data"}
+      }
+    },
+    {
+      "tool": "update_record",
+      "desc": "Update database record",
+      "args": {
+        "table": {"type": "str"},
+        "id": {"type": "int"},
+        "data": {"type": "obj"}
+      }
+    },
+    {
+      "name": "delete_record",
+      "description": "Delete record from table",
+      "parameters": {
+        "table_name": {"type": "string"},
+        "record_id": {"type": "integer"}
+      }
+    },
+    {
+      "name": "browse_web",
+      "description": "Browse web page",
+      "parameters": {
+        "url": {"type": "string", "description": "URL to visit"}
+      }
+    },
+    {
+      "name": "click_element",
+      "description": "Click web element",
+      "parameters": {
+        "selector": {"type": "string", "description": "CSS selector"},
+        "page_id": {"type": "string", "description": "Page identifier"}
+      }
+    },
+    {
+      "name": "fill_form",
+      "description": "Fill web form",
+      "parameters": {
+        "form_data": {"type": "object", "description": "Form field values"},
+        "page_id": {"type": "string"}
+      }
+    },
+    {
+      "name": "get_page_content",
+      "description": "Extract content from web page",
+      "parameters": {
+        "url": {"type": "string", "description": "Page URL"}
+      }
+    }
+  ]
+}

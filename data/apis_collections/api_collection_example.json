@@ -1,0 +1,218 @@
+{
+  "domain": "file_operations",
+  "description": "File and directory management operations",
+  "tools": [
+    {
+      "name": "create_file",
+      "description": "Create a new file with specified content",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Path where the file should be created"
+        },
+        "content": {
+          "type": "string", 
+          "description": "Content to write to the file"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "File encoding (default: utf-8)",
+          "default": "utf-8"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "file_id": {"type": "string"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read content from an existing file", 
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to the file to read"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "File encoding (default: utf-8)",
+          "default": "utf-8"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "content": {"type": "string"},
+          "file_size": {"type": "integer"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "delete_file",
+      "description": "Delete a file from the filesystem",
+      "parameters": {
+        "file_path": {
+          "type": "string", 
+          "description": "Path to the file to delete"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "list_directory",
+      "description": "List files and subdirectories in a directory",
+      "parameters": {
+        "directory_path": {
+          "type": "string",
+          "description": "Path to the directory to list"
+        },
+        "include_hidden": {
+          "type": "boolean",
+          "description": "Whether to include hidden files",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "type": {"type": "string"},
+                "size": {"type": "integer"},
+                "modified": {"type": "string"}
+              }
+            }
+          },
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "create_directory",
+      "description": "Create a new directory",
+      "parameters": {
+        "directory_path": {
+          "type": "string",
+          "description": "Path where the directory should be created"
+        },
+        "recursive": {
+          "type": "boolean", 
+          "description": "Create parent directories if they don't exist",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "directory_id": {"type": "string"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "move_file",
+      "description": "Move or rename a file",
+      "parameters": {
+        "source_path": {
+          "type": "string",
+          "description": "Current path of the file"
+        },
+        "destination_path": {
+          "type": "string",
+          "description": "New path for the file"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "get_file_info",
+      "description": "Get detailed information about a file",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to the file"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "file_info": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "size": {"type": "integer"},
+              "created": {"type": "string"},
+              "modified": {"type": "string"},
+              "permissions": {"type": "string"},
+              "file_type": {"type": "string"}
+            }
+          },
+          "message": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "search_files",
+      "description": "Search for files by name pattern or content",
+      "parameters": {
+        "search_path": {
+          "type": "string",
+          "description": "Directory to search in"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Search pattern (file name or regex)"
+        },
+        "search_content": {
+          "type": "boolean",
+          "description": "Whether to search file contents",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object", 
+        "properties": {
+          "success": {"type": "boolean"},
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "file_path": {"type": "string"},
+                "match_type": {"type": "string"},
+                "line_number": {"type": "integer"}
+              }
+            }
+          },
+          "message": {"type": "string"}
+        }
+      }
+    }
+  ]
+}
+

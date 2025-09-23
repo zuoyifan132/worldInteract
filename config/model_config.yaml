@@ -1,0 +1,60 @@
+# Model Configuration for Different Tasks
+# Each task can use a different model for optimal performance
+
+schema_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8124
+  retry_attempts: 3
+
+tool_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 12384
+  retry_attempts: 3
+
+state_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 12384
+  retry_attempts: 3
+
+validation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8214
+  retry_attempts: 3
+
+test_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8124
+  retry_attempts: 3
+
+# New modules for Scenario Collection and Dependency Graph
+scenario_collection:
+  model: "claude_3d7"
+  temperature: 0.3
+  max_tokens: 8124
+  retry_attempts: 3
+
+dependency_graph:
+  model: "claude_3d7"
+  temperature: 0.1
+  max_tokens: 4096
+  retry_attempts: 3
+
+# Embedding model configuration
+embedding:
+  model: "text-embedding-3-large"
+  api_base: "https://api.openai.com/v1"
+  dimensions: 3072
+  batch_size: 100
+
+# Default fallback model
+default:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8124
+  retry_attempts: 3
+

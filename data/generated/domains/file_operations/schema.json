@@ -1,0 +1,241 @@
+{
+  "files": {
+    "description": "Table storing file records and metadata",
+    "primary_key": "file_id",
+    "fields": {
+      "file_id": {
+        "type": "string",
+        "description": "Unique identifier for the file",
+        "required": true
+      },
+      "file_path": {
+        "type": "string",
+        "description": "Full path to the file",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "description": "File name without path",
+        "required": true
+      },
+      "parent_directory_id": {
+        "type": "string",
+        "description": "Reference to parent directory",
+        "required": true
+      },
+      "content": {
+        "type": "string",
+        "description": "File content as string",
+        "required": false,
+        "default": ""
+      },
+      "encoding": {
+        "type": "string",
+        "description": "File encoding format",
+        "required": false,
+        "default": "utf-8"
+      },
+      "size": {
+        "type": "integer",
+        "description": "File size in bytes",
+        "required": true,
+        "default": 0
+      },
+      "file_type": {
+        "type": "string",
+        "description": "File type/extension",
+        "required": false
+      },
+      "is_hidden": {
+        "type": "boolean",
+        "description": "Whether file is hidden",
+        "required": false,
+        "default": false
+      },
+      "created_at": {
+        "type": "string",
+        "description": "File creation timestamp",
+        "required": true
+      },
+      "modified_at": {
+        "type": "string",
+        "description": "Last modification timestamp",
+        "required": true
+      },
+      "permissions": {
+        "type": "string",
+        "description": "File permissions string",
+        "required": false,
+        "default": "644"
+      }
+    },
+    "relationships": {
+      "parent_directory_id": {
+        "type": "many_to_one",
+        "table": "directories",
+        "field": "directory_id"
+      }
+    }
+  },
+  "directories": {
+    "description": "Table storing directory records and hierarchy",
+    "primary_key": "directory_id",
+    "fields": {
+      "directory_id": {
+        "type": "string",
+        "description": "Unique identifier for the directory",
+        "required": true
+      },
+      "directory_path": {
+        "type": "string",
+        "description": "Full path to the directory",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "description": "Directory name without path",
+        "required": true
+      },
+      "parent_directory_id": {
+        "type": "string",
+        "description": "Reference to parent directory (null for root)",
+        "required": false
+      },
+      "is_hidden": {
+        "type": "boolean",
+        "description": "Whether directory is hidden",
+        "required": false,
+        "default": false
+      },
+      "created_at": {
+        "type": "string",
+        "description": "Directory creation timestamp",
+        "required": true
+      },
+      "modified_at": {
+        "type": "string",
+        "description": "Last modification timestamp",
+        "required": true
+      },
+      "permissions": {
+        "type": "string",
+        "description": "Directory permissions string",
+        "required": false,
+        "default": "755"
+      }
+    },
+    "relationships": {
+      "parent_directory_id": {
+        "type": "many_to_one",
+        "table": "directories",
+        "field": "directory_id"
+      }
+    }
+  },
+  "file_operations": {
+    "description": "Table tracking file system operations and history",
+    "primary_key": "operation_id",
+    "fields": {
+      "operation_id": {
+        "type": "string",
+        "description": "Unique identifier for the operation",
+        "required": true
+      },
+      "operation_type": {
+        "type": "string",
+        "description": "Type of operation (create, read, delete, move, etc.)",
+        "required": true
+      },
+      "file_id": {
+        "type": "string",
+        "description": "Reference to affected file",
+        "required": false
+      },
+      "directory_id": {
+        "type": "string",
+        "description": "Reference to affected directory",
+        "required": false
+      },
+      "source_path": {
+        "type": "string",
+        "description": "Source path for operations like move",
+        "required": false
+      },
+      "destination_path": {
+        "type": "string",
+        "description": "Destination path for operations like move",
+        "required": false
+      },
+      "timestamp": {
+        "type": "string",
+        "description": "When the operation occurred",
+        "required": true
+      },
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful",
+        "required": true
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message",
+        "required": false
+      }
+    },
+    "relationships": {
+      "file_id": {
+        "type": "many_to_one",
+        "table": "files",
+        "field": "file_id"
+      },
+      "directory_id": {
+        "type": "many_to_one",
+        "table": "directories",
+        "field": "directory_id"
+      }
+    }
+  },
+  "search_index": {
+    "description": "Table for search operations and content indexing",
+    "primary_key": "index_id",
+    "fields": {
+      "index_id": {
+        "type": "string",
+        "description": "Unique identifier for the index entry",
+        "required": true
+      },
+      "file_id": {
+        "type": "string",
+        "description": "Reference to indexed file",
+        "required": true
+      },
+      "content_snippet": {
+        "type": "string",
+        "description": "Indexed content snippet",
+        "required": false
+      },
+      "line_number": {
+        "type": "integer",
+        "description": "Line number where match was found",
+        "required": false
+      },
+      "match_type": {
+        "type": "string",
+        "description": "Type of match (filename, content, etc.)",
+        "required": true
+      },
+      "last_indexed": {
+        "type": "string",
+        "description": "When the file was last indexed",
+        "required": true
+      }
+    },
+    "relationships": {
+      "file_id": {
+        "type": "many_to_one",
+        "table": "files",
+        "field": "file_id"
+      }
+    }
+  }
+}

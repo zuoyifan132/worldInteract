@@ -1,0 +1,92 @@
+# Environment Configuration for WorldInteract Framework
+# Pipeline Flow: Scenario Collection → Tool Dependency Graph Modeling → Function Schema Programmatic Materialization
+
+# =============================================================================
+# GENERAL FRAMEWORK SETTINGS
+# =============================================================================
+general:
+  max_retries: 3
+  timeout_seconds: 120
+  enable_logging: true
+  log_level: "INFO"
+
+# =============================================================================
+# PHASE 1: SCENARIO COLLECTION
+# Raw API processing, cleaning, and standardization
+# =============================================================================
+scenario_collection:
+  min_tool_name_length: 3
+  max_tool_name_length: 50
+  required_fields: ["name", "description", "parameters", "returns"]
+  duplicate_threshold: 0.8  # Similarity threshold for detecting duplicates
+  description_min_length: 10
+
+# =============================================================================
+# PHASE 2: TOOL DEPENDENCY GRAPH MODELING
+# Domain clustering and dependency analysis
+# =============================================================================
+dependency_graph:
+  similarity_threshold: 0.75  # Cosine similarity threshold for creating edges
+  min_community_size: 2      # Minimum tools per domain
+  max_community_size: 20     # Maximum tools per domain
+  louvain_resolution: 1.0    # Louvain algorithm resolution parameter
+  enable_llm_validation: true # Whether to use LLM for dependency validation
+
+# =============================================================================
+# PHASE 3: FUNCTION SCHEMA PROGRAMMATIC MATERIALIZATION
+# Database schema generation, tool implementation, and state initialization
+# =============================================================================
+
+# Schema generation settings
+schema_generation:
+  max_schema_complexity: 10  # Maximum number of tables/collections
+  include_relationships: true
+  generate_indexes: false
+  default_data_types:
+    - "string"
+    - "integer"
+    - "float" 
+    - "boolean"
+    - "array"
+    - "object"
+
+# Tool generation settings
+tool_generation:
+  enforce_type_hints: true
+  include_error_handling: true
+  max_function_length: 100  # lines
+  validation_required: true
+
+# State generation settings
+state_generation:
+  min_records_per_table: 5
+  max_records_per_table: 20
+  data_diversity: true
+  realistic_relationships: true
+
+# Validation settings
+validation:
+  run_execution_tests: true
+  check_state_consistency: true
+  validate_return_types: true
+  max_test_cases: 5
+
+# Domain-specific settings
+domains:
+  file_operations:
+    min_records_per_table: 2
+    max_records_per_table: 5
+    schema_tables: ["files", "directories", "permissions", "metadata"]
+    max_file_size_mb: 100
+    supported_extensions: [".txt", ".json", ".csv", ".md", ".py"]
+  
+  web_browsing:
+    schema_tables: ["pages", "links", "cookies", "history", "bookmarks"]
+    max_page_size_kb: 500
+    supported_protocols: ["http", "https"]
+  
+  database_management:
+    schema_tables: ["databases", "tables", "indexes", "queries", "connections"]
+    max_connections: 10
+    supported_engines: ["sqlite", "mysql", "postgresql"]
+

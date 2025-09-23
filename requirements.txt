@@ -1,0 +1,41 @@
+# WorldInteract Framework Dependencies
+
+# Configuration and data handling
+PyYAML>=6.0.1
+
+# Logging
+loguru>=0.7.0
+
+# Retry mechanisms and robustness
+tenacity>=8.2.3
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Environment loading
+python-dotenv>=1.0.0
+
+# HTTP requests for API calls
+requests>=2.31.0
+
+# Type hints support (Python 3.8+)
+typing-extensions>=4.5.0
+
+# LLM API clients
+# OpenAI GPT models
+openai>=1.12.0
+
+# Anthropic Claude models
+anthropic>=0.25.0
+
+# Additional HTTP client for some model APIs
+httpx>=0.24.0
+
+# Graph analysis and community detection
+networkx>=3.1
+python-louvain>=0.16
+
+# Scientific computing and visualization
+matplotlib>=3.7.0
+scikit-learn>=1.3.0

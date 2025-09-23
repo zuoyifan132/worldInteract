@@ -1,0 +1,481 @@
+{
+  "apis": [
+    {
+      "name": "send_email",
+      "description": "通过SMTP协议发送电子邮件给一个或多个收件人，支持HTML格式内容、附件上传、抄送和密送功能，并提供发送状态跟踪和错误处理机制",
+      "parameters": {
+        "to_address": {
+          "type": "string",
+          "description": "主要收件人的电子邮箱地址，必须符合RFC 5322标准格式，例如：user@example.com。支持国际化域名"
+        },
+        "subject": {
+          "type": "string",
+          "description": "邮件主题行，最大长度998字符，支持UTF-8编码，用于简要描述邮件内容，会显示在收件人的邮箱列表中"
+        },
+        "body": {
+          "type": "string",
+          "description": "邮件正文内容，支持纯文本和HTML格式。HTML内容将自动处理内联样式和图片。最大大小25MB，支持多语言字符集"
+        },
+        "cc": {
+          "type": "array",
+          "description": "抄送收件人邮箱地址列表，这些收件人将收到邮件副本，且其他所有收件人都能看到抄送列表。每个地址必须是有效的邮箱格式",
+          "default": []
+        },
+        "attachments": {
+          "type": "array",
+          "description": "附件文件路径列表，支持常见文件格式（PDF、DOC、图片等）。单个文件最大25MB，总附件大小不超过50MB。文件路径必须是服务器可访问的绝对路径",
+          "default": []
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "邮件发送操作是否成功完成，true表示邮件已成功提交到邮件服务器队列，false表示发送失败"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "邮件的全球唯一标识符（Message-ID），由邮件服务器生成，格式如'<unique-id@domain.com>'，可用于邮件跟踪和问题排查"
+          },
+          "message": {
+            "type": "string",
+            "description": "详细的发送状态描述信息，包括成功确认或具体的错误原因，如'邮件发送成功'或'收件人地址格式错误'"
+          }
+        }
+      }
+    },
+    {
+      "name": "schedule_meeting",
+      "description": "创建并安排会议，支持线上和线下会议模式，自动发送日历邀请给参会人员，集成主流视频会议平台，提供会议提醒和冲突检测功能",
+      "parameters": {
+        "title": {
+          "type": "string",
+          "description": "会议标题，用于标识会议主题，最大长度200字符，支持emoji和特殊字符，将显示在所有参会人员的日历中"
+        },
+        "start_time": {
+          "type": "string",
+          "description": "会议开始时间，必须使用ISO 8601格式（如：2024-03-15T14:30:00Z或2024-03-15T14:30:00+08:00），支持时区信息，不能早于当前时间"
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "description": "会议持续时间，以分钟为单位，取值范围5-1440分钟（最长24小时），系统将根据此时间计算会议结束时间并检查参会人员时间冲突"
+        },
+        "attendees": {
+          "type": "array",
+          "description": "参会人员邮箱地址列表，系统将向这些邮箱发送会议邀请和提醒。支持最多500个参会者，每个邮箱地址必须有效且符合RFC标准"
+        },
+        "location": {
+          "type": "string",
+          "description": "会议地点信息，可以是物理地址（如'北京市朝阳区xxx会议室'）或在线会议平台名称。如果是在线会议，系统将自动生成会议链接",
+          "default": "在线会议"
+        },
+        "description": {
+          "type": "string",
+          "description": "会议详细描述和议程安排，支持Markdown格式，最大长度2000字符，可包含会议目标、讨论要点、预期成果等信息",
+          "default": ""
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "会议创建操作是否成功，true表示会议已成功创建并发送邀请，false表示创建失败（如时间冲突、参会者无效等）"
+          },
+          "meeting_id": {
+            "type": "string",
+            "description": "会议的全球唯一标识符，格式为UUID，用于后续的会议管理操作（如修改、取消、查询等），长度36字符"
+          },
+          "meeting_url": {
+            "type": "string",
+            "description": "在线会议的加入链接，支持主流平台（Zoom、Teams、腾讯会议等），参会者可直接点击加入。仅在location为在线会议时返回"
+          },
+          "message": {
+            "type": "string",
+            "description": "会议创建状态的详细描述，包括成功确认信息或具体错误原因，如'会议创建成功，已发送邀请给3位参会者'或'时间冲突：与已有会议重叠'"
+          }
+        }
+      }
+    },
+    {
+      "name": "search_contacts",
+      "description": "在企业通讯录和个人联系人数据库中执行智能搜索，支持模糊匹配、拼音搜索、正则表达式，并提供联系人信息的实时同步和隐私保护功能",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "搜索关键词，支持姓名、邮箱、电话号码、公司名称等信息的模糊查询。支持中英文、拼音首字母、部分匹配，最大长度100字符"
+        },
+        "search_fields": {
+          "type": "array",
+          "description": "指定要搜索的字段范围，可选值包括：name（姓名）、email（邮箱）、phone（电话）、company（公司）、department（部门）、title（职位）。优化搜索性能和精准度",
+          "default": ["name", "email", "phone"]
+        },
+        "limit": {
+          "type": "integer",
+          "description": "返回结果的最大数量限制，取值范围1-1000，较小的值能提供更快的响应速度。建议根据UI展示需求设置合适的值",
+          "default": 10
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "搜索操作是否成功执行，true表示搜索完成（即使无结果），false表示搜索过程中发生错误（如数据库连接失败）"
+          },
+          "contacts": {
+            "type": "array",
+            "description": "符合搜索条件的联系人信息列表，按相关性排序，包含联系人的基本信息和扩展属性",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contact_id": {"type": "string", "description": "联系人的唯一标识符"},
+                "name": {"type": "string", "description": "联系人的完整姓名"},
+                "email": {"type": "string", "description": "主要邮箱地址"},
+                "phone": {"type": "string", "description": "主要联系电话"},
+                "company": {"type": "string", "description": "所属公司或组织名称"}
+              }
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "数据库中符合搜索条件的联系人总数（可能超过返回的limit限制），用于分页显示和统计信息"
+          },
+          "message": {
+            "type": "string",
+            "description": "搜索操作的详细状态信息，包括搜索耗时、匹配策略说明或错误详情，如'找到5个匹配联系人，用时0.12秒'或'数据库连接超时'"
+          }
+        }
+      }
+    },
+    {
+      "name": "backup_data",
+      "description": "备份指定目录或文件到云存储",
+      "parameters": {
+        "source_path": {
+          "type": "string",
+          "description": "需要备份的源路径"
+        },
+        "backup_name": {
+          "type": "string",
+          "description": "备份任务名称"
+        },
+        "destination": {
+          "type": "string",
+          "description": "备份目标位置",
+          "default": "cloud_storage"
+        },
+        "compression": {
+          "type": "boolean",
+          "description": "是否压缩备份文件",
+          "default": true
+        },
+        "encryption": {
+          "type": "boolean",
+          "description": "是否加密备份文件",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "备份是否成功"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "备份任务唯一标识符"
+          },
+          "backup_size": {
+            "type": "integer",
+            "description": "备份文件大小（字节）"
+          },
+          "backup_url": {
+            "type": "string",
+            "description": "备份文件下载链接"
+          },
+          "message": {
+            "type": "string",
+            "description": "备份状态描述"
+          }
+        }
+      }
+    },
+    {
+      "name": "restore_data",
+      "description": "从备份恢复数据到指定位置",
+      "parameters": {
+        "backup_id": {
+          "type": "string",
+          "description": "备份任务标识符"
+        },
+        "restore_path": {
+          "type": "string",
+          "description": "数据恢复目标路径"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "description": "是否覆盖现有文件",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "恢复是否成功"
+          },
+          "restored_files": {
+            "type": "array",
+            "description": "恢复的文件列表"
+          },
+          "message": {
+            "type": "string",
+            "description": "恢复状态描述"
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_performance",
+      "description": "分析系统性能指标并生成报告",
+      "parameters": {
+        "time_range": {
+          "type": "string",
+          "description": "分析时间范围（如'1h', '24h', '7d'）"
+        },
+        "metrics": {
+          "type": "array",
+          "description": "要分析的性能指标列表",
+          "default": ["cpu", "memory", "disk", "network"]
+        },
+        "report_format": {
+          "type": "string",
+          "description": "报告格式",
+          "default": "json"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "分析是否成功"
+          },
+          "report": {
+            "type": "object",
+            "description": "性能分析报告"
+          },
+          "summary": {
+            "type": "string",
+            "description": "性能总结"
+          },
+          "recommendations": {
+            "type": "array",
+            "description": "优化建议列表"
+          },
+          "message": {
+            "type": "string",
+            "description": "分析状态描述"
+          }
+        }
+      }
+    },
+    {
+      "name": "generate_report",
+      "description": "基于模板和数据生成自定义报告",
+      "parameters": {
+        "template_name": {
+          "type": "string",
+          "description": "报告模板名称"
+        },
+        "data_source": {
+          "type": "string",
+          "description": "数据源标识符"
+        },
+        "output_format": {
+          "type": "string",
+          "description": "输出格式（pdf, docx, html）",
+          "default": "pdf"
+        },
+        "filters": {
+          "type": "object",
+          "description": "数据过滤条件",
+          "default": {}
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "报告生成是否成功"
+          },
+          "report_id": {
+            "type": "string",
+            "description": "报告唯一标识符"
+          },
+          "download_url": {
+            "type": "string",
+            "description": "报告下载链接"
+          },
+          "page_count": {
+            "type": "integer",
+            "description": "报告页数"
+          },
+          "message": {
+            "type": "string",
+            "description": "生成状态描述"
+          }
+        }
+      }
+    },
+    {
+      "name": "process_payment",
+      "description": "处理在线支付交易，支持多种支付方式和货币类型，提供实时反欺诈检测、PCI DSS合规的安全加密、交易状态跟踪和自动对账功能",
+      "parameters": {
+        "amount": {
+          "type": "number",
+          "description": "支付金额，必须为正数，支持最多2位小数。最小金额0.01，最大金额999999.99。系统将进行金额合理性验证和反洗钱检查"
+        },
+        "currency": {
+          "type": "string",
+          "description": "货币类型，使用ISO 4217标准三字母代码，如CNY（人民币）、USD（美元）、EUR（欧元）。支持汇率自动转换和多币种结算",
+          "default": "CNY"
+        },
+        "payment_method": {
+          "type": "string",
+          "description": "支付方式标识符，支持：credit_card（信用卡）、debit_card（借记卡）、alipay（支付宝）、wechat（微信支付）、bank_transfer（银行转账）。每种方式有不同的处理流程和手续费"
+        },
+        "order_id": {
+          "type": "string",
+          "description": "商户订单号，必须唯一且不超过64字符，用于关联商户系统的订单信息。支持字母、数字、下划线和短横线，用于交易追踪和对账"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "客户在商户系统中的唯一标识符，用于用户画像分析、风险评估和交易历史关联。长度不超过128字符，支持匿名化处理"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "支付交易是否成功完成，true表示资金已成功转移并确认，false表示支付失败或被拒绝（需查看message了解具体原因）"
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "支付网关生成的全球唯一交易标识符，格式为32位十六进制字符串，用于后续的退款、查询、对账等操作，永久有效"
+          },
+          "status": {
+            "type": "string",
+            "description": "交易当前状态，可能值：success（成功）、failed（失败）、pending（处理中）、canceled（已取消）、refunded（已退款）。状态会实时更新"
+          },
+          "receipt_url": {
+            "type": "string",
+            "description": "电子收据的下载链接，PDF格式，包含完整的交易信息、商户信息和法律条款。链接有效期30天，支持多次下载"
+          },
+          "message": {
+            "type": "string",
+            "description": "详细的交易状态描述和处理结果说明，包括成功确认或失败原因（如余额不足、卡片过期、风控拦截等），便于用户理解和客服处理"
+          }
+        }
+      }
+    },
+    {
+      "name": "verify_identity",
+      "description": "执行多层次用户身份验证，支持短信验证码、邮箱验证、生物识别（指纹、人脸、声纹）、硬件令牌等多种认证方式，提供实时风险评估和反欺诈检测",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "用户的唯一标识符，可以是系统内部ID、邮箱地址或手机号码。系统将根据此标识查找用户的认证配置和历史行为模式，长度不超过128字符"
+        },
+        "verification_method": {
+          "type": "string",
+          "description": "身份验证方式，支持：sms（短信验证码）、email（邮箱验证码）、biometric（生物识别）、totp（时间密码）、hardware_token（硬件令牌）、password（密码验证）。可组合使用实现多因子认证"
+        },
+        "verification_code": {
+          "type": "string",
+          "description": "验证码或认证凭据，根据verification_method的不同而变化：短信/邮箱为6位数字码，TOTP为6-8位数字，生物识别为加密的特征数据，硬件令牌为设备生成的动态码"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "验证操作是否成功执行，true表示验证流程正常完成，false表示系统错误或参数无效（非身份验证失败）"
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "用户身份是否通过验证，true表示身份认证成功，false表示认证失败（如验证码错误、生物特征不匹配等）"
+          },
+          "confidence_score": {
+            "type": "number",
+            "description": "身份验证的置信度评分，范围0.0-1.0，基于验证方式的安全等级、用户行为分析、设备信任度等因素综合计算。0.8以上为高可信度"
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "验证结果的过期时间，ISO 8601格式。过期后需要重新验证。不同验证方式有不同的有效期：短信5分钟，生物识别24小时，硬件令牌1小时"
+          },
+          "message": {
+            "type": "string",
+            "description": "详细的验证状态和结果说明，包括成功确认、失败原因、安全建议等信息，如'身份验证成功，置信度95%'或'验证码已过期，请重新获取'"
+          }
+        }
+      }
+    },
+    {
+      "name": "monitor_health",
+      "description": "监控系统健康状态并发送告警",
+      "parameters": {
+        "service_name": {
+          "type": "string",
+          "description": "要监控的服务名称"
+        },
+        "check_interval": {
+          "type": "integer",
+          "description": "检查间隔（秒）",
+          "default": 60
+        },
+        "alert_threshold": {
+          "type": "object",
+          "description": "告警阈值配置"
+        },
+        "notification_channels": {
+          "type": "array",
+          "description": "通知渠道列表",
+          "default": ["email"]
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "监控设置是否成功"
+          },
+          "monitor_id": {
+            "type": "string",
+            "description": "监控任务标识符"
+          },
+          "current_status": {
+            "type": "string",
+            "description": "当前服务状态"
+          },
+          "next_check": {
+            "type": "string",
+            "description": "下次检查时间"
+          },
+          "message": {
+            "type": "string",
+            "description": "监控设置状态描述"
+          }
+        }
+      }
+    }
+  ]
+}
