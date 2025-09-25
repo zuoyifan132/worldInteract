@@ -5,6 +5,7 @@
 
 import os
 import sys
+import dotenv
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -16,72 +17,75 @@ from worldInteract.core.scenario_collection import APICleaner
 from worldInteract.core.dependency_graph import DependencyGraphBuilder
 
 
+dotenv.load_dotenv("../.env")
+
+
 def main():
-    """运行示例流程"""
+    """Run the scenario pipeline example"""
     
-    logger.info("开始运行Scenario Pipeline示例")
+    logger.info("Starting the scenario pipeline example")
     
-    # 设置路径
+    # set paths
     project_root = Path(__file__).parent.parent
     raw_apis_path = project_root / "data" / "raw_apis"
     
-    # 输出目录
-    output_dir = project_root / "output" / "example_run"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # output directory
+    processed_apis_output_dir = project_root / "data" / "processed_apis" / "example_run"
+    processed_apis_output_dir.mkdir(parents=True, exist_ok=True)
     
-    processed_apis_path = output_dir / "cleaned_apis.json"
-    dependency_graphs_dir = output_dir / "dependency_graphs"
+    processed_apis_path = processed_apis_output_dir / "cleaned_apis.json"
+    dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "example_run"
+    dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
     
-    # 检查输入目录
+    # check input directory
     if not raw_apis_path.exists():
-        logger.error(f"Raw APIs目录不存在: {raw_apis_path}")
+        logger.error(f"Raw APIs directory does not exist: {raw_apis_path}")
         return
     
-    try:
-        # 阶段1: Scenario Collection
-        logger.info("=== 开始Scenario Collection阶段 ===")
-        cleaner = APICleaner()
-        cleaning_result = cleaner.clean_apis(str(raw_apis_path), str(processed_apis_path))
+    # try:
+    # step1: Scenario Collection
+    logger.info("=== Starting Scenario Collection phase ===")
+    cleaner = APICleaner()
+    cleaning_result = cleaner.clean_apis(str(raw_apis_path), str(processed_apis_path))
+    
+    logger.info("Scenario Collection completed, statistics:")
+    stats = cleaning_result.get("metadata", {}).get("processing_stats", {})
+    for key, value in stats.items():
+        logger.info(f"  {key}: {value}")
+    
+    # step2: Tool Dependency Graph Modeling  
+    logger.info("=== Starting Tool Dependency Graph Modeling phase ===")
+    builder = DependencyGraphBuilder()
+    graph_result = builder.build_dependency_graph(
+        str(processed_apis_path), 
+        str(dependency_graphs_dir)
+    )
+    
+    logger.info("Dependency Graph Modeling completed, statistics:")
+    for phase, phase_stats in graph_result.items():
+        if isinstance(phase_stats, dict):
+            logger.info(f"  {phase}:")
+            for key, value in phase_stats.items():
+                logger.info(f"    {key}: {value}")
+    
+    logger.info("\n=== Pipeline completed ===")
+    logger.info(f"Cleaned APIs: {processed_apis_path}")
+    logger.info(f"Dependency graph data: {dependency_graphs_dir}")
+    logger.info(f"Generated domains: {dependency_graphs_dir / 'domains'}")
+    
+    # show generated domains
+    domains_dir = dependency_graphs_dir / "domains"
+    if domains_dir.exists():
+        domain_files = list(domains_dir.glob("*.json"))
+        logger.info(f"Generated {len(domain_files)} domains:")
+        for domain_file in domain_files:
+            logger.info(f"  - {domain_file.name}")
+    
+    logger.info("\nExample run completed!")
         
-        logger.info("Scenario Collection完成，统计信息:")
-        stats = cleaning_result.get("metadata", {}).get("processing_stats", {})
-        for key, value in stats.items():
-            logger.info(f"  {key}: {value}")
-        
-        # 阶段2: Tool Dependency Graph Modeling  
-        logger.info("=== 开始Tool Dependency Graph Modeling阶段 ===")
-        builder = DependencyGraphBuilder()
-        graph_result = builder.build_dependency_graph(
-            str(processed_apis_path), 
-            str(dependency_graphs_dir)
-        )
-        
-        logger.info("Dependency Graph Modeling完成，统计信息:")
-        for phase, phase_stats in graph_result.items():
-            if isinstance(phase_stats, dict):
-                logger.info(f"  {phase}:")
-                for key, value in phase_stats.items():
-                    logger.info(f"    {key}: {value}")
-        
-        # 展示结果
-        logger.info("\n=== 流程完成 ===")
-        logger.info(f"清洗后的APIs: {processed_apis_path}")
-        logger.info(f"依赖图数据: {dependency_graphs_dir}")
-        logger.info(f"生成的域: {dependency_graphs_dir / 'domains'}")
-        
-        # 列出生成的域文件
-        domains_dir = dependency_graphs_dir / "domains"
-        if domains_dir.exists():
-            domain_files = list(domains_dir.glob("*.json"))
-            logger.info(f"生成了 {len(domain_files)} 个域:")
-            for domain_file in domain_files:
-                logger.info(f"  - {domain_file.name}")
-        
-        logger.info("\n示例运行成功完成！")
-        
-    except Exception as e:
-        logger.error(f"示例运行失败: {e}")
-        raise
+    # except Exception as e:
+    #     logger.error(f"Example run failed: {e}")
+    #     raise
 
 
 if __name__ == "__main__":

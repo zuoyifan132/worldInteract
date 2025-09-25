@@ -103,6 +103,29 @@ class ConfigManager:
         
         return domains_config.get(domain_name, {})
     
+    def get_environment_config(self, task_name: str) -> Dict[str, Any]:
+        """
+        Get environment configuration for a specific task.
+        
+        Args:
+            task_name: Name of the task (e.g., 'scenario_collection', 'tool_generation')
+            
+        Returns:
+            Environment configuration dictionary
+        """
+        env_config = self.load_environment_config()
+        
+        if task_name in env_config:
+            return env_config[task_name]
+        else:
+            # Fallback to general configuration
+            return env_config.get("general", {
+                "max_retries": 3,
+                "timeout_seconds": 120,
+                "enable_logging": True,
+                "log_level": "INFO"
+            })
+    
     def get_general_config(self) -> Dict[str, Any]:
         """Get general configuration settings."""
         env_config = self.load_environment_config()

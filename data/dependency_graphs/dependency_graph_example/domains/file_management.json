@@ -1,0 +1,86 @@
+{
+  "domain": "file_management",
+  "description": "Tools for comprehensive file system operations including creation, deletion, organization, and transfer of files",
+  "tool_count": 6,
+  "tools": [
+    {
+      "name": "create_file",
+      "description": "Creates a new file at the specified path with the given content.",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "The file system path where the new file will be created."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content to be written into the newly created file."
+        }
+      }
+    },
+    {
+      "name": "delete_file",
+      "description": "Removes a specified file from the filesystem.",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "The absolute or relative path to the file that needs to be deleted."
+        }
+      },
+      "returns": {
+        "success": "Indicates whether the file deletion was successfully executed (true) or failed (false)."
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "Retrieve a list of all files within a specified directory.",
+      "parameters": {
+        "dir": {
+          "type": "string",
+          "description": "The absolute or relative path to the directory whose files will be listed."
+        }
+      }
+    },
+    {
+      "name": "move_file",
+      "description": "Moves a file from the source path to the specified target location.",
+      "parameters": {
+        "source": {
+          "type": "string",
+          "description": "The file path of the file to be moved."
+        },
+        "target": {
+          "type": "string",
+          "description": "The destination path where the file will be moved."
+        }
+      }
+    },
+    {
+      "name": "upload_file",
+      "description": "Upload a file to the server at the specified URL.",
+      "parameters": {
+        "file": {
+          "type": "file",
+          "description": "The file object that needs to be uploaded."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL endpoint to which the file will be uploaded."
+        }
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Downloads a file from a specified URL and saves it to a local path.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the file to be downloaded."
+        },
+        "save_path": {
+          "type": "string",
+          "description": "The local path where the downloaded file will be saved."
+        }
+      }
+    }
+  ]
+}

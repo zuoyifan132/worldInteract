@@ -1,0 +1,87 @@
+{
+  "domain": "database_management",
+  "description": "Tools for comprehensive database operations including database creation, table management, and record manipulation (CRUD operations)",
+  "tool_count": 6,
+  "tools": [
+    {
+      "name": "create_database",
+      "description": "Create a new database with the specified name.",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The unique name to assign to the new database."
+        }
+      }
+    },
+    {
+      "name": "create_table",
+      "description": "Creates a new database table with a specified schema.",
+      "parameters": {
+        "table_name": {
+          "type": "string",
+          "description": "The name of the table to be created in the database."
+        },
+        "schema": {
+          "type": "object",
+          "description": "An object defining the structure of the table, including columns and their data types."
+        }
+      }
+    },
+    {
+      "name": "drop_table",
+      "description": "Removes a specified table from the database permanently.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the table to be dropped from the database."
+        }
+      }
+    },
+    {
+      "name": "insert_record",
+      "description": "Inserts a new record into the specified database table.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the database table where the record will be inserted."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the key-value pairs that represent the record's data to be inserted."
+        }
+      }
+    },
+    {
+      "name": "update_record",
+      "description": "Updates an existing record in a specified database table.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the database table where the record exists."
+        },
+        "id": {
+          "type": "integer",
+          "description": "The unique identifier of the record to be updated."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the fields and their new values to update in the record."
+        }
+      }
+    },
+    {
+      "name": "delete_record",
+      "description": "Removes a specific record from the specified database table.",
+      "parameters": {
+        "table_name": {
+          "type": "string",
+          "description": "The name of the database table from which the record will be deleted."
+        },
+        "record_id": {
+          "type": "integer",
+          "description": "The unique identifier of the record to be deleted."
+        }
+      }
+    }
+  ]
+}

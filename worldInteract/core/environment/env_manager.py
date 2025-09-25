@@ -63,21 +63,21 @@ class EnvironmentManager:
         
         try:
             # Step 1: Generate database schema
+            # TODO: provide tool implementations to generate schema
             logger.info("Step 1: Generating database schema...")
             schema = self.schema_generator.generate_schema(api_collection)
             
             # Step 2: Generate initial state
+            # TODO: provide tool implementations to generate initial state
             logger.info("Step 2: Generating initial database state...")
             initial_state = self.generate_initial_state(schema, api_collection)
             
             # Step 3: Generate tool implementations
-            # skip 
+            # skip  
             logger.info("Step 3: Generating tool implementations...")
             tools = self.tool_generator.generate_tools(api_collection, schema, initial_state)
             
             # Step 4: Validate tools (if requested)
-            # TODO: using ReAct agent mode to validate and regenerate tools if needed, set maximum ReAct rouds
-            # if exceeded the maximum ReAct rounds, skip this domain
             validation_results = {}
             if validate_tools:
                 logger.info("Step 4: Validating generated tools...")

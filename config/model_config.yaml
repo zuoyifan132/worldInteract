@@ -1,57 +1,85 @@
-# Model Configuration for Different Tasks
-# Each task can use a different model for optimal performance
+# Model Configuration for WorldInteract Framework
+# Pipeline Flow: Scenario Collection → Tool Dependency Graph Modeling → Function Schema Programmatic Materialization
 
-schema_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8124
-  retry_attempts: 3
-
-tool_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 12384
-  retry_attempts: 3
-
-state_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 12384
-  retry_attempts: 3
-
-validation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8214
-  retry_attempts: 3
-
-test_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8124
-  retry_attempts: 3
-
-# New modules for Scenario Collection and Dependency Graph
+# =============================================================================
+# PHASE 1: SCENARIO COLLECTION
+# Raw API processing, cleaning, and standardization
+# =============================================================================
 scenario_collection:
-  model: "claude_3d7"
-  temperature: 0.3
+  model: "openai_gpt"
+  temperature: 1.0
   max_tokens: 8124
   retry_attempts: 3
 
+# =============================================================================
+# PHASE 2: TOOL DEPENDENCY GRAPH MODELING
+# Domain clustering and dependency analysis
+# =============================================================================
 dependency_graph:
   model: "claude_3d7"
   temperature: 0.1
   max_tokens: 4096
   retry_attempts: 3
 
-# Embedding model configuration
+# =============================================================================
+# PHASE 3: FUNCTION SCHEMA PROGRAMMATIC MATERIALIZATION
+# Database schema generation, tool implementation, and state initialization
+# =============================================================================
+
+# Schema generation configuration
+schema_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8124
+  retry_attempts: 3
+
+# Tool implementation configuration
+tool_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 12384
+  retry_attempts: 3
+
+# Initial state generation configuration
+state_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 12384
+  retry_attempts: 3
+
+# =============================================================================
+# QUALITY ASSURANCE AND TESTING
+# Validation, testing, and quality control
+# =============================================================================
+
+# Tool validation configuration
+validation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8214
+  retry_attempts: 3
+
+# Test case generation configuration
+test_generation:
+  model: "claude_3d7"
+  temperature: 1.0
+  max_tokens: 8124
+  retry_attempts: 3
+
+# =============================================================================
+# EMBEDDING AND SIMILARITY MODELS
+# Semantic analysis and similarity computation
+# =============================================================================
 embedding:
   model: "text-embedding-3-large"
   api_base: "https://api.openai.com/v1"
   dimensions: 3072
   batch_size: 100
 
-# Default fallback model
+# =============================================================================
+# DEFAULT FALLBACK CONFIGURATION
+# Used when task-specific configuration is not available
+# =============================================================================
 default:
   model: "claude_3d7"
   temperature: 1.0

@@ -36,7 +36,7 @@ def generate(system: str, user: str, **kwargs) -> Tuple[Dict[str, Any], str, Lis
     if not api_key:
         raise ValueError("OpenAI API key not found in environment variables")
     
-    model_name = kwargs.get("model_name", "gpt-5")
+    model_name = kwargs.get("model_name", "gpt-4o-mini")
     temperature = kwargs.get("temperature", 1.0)
     max_tokens = kwargs.get("max_tokens", 4096)
     tools = kwargs.get("tools", [])

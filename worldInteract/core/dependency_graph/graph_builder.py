@@ -5,15 +5,18 @@ Dependency Graph Builder for modeling tool relationships and domain clustering.
 import json
 import networkx as nx
 import numpy as np
+import textwrap
 from typing import Dict, List, Any, Tuple, Optional, Set
 from pathlib import Path
 from loguru import logger
 from community import community_louvain
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.embedding import OpenAIEmbeddings
+from worldInteract.utils.parser_utils import extract_json_from_text
 
 
 class DependencyGraphBuilder:
@@ -39,6 +42,7 @@ class DependencyGraphBuilder:
         self.max_community_size = self.env_config.get("max_community_size", 20)
         self.louvain_resolution = self.env_config.get("louvain_resolution", 1.0)
         self.enable_llm_validation = self.env_config.get("enable_llm_validation", True)
+        self.singleton_tool_similarity_threshold = self.env_config.get("singleton_tool_similarity_threshold", 0.6)
         
         logger.info(f"Initialized Dependency Graph Builder with threshold: {self.similarity_threshold}")
     
@@ -76,18 +80,21 @@ class DependencyGraphBuilder:
         
         # Step 3: Perform community detection
         logger.info("Performing community detection...")
-        communities = self._detect_communities(graph)
+        communities, singleton_tools = self._detect_communities(graph)
         
-        # Step 4: Validate dependencies with LLM (if enabled)
+        # Step 4: Validate communities and create domains with LLM (if enabled)
         if self.enable_llm_validation:
-            logger.info("Validating dependencies with LLM...")
-            communities = self._validate_communities_with_llm(apis, communities)
+            logger.info("Validating communities and creating domains with LLM...")
+            domains = self._validate_communities_with_llm(apis, communities)
+        else:
+            raise ValueError("LLM validation is not enabled for graph building, please enable it in the config")
         
-        # Step 5: Create domain assignments
-        logger.info("Creating domain assignments...")
-        domains = self._create_domains(apis, communities)
+        # Step 6: Handle singleton tools
+        if singleton_tools:
+            logger.info(f"Handling {len(singleton_tools)} singleton tools...")
+            domains = self._handle_singleton_tools(singleton_tools, domains, apis)
         
-        # Step 6: Save outputs
+        # Step 7: Save outputs
         output_data = self._save_outputs(
             apis, graph, communities, domains, tool_embeddings, output_dir
         )
@@ -99,7 +106,7 @@ class DependencyGraphBuilder:
         """Generate embeddings for all tool parameters."""
         tool_embeddings = {}
         
-        for api in apis:
+        for api in tqdm(apis, desc="Generating tool embeddings"):
             tool_name = api["name"]
             try:
                 embeddings = self.embeddings.embed_tool_parameters(api)
@@ -147,13 +154,18 @@ class DependencyGraphBuilder:
         logger.info(f"Built graph with {graph.number_of_nodes()} nodes and {edge_count} edges")
         return graph
     
-    def _detect_communities(self, graph: nx.Graph) -> Dict[int, List[str]]:
-        """Detect communities using Louvain algorithm."""
+    def _detect_communities(self, graph: nx.Graph) -> Tuple[Dict[int, List[str]], List[str]]:
+        """Detect communities using Louvain algorithm.
+        
+        Returns:
+            Tuple of (communities, singleton_tools)
+        """
         if graph.number_of_edges() == 0:
-            # No edges, each node is its own community
-            communities = {i: [node] for i, node in enumerate(graph.nodes())}
-            logger.warning("No edges found, each tool will be its own domain")
-            return communities
+            # No edges, each node is its own singleton tool
+            singleton_tools = list(graph.nodes())
+            communities = {}
+            logger.warning("No edges found, all tools are singleton tools")
+            return communities, singleton_tools
         
         # Apply Louvain community detection
         partition = community_louvain.best_partition(graph, resolution=self.louvain_resolution)
@@ -173,25 +185,22 @@ class DependencyGraphBuilder:
             if len(tools) >= self.min_community_size:
                 if len(tools) <= self.max_community_size:
                     filtered_communities[len(filtered_communities)] = tools
-                else:
-                    # Split large communities
-                    split_communities = self._split_large_community(tools, graph)
-                    for split_comm in split_communities:
-                        filtered_communities[len(filtered_communities)] = split_comm
+                # else:
+                #     # Split large communities
+                #     split_communities = self._split_large_community(tools, graph)
+                #     for split_comm in split_communities:
+                #         filtered_communities[len(filtered_communities)] = split_comm
             else:
                 singleton_tools.extend(tools)
         
-        # Handle singleton tools - try to merge with most similar community
-        if singleton_tools:
-            filtered_communities = self._merge_singleton_tools(
-                singleton_tools, filtered_communities, graph
-            )
-        
-        logger.info(f"Detected {len(filtered_communities)} communities")
+        logger.info(f"Detected {len(filtered_communities)} communities and {len(singleton_tools)} singleton tools")
         for comm_id, tools in filtered_communities.items():
             logger.debug(f"Community {comm_id}: {len(tools)} tools - {', '.join(tools[:3])}{'...' if len(tools) > 3 else ''}")
         
-        return filtered_communities
+        if singleton_tools:
+            logger.debug(f"Singleton tools: {', '.join(singleton_tools[:5])}{'...' if len(singleton_tools) > 5 else ''}")
+        
+        return filtered_communities, singleton_tools
     
     def _split_large_community(self, tools: List[str], graph: nx.Graph) -> List[List[str]]:
         """Split large communities into smaller ones."""
@@ -226,52 +235,163 @@ class DependencyGraphBuilder:
         
         return result if result else [tools]
     
-    def _merge_singleton_tools(
-        self, 
-        singleton_tools: List[str], 
-        communities: Dict[int, List[str]], 
-        graph: nx.Graph
-    ) -> Dict[int, List[str]]:
-        """Merge singleton tools with most similar communities."""
-        for tool in singleton_tools:
-            best_community = None
+    # Note: _merge_singleton_tools method removed as singleton tools are now handled 
+    # in _handle_singleton_tools after domain creation
+    
+    def _handle_singleton_tools(
+        self,
+        singleton_tools: List[str],
+        domains: List[Dict[str, Any]],
+        apis: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Handle singleton tools by comparing with existing domains and using LLM validation.
+        
+        Args:
+            singleton_tools: List of tool names that don't belong to any community
+            domains: List of existing domain objects
+            apis: List of all API objects
+            
+        Returns:
+            Updated list of domains with singleton tools added where appropriate
+        """
+        api_dict = {api["name"]: api for api in apis}
+        unassigned_tools = []
+        
+        for tool_name in tqdm(singleton_tools, desc="Handling singleton tools"):
+            if tool_name not in api_dict:
+                logger.warning(f"Singleton tool {tool_name} not found in APIs")
+                continue
+                
+            tool_api = api_dict[tool_name]
+            best_domain_idx = None
             best_similarity = 0.0
             
-            # Find community with highest average similarity
-            for comm_id, comm_tools in communities.items():
-                similarities = []
-                for comm_tool in comm_tools:
-                    if graph.has_edge(tool, comm_tool):
-                        similarities.append(graph[tool][comm_tool]['weight'])
-                
-                if similarities:
-                    avg_similarity = np.mean(similarities)
-                    if avg_similarity > best_similarity:
-                        best_similarity = avg_similarity
-                        best_community = comm_id
+            # Calculate similarity with each domain using descriptions
+            for domain_idx, domain in enumerate(domains):
+                try:
+                    # Calculate similarity between tool description and domain description
+                    tool_description = tool_api["description"]
+                    domain_description = domain["description"]
+                    
+                    # Get embeddings for descriptions
+                    descriptions = [tool_description, domain_description]
+                    embeddings = self.embeddings.embed_texts(descriptions)
+                    
+                    if len(embeddings) == 2:
+                        tool_desc_embedding = embeddings[0]
+                        domain_desc_embedding = embeddings[1]
+                        
+                        # Calculate cosine similarity
+                        similarity = self.embeddings.cosine_similarity(tool_desc_embedding, domain_desc_embedding)
+                        
+                        if similarity > best_similarity:
+                            best_similarity = similarity
+                            best_domain_idx = domain_idx
+                        
+                except Exception as e:
+                    logger.error(f"Failed to calculate similarity between {tool_name} description and domain '{domain['domain']}' description: {e}")
             
-            # Add to best community or create new one
-            if best_community is not None and best_similarity > self.similarity_threshold * 0.7:
-                communities[best_community].append(tool)
+            # Check if similarity exceeds threshold
+            if best_similarity > self.singleton_tool_similarity_threshold and best_domain_idx is not None:
+                # Use LLM to validate if the tool should join this domain
+                domain = domains[best_domain_idx]
+                should_join = self._llm_validate_singleton_tool(tool_api, domain)
+                
+                if should_join:
+                    # Add tool to the domain
+                    domains[best_domain_idx]["tools"].append(tool_api)
+                    domains[best_domain_idx]["tool_count"] += 1
+                    logger.info(f"Added singleton tool {tool_name} to domain '{domain['domain']}' (similarity: {best_similarity:.3f})")
+                else:
+                    unassigned_tools.append(tool_api)
+                    logger.info(f"LLM rejected adding {tool_name} to domain '{domain['domain']}' (similarity: {best_similarity:.3f})")
             else:
-                # Create new community for singleton
-                communities[len(communities)] = [tool]
+                unassigned_tools.append(tool_api)
+                logger.info(f"Singleton tool {tool_name} similarity too low (best: {best_similarity:.3f}, threshold: {self.singleton_tool_similarity_threshold})")
         
-        return communities
+        return domains
+    
+    def _llm_validate_singleton_tool(self, tool_api: Dict[str, Any], domain: Dict[str, Any]) -> bool:
+        """
+        Use LLM to validate if a singleton tool should join a domain.
+        
+        Args:
+            tool_api: The singleton tool API object
+            domain: The domain object
+            
+        Returns:
+            True if the tool should join the domain, False otherwise
+        """
+        try:
+            system_prompt = textwrap.dedent("""
+                You are an API analysis expert. Please determine whether a singleton tool should join an existing functional domain.
+                
+                Evaluation criteria:
+                1. Does the tool's functionality relate to other tools in the domain?
+                2. Can the tool work collaboratively with tools in the domain?
+                3. Does the tool belong to the same application scenario or business domain?
+                4. Would adding it enhance the overall functional consistency of the domain?
+                
+                Please answer only "Yes" or "No" and provide a brief explanation.
+            """).strip()
+
+            user_prompt = textwrap.dedent(f"""
+                Please determine whether the following tool should join the specified functional domain:
+
+                Candidate Tool:
+                - Name: {tool_api['name']}
+                - Description: {tool_api['description']}
+
+                Target Functional Domain:
+                - Domain Name: {domain['domain']}
+                - Domain Description: {domain['description']}
+                - Current Tool Count: {domain['tool_count']}
+                - Sample Tools: {', '.join([tool['name'] for tool in domain['tools'][:3]])}
+
+                Should this tool join the functional domain?
+            """).strip()
+
+            thinking_content, answer_text, function_calls = generate(
+                self.model_config["model"],
+                system_prompt,
+                user_prompt,
+                temperature=self.model_config.get("temperature", 0.1),
+                max_tokens=300
+            )
+            
+            # Parse response
+            response = answer_text.strip().lower()
+            should_join = "yes" in response
+            
+            return should_join
+            
+        except Exception as e:
+            logger.error(f"LLM validation failed for singleton tool {tool_api['name']}: {e}")
+            # Default to not joining if validation fails
+            return False
     
     def _validate_communities_with_llm(
         self, 
         apis: List[Dict[str, Any]], 
         communities: Dict[int, List[str]]
-    ) -> Dict[int, List[str]]:
-        """Validate and refine communities using LLM analysis."""
+    ) -> List[Dict[str, Any]]:
+        """Validate communities and create domains using LLM analysis."""
         api_dict = {api["name"]: api for api in apis}
-        validated_communities = {}
+        domains = []
         
         for comm_id, tools in communities.items():
-            if len(tools) <= 2:
-                # Skip validation for small communities
-                validated_communities[len(validated_communities)] = tools
+            if len(tools) <= 1:
+                # Handle single tools separately
+                if tools and tools[0] in api_dict:
+                    tool_api = api_dict[tools[0]]
+                    domain = {
+                        "domain": f"{tool_api['name']}_operations",
+                        "description": f"Single tool domain: {tool_api['description'][:50]}...",
+                        "tool_count": 1,
+                        "tools": [tool_api]
+                    }
+                    domains.append(domain)
                 continue
             
             try:
@@ -281,182 +401,105 @@ class DependencyGraphBuilder:
                     if tool in api_dict:
                         tool_descriptions.append(f"- {tool}: {api_dict[tool]['description']}")
                 
-                # Ask LLM to validate the grouping
-                # TODO: the suggestion include a dict which contains domain name and its corresponding 
-                # tools belong to it, some outside tools should be removed from the community
-                is_valid, suggestions = self._llm_validate_community(tool_descriptions)
+                # Ask LLM to analyze and reorganize tools into proper domains
+                llm_domain = self._llm_analyze_and_create_domains(tool_descriptions, api_dict)
                 
-                if is_valid:
-                    validated_communities[len(validated_communities)] = tools
+                if llm_domain:
+                    domains.append(llm_domain)
                 else:
-                    # Split community based on LLM suggestions
-                    # TODO: consider remove this functionality since suggestion already split the tools
-                    # and remove outlier tools from the community
-                    split_communities = self._llm_split_community(tools, suggestions, api_dict)
-                    for split_comm in split_communities:
-                        validated_communities[len(validated_communities)] = split_comm
+                    logger.warning(f"LLM analysis failed for community {comm_id}, skip this community for tool names {tools}")
+                    continue
                 
             except Exception as e:
-                logger.error(f"LLM validation failed for community {comm_id}: {e}")
-                # Keep original community if validation fails
-                validated_communities[len(validated_communities)] = tools
+                logger.error(f"LLM validation failed for community {comm_id}: {e}, skip this community for tool names {tools}")
+                continue
         
-        return validated_communities
-    
-    def _llm_validate_community(self, tool_descriptions: List[str]) -> Tuple[bool, str]:
-        """Use LLM to validate if tools belong to the same domain."""
-        system_prompt = """你是一个API分析专家。请分析以下工具是否属于同一个功能域。
-
-评判标准：
-1. 工具是否解决相似的问题或属于同一个应用场景
-2. 工具之间是否有明显的功能关联性
-3. 是否可以归类到同一个领域（如文件操作、用户管理、数据库操作等）
-
-请回答"是"或"否"，并简要说明原因。"""
-
-        tools_text = "\n".join(tool_descriptions)
-        user_prompt = f"""请分析以下工具组是否属于同一个功能域：
-
-{tools_text}
-
-这些工具是否应该归为同一个域？请回答"是"或"否"，并说明原因。"""
-
-        try:
-            response = generate(
-                self.model_config["model"],
-                system_prompt,
-                user_prompt,
-                temperature=self.model_config.get("temperature", 0.1),
-                max_tokens=500
-            )
-            
-            # Parse response
-            response = response.strip().lower()
-            is_valid = "是" in response[:10] or "yes" in response[:10]
-            
-            return is_valid, response
-            
-        except Exception as e:
-            logger.error(f"LLM validation failed: {e}")
-            return True, "Validation failed"
-    
-    def _llm_split_community(
-        self, 
-        tools: List[str], 
-        llm_suggestions: str, 
-        api_dict: Dict[str, Dict[str, Any]]
-    ) -> List[List[str]]:
-        """Split community based on LLM suggestions."""
-        # For now, implement a simple split strategy
-        # In practice, you could parse LLM suggestions more sophisticated
-        
-        if len(tools) <= 3:
-            return [tools]
-        
-        # Simple strategy: split in half
-        mid = len(tools) // 2
-        return [tools[:mid], tools[mid:]]
-    
-    def _create_domains(
-        self, 
-        apis: List[Dict[str, Any]], 
-        communities: Dict[int, List[str]]
-    ) -> List[Dict[str, Any]]:
-        """Create domain objects from communities."""
-        api_dict = {api["name"]: api for api in apis}
-        domains = []
-        
-        for comm_id, tools in communities.items():
-            # Generate domain name and description
-            domain_name = self._generate_domain_name(tools, api_dict)
-            domain_description = self._generate_domain_description(tools, api_dict)
-            
-            # Collect tools for this domain
-            domain_tools = []
-            for tool_name in tools:
-                if tool_name in api_dict:
-                    domain_tools.append(api_dict[tool_name])
-            
-            domain = {
-                "domain": domain_name,
-                "description": domain_description,
-                "tool_count": len(domain_tools),
-                "tools": domain_tools
-            }
-            
-            domains.append(domain)
-        
+        logger.info(f"Created {len(domains)} domains with LLM validation")
         return domains
     
-    def _generate_domain_name(self, tools: List[str], api_dict: Dict[str, Dict[str, Any]]) -> str:
-        """Generate a descriptive name for the domain."""
-        # Simple heuristic: find common words in tool names
-        common_words = []
+    def _llm_analyze_and_create_domains(
+        self, 
+        tool_descriptions: List[str], 
+        api_dict: Dict[str, Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Use LLM to analyze tools and create proper domain groupings."""
         
-        # Extract words from tool names
-        all_words = []
-        for tool in tools:
-            words = tool.replace('_', ' ').split()
-            all_words.extend(words)
-        
-        # Find most common words
-        word_counts = {}
-        for word in all_words:
-            word_counts[word] = word_counts.get(word, 0) + 1
-        
-        # Sort by frequency
-        sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
-        
-        # Use most common word or combination
-        if sorted_words:
-            primary_word = sorted_words[0][0]
-            if len(sorted_words) > 1:
-                secondary_word = sorted_words[1][0]
-                return f"{primary_word}_{secondary_word}"
-            else:
-                return f"{primary_word}_operations"
-        
-        # Fallback
-        return f"domain_{len(tools)}_tools"
-    
-    def _generate_domain_description(self, tools: List[str], api_dict: Dict[str, Dict[str, Any]]) -> str:
-        """Generate a description for the domain."""
-        try:
-            # Collect tool descriptions
-            descriptions = []
-            for tool in tools[:5]:  # Limit to first 5 tools
-                if tool in api_dict:
-                    descriptions.append(f"- {tool}: {api_dict[tool]['description']}")
+        system_prompt = textwrap.dedent("""
+            You are an API analysis expert. Please analyze the given tools and create ONE coherent functional domain.
             
-            system_prompt = """你是一个API分析专家。根据提供的工具列表，生成一个简洁的域描述。
+            Your task:
+            1. Identify the most appropriate single domain that best represents the core functionality
+            2. Include only tools that clearly belong to this main functional domain
+            3. Remove tools that don't fit well with the main domain (outliers)
+            4. Generate a meaningful domain name and description for the identified domain
+            5. Focus on finding the strongest functional relationship among the tools
+            
+            Please respond with a JSON structure like this:
+            ```json
+            {
+                "domain": {
+                    "domain_name": "file_operations",
+                    "description": "Tools for file system operations and management",
+                    "tools": ["create_file", "read_file", "delete_file"]
+                },
+                "outliers": ["unrelated_tool1", "unrelated_tool2"]
+            }
+            ```
+            
+            Only include tools that have clear functional relationships with the main domain. It's better to exclude outliers than force them into an inappropriate domain.
+        """).strip()
 
-要求：
-1. 描述应该概括这些工具的共同功能领域
-2. 长度在20-60字之间
-3. 使用中文
-4. 突出核心功能特征"""
+        tools_text = "\n".join(tool_descriptions)
+        user_prompt = textwrap.dedent(f"""
+            Please analyze the following tools and identify the most appropriate single functional domain:
+            
+            {tools_text}
+            
+            Find the core functional domain that best represents these tools, include only tools that clearly belong to this domain, and identify any outliers that don't fit well.
+        """).strip()
 
-            tools_text = "\n".join(descriptions)
-            user_prompt = f"""以下工具属于同一个功能域：
-
-{tools_text}
-
-请为这个功能域生成一个简洁的描述："""
-
-            description = generate(
+        try:
+            thinking_content, answer_text, function_calls = generate(
                 self.model_config["model"],
                 system_prompt,
                 user_prompt,
                 temperature=self.model_config.get("temperature", 0.1),
-                max_tokens=200
+                max_tokens=1000
             )
             
-            return description.strip()
+            extracted_json = extract_json_from_text(answer_text.strip())
+            response_data = json.loads(extracted_json)
             
+            if "domain" in response_data:
+                domain_info = response_data["domain"]
+                domain_name = domain_info.get("domain_name", "unknown_domain")
+                description = domain_info.get("description", "Generated domain")
+                tool_names = domain_info.get("tools", [])
+                
+                # Collect tool objects
+                domain_tools = []
+                for tool_name in tool_names:
+                    if tool_name in api_dict:
+                        domain_tools.append(api_dict[tool_name])
+                
+                if domain_tools:  # Only create domain if it has valid tools
+                    domain = {
+                        "domain": domain_name,
+                        "description": description,
+                        "tool_count": len(domain_tools),
+                        "tools": domain_tools
+                    }
+                    return domain
+            
+            return None
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse LLM JSON response: {e}")
+            return []
         except Exception as e:
-            logger.error(f"Failed to generate domain description: {e}")
-            return f"包含{len(tools)}个相关工具的功能域"
-    
+            logger.error(f"LLM domain analysis failed: {e}")
+            return []
+
     def _save_outputs(
         self,
         apis: List[Dict[str, Any]],

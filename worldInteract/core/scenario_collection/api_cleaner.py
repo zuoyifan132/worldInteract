@@ -9,11 +9,29 @@ from typing import Dict, List, Any, Optional, Set
 from pathlib import Path
 from loguru import logger
 from difflib import SequenceMatcher
+from tqdm import tqdm
+from tenacity import RetryError
 
+from worldInteract.core.scenario_collection import similarity_method
 from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.embedding import OpenAIEmbeddings
 from worldInteract.utils.parser_utils import extract_json_from_text
+from worldInteract.core.scenario_collection.similarity_method import SimilarityMethod
+
+
+# Standardize type names mapping
+TYPE_MAPPING = {
+    "str": "string",
+    "int": "integer",
+    "bool": "boolean",
+    "obj": "object",
+    "arr": "array"
+}
+# Standardize description fields
+DESC_FIELDS = ["description", "desc", "info"]
+# Standardize type fields
+TYPE_FIELDS = ["type", "datatype", "dtype"]
 
 
 class APICleaner:
@@ -44,7 +62,20 @@ class APICleaner:
         self.duplicate_threshold = self.env_config.get("duplicate_threshold", 0.8)
         self.min_description_length = self.env_config.get("description_min_length", 10)
         
-        logger.info("Initialized API Cleaner")
+        # Parse similarity method from config
+        similarity_method_str = self.env_config.get("similarity_method", SimilarityMethod.get_default().value)
+        try:
+            self.similarity_method = SimilarityMethod.from_string(similarity_method_str)
+        except ValueError as e:
+            logger.warning(f"{e}. Using default method.")
+            self.similarity_method = SimilarityMethod.get_default()
+        
+        # If embedding_model is configured but embeddings are not available, fall back to sequence_matcher
+        if self.similarity_method.is_embedding_based() and self.embeddings is None:
+            logger.warning(f"similarity_method configured as '{self.similarity_method}' but embeddings unavailable. Falling back to '{SimilarityMethod.SEQUENCE_MATCHER}'")
+            self.similarity_method = SimilarityMethod.SEQUENCE_MATCHER
+        
+        logger.info(f"Initialized API Cleaner with similarity method: {self.similarity_method}")
     
     def _load_raw_apis(self, raw_apis_path: str) -> List[Dict[str, Any]]:
         """
@@ -127,7 +158,7 @@ class APICleaner:
         fixed_apis = []
         for api in raw_apis:
             try:
-                fixed_api = self._fix_api_format(api)
+                fixed_api = self.standardize_and_fix_api_format(api)
                 if fixed_api:
                     fixed_apis.append(fixed_api)
                     stats["fixed"] += 1
@@ -140,6 +171,7 @@ class APICleaner:
         logger.info(f"Fixed {len(fixed_apis)} APIs")
         
         # Step 2: Remove duplicates
+        # BUG: too slow
         unique_apis = self._remove_duplicates(fixed_apis)
         stats["removed_duplicates"] = len(fixed_apis) - len(unique_apis)
         stats["final_count"] = len(unique_apis)
@@ -148,6 +180,8 @@ class APICleaner:
         
         # Step 3: Enhance descriptions using LLM
         enhanced_apis = self._enhance_descriptions(unique_apis)
+
+        # TODO: Step 4: Generate tool implementation and unit test cases
         
         # Prepare output
         output_data = {
@@ -169,7 +203,7 @@ class APICleaner:
         logger.info(f"Saved {len(enhanced_apis)} cleaned APIs to {output_path}")
         return output_data
     
-    def _fix_api_format(self, api: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def standardize_and_fix_api_format(self, api: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Fix and standardize a single API format.
         
@@ -188,14 +222,16 @@ class APICleaner:
         description = self._extract_description(api)
         if not description or len(description) < self.min_description_length:
             # Try to generate description using LLM
+            # TODO: Parallel execution
             description = self._generate_description(name, api)
+            logger.info(f"Generated new description for {name}: {description}")
             if not description:
                 return None
         
         # Extract parameters
         parameters = self._extract_parameters(api)
         
-        # Extract returns (optional)
+        # Extract returns
         returns = self._extract_returns(api)
         
         # Create standardized format
@@ -252,24 +288,15 @@ class APICleaner:
                         std_param = {}
                         
                         # Type
-                        type_fields = ["type", "datatype", "dtype"]
-                        for type_field in type_fields:
+                        for type_field in TYPE_FIELDS:
                             if type_field in param_info:
                                 param_type = str(param_info[type_field]).strip()
                                 # Standardize type names
-                                type_mapping = {
-                                    "str": "string",
-                                    "int": "integer",
-                                    "bool": "boolean",
-                                    "obj": "object",
-                                    "arr": "array"
-                                }
-                                std_param["type"] = type_mapping.get(param_type, param_type)
+                                std_param["type"] = TYPE_MAPPING.get(param_type, param_type)
                                 break
                         
                         # Description
-                        desc_fields = ["description", "desc", "info"]
-                        for desc_field in desc_fields:
+                        for desc_field in DESC_FIELDS:
                             if desc_field in param_info:
                                 std_param["description"] = str(param_info[desc_field]).strip()
                                 break
@@ -312,11 +339,11 @@ class APICleaner:
         """Generate description using LLM when missing."""
         try:
             system_prompt = textwrap.dedent(
-                """You are an API documentation expert. Generate a clear and concise tool description based on the tool name, parameter names, and parameter descriptions.
+                f"""You are an API documentation expert. Generate a clear and concise tool description based on the tool name, parameter names, and parameter descriptions.
 
                 Requirements:
                 1. The description should explain the main functionality of the tool
-                2. Length should be approximately 50-100 characters
+                2. Length should be no shorter than {self.min_description_length} characters
                 3. Use the same language as the provided parameter descriptions 
                 4. Focus on what the tool does, not on specific parameter details
                 5. Make it professional and clear"""
@@ -366,7 +393,7 @@ class APICleaner:
         unique_apis = []
         seen_names = set()
         
-        for api in apis:
+        for api in tqdm(apis, desc="Removing duplicates"):
             name = api["name"]
             
             # Check for exact name duplicates
@@ -374,26 +401,23 @@ class APICleaner:
                 logger.debug(f"Removed duplicate API: {name}")
                 continue
             
-            # Check for semantic duplicates
+            # Check for semantic duplicates using configured similarity method
             is_duplicate = False
-            if self.embeddings:
-                for existing_api in unique_apis:
-                    similarity = self._calculate_api_similarity(api, existing_api)
-                    if similarity > self.duplicate_threshold:
-                        logger.debug(f"Removed semantically similar API: {name} (similar to {existing_api['name']})")
-                        is_duplicate = True
-                        break
-            else:
-                # Fallback to text similarity
-                for existing_api in unique_apis:
-                    text_similarity = self._calculate_text_similarity(
+            for existing_api in unique_apis:
+                if self.similarity_method.is_embedding_based():
+                    # Use semantic similarity with embeddings
+                    similarity = self._calculate_api_semantical_similarity(api, existing_api)
+                else:
+                    # Use text similarity with sequence matcher
+                    similarity = self._calculate_text_similarity(
                         f"{api['name']} {api['description']}", 
                         f"{existing_api['name']} {existing_api['description']}"
                     )
-                    if text_similarity > self.duplicate_threshold:
-                        logger.debug(f"Removed textually similar API: {name}")
-                        is_duplicate = True
-                        break
+                
+                if similarity > self.duplicate_threshold:
+                    logger.debug(f"Removed {self.similarity_method.value} similar API: {name} (similar to {existing_api['name']}, similarity: {similarity:.3f})")
+                    is_duplicate = True
+                    break
             
             if not is_duplicate:
                 unique_apis.append(api)
@@ -401,9 +425,9 @@ class APICleaner:
         
         return unique_apis
     
-    def _calculate_api_similarity(self, api1: Dict[str, Any], api2: Dict[str, Any]) -> float:
+    def _calculate_api_semantical_similarity(self, api1: Dict[str, Any], api2: Dict[str, Any]) -> float:
         """Calculate semantic similarity between two APIs using embeddings."""
-        if not self.embeddings:
+        if not self.embeddings or not self.similarity_method.is_embedding_based():
             return 0.0
         
         try:
@@ -415,6 +439,8 @@ class APICleaner:
             embeddings = self.embeddings.embed_texts([text1, text2])
             if len(embeddings) == 2:
                 return self.embeddings.cosine_similarity(embeddings[0], embeddings[1])
+        except RetryError as e:
+            logger.error(f"Failed to calculate semantic similarity: {e}")
         except Exception as e:
             logger.error(f"Failed to calculate semantic similarity: {e}")
         
@@ -428,12 +454,13 @@ class APICleaner:
         """Enhance API descriptions using LLM for better quality."""
         enhanced_apis = []
         
-        for api in apis:
+        for api in tqdm(apis, desc="Enhancing descriptions"):
             try:
                 logger.info(f"Enhancing API: {api['name']}")
+                logger.info(f"The original tool description is: {json.dumps(api, indent=2, ensure_ascii=False)}")
                 enhanced_api = self._enhance_complete_api(api)
                 enhanced_apis.append(enhanced_api)
-                
+                logger.info(f"The enhanced tool description is: {json.dumps(enhanced_api, indent=2, ensure_ascii=False)}")
             except Exception as e:
                 logger.error(f"Failed to enhance API {api.get('name', 'unknown')}: {e}")
                 enhanced_apis.append(api)  # Keep original if enhancement fails
@@ -447,14 +474,15 @@ class APICleaner:
                 """You are an API documentation expert. Review the provided tool specification and improve any unclear, ambiguous, or missing descriptions.
 
                 Your task:
-                1. Check the tool description, parameter descriptions, and return descriptions
-                2. If all descriptions are clear and professional, output only "yes"
-                3. If any descriptions need improvement, output a properly formatted JSON with enhanced descriptions
+                1. Using the same language as the input tool description
+                2. Check the tool description, parameter descriptions, and return descriptions
+                3. If all descriptions are clear and professional, output only "yes"
+                4. If any descriptions need improvement, output a properly formatted JSON with enhanced descriptions
 
                 Requirements for improvements:
                 - Tool description: Clear, concise explanation of main functionality (50-100 characters)
                 - Parameter descriptions: Clear explanation of what each parameter does
-                - Return descriptions: Clear explanation of what the function returns
+                - Return descriptions: Clear explanation of what the function returns if original return description is missing or unclear
                 - Use professional, technical language
                 - Maintain consistency in style and terminology
                 - Fix any grammatical errors or unclear phrasing

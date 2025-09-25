@@ -1,7 +1,7 @@
 """
 OpenAI Embeddings API wrapper for tool dependency analysis.
 """
-
+import dotenv
 import os
 import numpy as np
 from typing import List, Dict, Any, Optional
@@ -12,10 +12,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from worldInteract.utils.config_manager import config_manager
 
 
+dotenv.load_dotenv("../../../.env")
+
+
 class OpenAIEmbeddings:
     """OpenAI embeddings client for vectorizing tool descriptions."""
     
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: Optional[str] = None, **kwargs):
         """
         Initialize OpenAI embeddings client.
         
@@ -26,7 +29,7 @@ class OpenAIEmbeddings:
         self.embedding_config = self.config_manager.get_model_config("embedding")
         
         # Initialize OpenAI client
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = kwargs.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
             
@@ -166,23 +169,28 @@ class OpenAIEmbeddings:
         tool2_embeddings: Dict[str, List[float]]
     ) -> float:
         """
-        Calculate maximum similarity between parameters of two tools.
+        Calculate average similarity between parameters of two tools.
         
         Args:
             tool1_embeddings: Parameter embeddings for tool 1
             tool2_embeddings: Parameter embeddings for tool 2
             
         Returns:
-            Maximum cosine similarity between any pair of parameters
+            Average cosine similarity between any pair of parameters
         """
         if not tool1_embeddings or not tool2_embeddings:
             return 0.0
         
-        max_similarity = 0.0
+        total_similarity = 0.0
+        counter = 0
         
         for param1_name, embedding1 in tool1_embeddings.items():
             for param2_name, embedding2 in tool2_embeddings.items():
                 similarity = self.cosine_similarity(embedding1, embedding2)
-                max_similarity = max(max_similarity, similarity)
-        
-        return max_similarity
+                total_similarity += similarity
+                counter += 1
+
+        if counter == 0:
+            return 0.0
+
+        return total_similarity / counter
