@@ -1,0 +1,106 @@
+{
+  "domain": "vehicle_monitoring",
+  "description": "Tools for monitoring and displaying vehicle status information",
+  "tool_count": 1,
+  "tools": [
+    {
+      "name": "displaycarstatus",
+      "description": "Displays the vehicle's status based on the specified display option.",
+      "parameters": {
+        "option": {
+          "type": "string",
+          "description": "Specifies the display option for vehicle status. Valid options include: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "dict",
+            "description": "Detailed status of the vehicle according to the selected option.",
+            "properties": {
+              "fuelLevel": {
+                "type": "float",
+                "description": "[Optional] The current fuel level of the vehicle measured in gallons."
+              },
+              "batteryVoltage": {
+                "type": "float",
+                "description": "[Optional] The voltage level of the vehicle's battery in volts."
+              },
+              "doorStatus": {
+                "type": "dict",
+                "description": "[Optional] The locked or unlocked status of each vehicle door.",
+                "properties": {
+                  "driver": {
+                    "type": "string",
+                    "description": "The status of the driver's door. Possible values: [\"locked\", \"unlocked\"]"
+                  },
+                  "passenger": {
+                    "type": "string",
+                    "description": "The status of the passenger's door. Possible values: [\"locked\", \"unlocked\"]"
+                  },
+                  "rear_left": {
+                    "type": "string",
+                    "description": "The status of the rear left door. Possible values: [\"locked\", \"unlocked\"]"
+                  },
+                  "rear_right": {
+                    "type": "string",
+                    "description": "The status of the rear right door. Possible values: [\"locked\", \"unlocked\"]"
+                  }
+                }
+              },
+              "currentACTemperature": {
+                "type": "float",
+                "description": "[Optional] The current temperature setting for air conditioning in degrees Celsius."
+              },
+              "fanSpeed": {
+                "type": "integer",
+                "description": "[Optional] The current fan speed setting, ranging from 0 to 100."
+              },
+              "climateMode": {
+                "type": "string",
+                "description": "[Optional] The currently set climate control mode. Possible values: [\"auto\", \"cool\", \"heat\", \"defrost\"]"
+              },
+              "humidityLevel": {
+                "type": "float",
+                "description": "[Optional] The current humidity level inside the vehicle expressed as a percentage."
+              },
+              "headlightStatus": {
+                "type": "string",
+                "description": "[Optional] The operational status of the headlights. Possible values: [\"on\", \"off\"]"
+              },
+              "parkingBrakeStatus": {
+                "type": "string",
+                "description": "[Optional] The status of the parking brake. Possible values: [\"engaged\", \"released\"]"
+              },
+              "parkingBrakeForce": {
+                "type": "float",
+                "description": "[Optional] The force being applied to the parking brake measured in Newtons."
+              },
+              "slopeAngle": {
+                "type": "float",
+                "description": "[Optional] The angle of the slope on which the vehicle is positioned, measured in degrees."
+              },
+              "brakePedalStatus": {
+                "type": "string",
+                "description": "[Optional] The status of the brake pedal. Possible values: [\"pressed\", \"released\"]"
+              },
+              "brakePedalForce": {
+                "type": "float",
+                "description": "[Optional] The force being applied to the brake pedal measured in Newtons."
+              },
+              "engineState": {
+                "type": "string",
+                "description": "[Optional] The current operational state of the engine. Possible values: [\"running\", \"stopped\"]"
+              },
+              "metadata": {
+                "type": "string",
+                "description": "[Optional] Additional metadata related to the vehicle's status."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

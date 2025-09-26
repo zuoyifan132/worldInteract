@@ -1,0 +1,45 @@
+{
+  "domain": "volume_conversion",
+  "description": "Tools for converting volume measurements between different units",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "gallon_to_liter",
+      "description": "Converts a specified volume from gallons to liters.",
+      "parameters": {
+        "gallon": {
+          "type": "float",
+          "description": "The volume in gallons that needs to be converted to liters."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "liter": {
+            "type": "float",
+            "description": "The equivalent volume in liters after conversion from gallons."
+          }
+        }
+      }
+    },
+    {
+      "name": "liter_to_gallon",
+      "description": "Converts a volume measurement from liters to gallons.",
+      "parameters": {
+        "liter": {
+          "type": "float",
+          "description": "The volume in liters that you wish to convert to gallons."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "gallon": {
+            "type": "float",
+            "description": "The equivalent volume in gallons after conversion."
+          }
+        }
+      }
+    }
+  ]
+}

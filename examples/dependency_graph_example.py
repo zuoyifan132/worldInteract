@@ -9,6 +9,7 @@ import os
 import sys
 import json
 import dotenv
+import argparse
 from pathlib import Path
 
 # Add project root directory to Python path
@@ -22,40 +23,97 @@ from worldInteract.core.dependency_graph import DependencyGraphBuilder
 dotenv.load_dotenv("../.env")
 
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="Run dependency graph example to create tool dependency graphs from cleaned API scenarios",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Example usage:
+  python dependency_graph_example.py
+  python dependency_graph_example.py --input-file /path/to/cleaned_apis.json --output-dir /path/to/output
+  python dependency_graph_example.py -i data/processed_apis/example_run/cleaned_apis.json -o output/my_dependency_graphs
+        """
+    )
+    
+    parser.add_argument(
+        "--input-file", "-i",
+        type=str,
+        default=None,
+        help="Input file path for cleaned API data (default: search for cleaned_apis.json in processed_apis directories)"
+    )
+    
+    parser.add_argument(
+        "--output-dir", "-o", 
+        type=str,
+        default=None,
+        help="Output directory path for dependency graphs (default: data/dependency_graphs/dependency_graph_example)"
+    )
+    
+    return parser.parse_args()
+
+
 def main():
     """Run the dependency graph modeling example"""
+    
+    # Parse command line arguments
+    args = parse_arguments()
     
     logger.info("Starting Tool Dependency Graph Modeling Example")
     
     # Set up paths
     project_root = Path(__file__).parent.parent
     
-    # Look for cleaned APIs in multiple possible locations
-    possible_input_paths = [
-        project_root / "data" / "processed_apis" / "example_run" / "cleaned_apis.json",
-    ]
-    
-    # Find the most recent cleaned APIs file
-    cleaned_apis_path = None
-    for path in possible_input_paths:
-        if path.exists():
-            cleaned_apis_path = path
-            break
-    
-    if not cleaned_apis_path:
-        logger.error("No cleaned APIs file found!")
-        logger.info("Available search paths:")
+    # Use command line arguments or default paths for input
+    if args.input_file:
+        cleaned_apis_path = Path(args.input_file)
+        if not cleaned_apis_path.is_absolute():
+            cleaned_apis_path = project_root / cleaned_apis_path
+    else:
+        # Look for cleaned APIs in multiple possible locations
+        possible_input_paths = [
+            project_root / "data" / "processed_apis" / "scenario_collection_example" / "cleaned_apis.json",
+            project_root / "data" / "processed_apis" / "bfcl_collection_example" / "cleaned_apis.json",
+            project_root / "data" / "processed_apis" / "example_run" / "cleaned_apis.json",
+        ]
+        
+        # Find the most recent cleaned APIs file
+        cleaned_apis_path = None
         for path in possible_input_paths:
-            logger.info(f"  - {path}")
-        logger.info("\nPlease run scenario_collection_example.py first to generate cleaned APIs")
+            if path.exists():
+                cleaned_apis_path = path
+                break
+        
+        if not cleaned_apis_path:
+            logger.error("No cleaned APIs file found!")
+            logger.info("Available search paths:")
+            for path in possible_input_paths:
+                logger.info(f"  - {path}")
+            logger.info("\nPlease run scenario_collection_example.py first to generate cleaned APIs")
+            return
+    
+    # Use command line arguments or default paths for output
+    if args.output_dir:
+        dependency_graphs_dir = Path(args.output_dir)
+        if not dependency_graphs_dir.is_absolute():
+            dependency_graphs_dir = project_root / dependency_graphs_dir
+        # Create output directory if it doesn't exist
+        dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        # Create output directory for dependency graphs (default path)
+        dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "dependency_graph_example"
+        dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Log the paths being used
+    logger.info(f"Input file: {cleaned_apis_path}")
+    logger.info(f"Output directory: {dependency_graphs_dir}")
+    
+    # Validate input file exists
+    if not cleaned_apis_path.exists():
+        logger.error(f"Cleaned APIs file does not exist: {cleaned_apis_path}")
+        logger.info("Please ensure you have a valid cleaned APIs file")
+        logger.info("You can generate one using scenario_collection_example.py")
         return
-    
-    # Create output directory for dependency graphs
-    dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "dependency_graph_example"
-    dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
-    
-    logger.info(f"Using cleaned APIs from: {cleaned_apis_path}")
-    logger.info(f"Dependency graphs will be saved to: {dependency_graphs_dir}")
     
     # Validate input file
     try:

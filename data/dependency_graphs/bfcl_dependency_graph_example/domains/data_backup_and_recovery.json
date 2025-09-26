@@ -1,0 +1,97 @@
+{
+  "domain": "data_backup_and_recovery",
+  "description": "Tools for backing up data to cloud storage and restoring data from backups",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "backup_data",
+      "description": "备份指定目录或文件到云存储",
+      "parameters": {
+        "source_path": {
+          "type": "string",
+          "description": "需要备份的源路径"
+        },
+        "backup_name": {
+          "type": "string",
+          "description": "备份任务名称"
+        },
+        "destination": {
+          "type": "string",
+          "description": "备份目标位置",
+          "default": "cloud_storage"
+        },
+        "compression": {
+          "type": "boolean",
+          "description": "是否压缩备份文件",
+          "default": true
+        },
+        "encryption": {
+          "type": "boolean",
+          "description": "是否加密备份文件",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "备份是否成功"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "备份任务唯一标识符"
+          },
+          "backup_size": {
+            "type": "integer",
+            "description": "备份文件大小（字节）"
+          },
+          "backup_url": {
+            "type": "string",
+            "description": "备份文件下载链接"
+          },
+          "message": {
+            "type": "string",
+            "description": "备份状态描述"
+          }
+        }
+      }
+    },
+    {
+      "name": "restore_data",
+      "description": "从备份恢复数据到指定位置",
+      "parameters": {
+        "backup_id": {
+          "type": "string",
+          "description": "备份任务标识符"
+        },
+        "restore_path": {
+          "type": "string",
+          "description": "数据恢复目标路径"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "description": "是否覆盖现有文件",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "恢复是否成功"
+          },
+          "restored_files": {
+            "type": "array",
+            "description": "恢复的文件列表"
+          },
+          "message": {
+            "type": "string",
+            "description": "恢复状态描述"
+          }
+        }
+      }
+    }
+  ]
+}

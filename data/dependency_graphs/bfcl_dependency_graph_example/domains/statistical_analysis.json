@@ -1,0 +1,102 @@
+{
+  "domain": "statistical_analysis",
+  "description": "Tools for performing statistical calculations and data analysis on numerical datasets",
+  "tool_count": 5,
+  "tools": [
+    {
+      "name": "max_value",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Find the maximum value in a list of numbers.",
+      "parameters": {
+        "numbers": {
+          "type": "array",
+          "description": "List of numbers to find the maximum from."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "The maximum value in the list."
+          }
+        }
+      }
+    },
+    {
+      "name": "mean",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the mean of a list of numbers.",
+      "parameters": {
+        "numbers": {
+          "type": "array",
+          "description": "List of numbers to calculate the mean of."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "Mean of the numbers."
+          }
+        }
+      }
+    },
+    {
+      "name": "min_value",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Find the minimum value in a list of numbers.",
+      "parameters": {
+        "numbers": {
+          "type": "array",
+          "description": "List of numbers to find the minimum from."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "The minimum value in the list."
+          }
+        }
+      }
+    },
+    {
+      "name": "standard_deviation",
+      "description": "Calculate the standard deviation of a numerical dataset.",
+      "parameters": {
+        "numbers": {
+          "type": "array",
+          "description": "An array containing the numerical values for which the standard deviation will be computed."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "The calculated standard deviation of the provided numbers, indicating the dispersion of the dataset."
+          }
+        }
+      }
+    },
+    {
+      "name": "sum_values",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the sum of a list of numbers.",
+      "parameters": {
+        "numbers": {
+          "type": "array",
+          "description": "List of numbers to sum."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "The sum of all numbers in the list."
+          }
+        }
+      }
+    }
+  ]
+}

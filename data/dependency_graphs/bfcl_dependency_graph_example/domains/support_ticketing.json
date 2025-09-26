@@ -1,0 +1,111 @@
+{
+  "domain": "support_ticketing",
+  "description": "Tools for managing support tickets throughout their lifecycle",
+  "tool_count": 4,
+  "tools": [
+    {
+      "name": "close_ticket",
+      "description": "Closes a specified support ticket in the company's ticketing system.",
+      "parameters": {
+        "ticket_id": {
+          "type": "integer",
+          "description": "The unique identifier of the ticket that needs to be closed."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates the result of the ticket closure operation (e.g., 'success' or 'failure')."
+          }
+        }
+      }
+    },
+    {
+      "name": "edit_ticket",
+      "description": "Modifies the details of an existing support ticket within the ticketing system.",
+      "parameters": {
+        "ticket_id": {
+          "type": "integer",
+          "description": "The unique identifier of the ticket that is to be modified."
+        },
+        "updates": {
+          "type": "dict",
+          "description": "A dictionary containing the fields to update. Possible fields include: - title (str): [Optional] The new title for the ticket."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates the outcome of the update operation, such as 'success' or 'failure'."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_ticket",
+      "description": "Retrieves detailed information about a specific support ticket using its ID.",
+      "parameters": {
+        "ticket_id": {
+          "type": "integer",
+          "description": "The unique identifier for the ticket to be retrieved, which must be valid and exist in the system."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique identifier assigned to the retrieved ticket."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title or summary of the ticket."
+          },
+          "description": {
+            "type": "string",
+            "description": "A detailed description providing further information about the ticket's issue."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the ticket, indicating whether it is open, in progress, or closed."
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority level of the ticket, often defined as a numeric scale (e.g., 1 for highest priority, 5 for lowest)."
+          },
+          "created_by": {
+            "type": "string",
+            "description": "The username of the individual who created the ticket, allowing for tracking and accountability."
+          }
+        }
+      }
+    },
+    {
+      "name": "resolve_ticket",
+      "description": "Resolve a support ticket by providing necessary resolution details.",
+      "parameters": {
+        "ticket_id": {
+          "type": "integer",
+          "description": "Unique identifier for the ticket that needs to be resolved."
+        },
+        "resolution": {
+          "type": "string",
+          "description": "Detailed information regarding the resolution applied to the ticket."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates the outcome of the ticket resolution operation (e.g., 'success' or 'failure')."
+          }
+        }
+      }
+    }
+  ]
+}

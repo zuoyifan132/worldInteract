@@ -1,0 +1,2449 @@
+{
+  "metadata": {
+    "total_domains": 32,
+    "total_tools": 98,
+    "avg_tools_per_domain": 3.0625
+  },
+  "domains": [
+    {
+      "domain": "stock_trading_management",
+      "description": "Tools for managing stock trading accounts, orders, and account information",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "get_account_info",
+          "description": "Retrieves detailed information about a user's trading account.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "account_id": {
+                "type": "integer",
+                "description": "Unique identifier for the user's trading account."
+              },
+              "balance": {
+                "type": "float",
+                "description": "Current monetary balance available in the trading account."
+              },
+              "binding_card": {
+                "type": "integer",
+                "description": "Identifier for the bank card linked to the trading account."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_order_history",
+          "description": "Retrieves the history of stock order IDs for a user's trading account.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "order_history": {
+                "type": "array",
+                "description": "An array containing the IDs of orders from the user's transaction history.",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "update_stock_price",
+          "description": "Updates the market price of a specified stock in the trading system.",
+          "parameters": {
+            "symbol": {
+              "type": "string",
+              "description": "The unique ticker symbol of the stock for which the price is to be updated."
+            },
+            "new_price": {
+              "type": "float",
+              "description": "The new market price to be set for the specified stock."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "The ticker symbol of the stock that was updated."
+              },
+              "old_price": {
+                "type": "float",
+                "description": "The previous market price of the stock before the update."
+              },
+              "new_price": {
+                "type": "float",
+                "description": "The updated market price of the stock after the change."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "stock_information_lookup",
+      "description": "Tools for retrieving stock data, company information, and market listings",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "get_stock_info",
+          "description": "Retrieve detailed information about a specified stock including pricing and volume data.",
+          "parameters": {
+            "symbol": {
+              "type": "string",
+              "description": "A unique ticker symbol representing the stock to be queried."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "price": {
+                "type": "float",
+                "description": "The current market price of the specified stock."
+              },
+              "percent_change": {
+                "type": "float",
+                "description": "The percentage change in the stock's price compared to the previous trading session."
+              },
+              "volume": {
+                "type": "float",
+                "description": "The total trading volume of the stock during the last trading session."
+              },
+              "MA(5)": {
+                "type": "float",
+                "description": "The 5-day moving average price of the stock, indicative of short-term trends."
+              },
+              "MA(20)": {
+                "type": "float",
+                "description": "The 20-day moving average price of the stock, indicative of medium-term trends."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_symbol_by_name",
+          "description": "Retrieve the stock symbol associated with a specified company name.",
+          "parameters": {
+            "name": {
+              "type": "string",
+              "description": "The full name of the company for which the stock symbol is requested."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "The stock symbol of the requested company. Returns 'Stock not found' if the symbol cannot be identified."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_available_stocks",
+          "description": "This tool belongs to the trading system, which allows users to trade stocks, manage their account, and view stock information. Tool description: Get a list of stock symbols in the given sector.",
+          "parameters": {
+            "sector": {
+              "type": "string",
+              "description": "The sector to retrieve stocks from (e.g., 'Technology')."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "stock_list": {
+                "type": "array",
+                "description": "List of stock symbols in the specified sector.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "watchlist_management",
+      "description": "Tools for managing user's stock watchlist including adding, removing, and viewing stocks",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "add_to_watchlist",
+          "description": "Facilitates adding a specified stock symbol to the user's watchlist for monitoring.",
+          "parameters": {
+            "stock": {
+              "type": "string",
+              "description": "The stock symbol (ticker) that the user wishes to add to their watchlist."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "The stock symbol that has been successfully added to the watchlist."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_watchlist",
+          "description": "Retrieves the user's stock watchlist from the trading system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "watchlist": {
+                "type": "array",
+                "description": "An array containing the stock symbols currently on the user's watchlist.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "remove_stock_from_watchlist",
+          "description": "Removes a specified stock from the user's watchlist in the trading system.",
+          "parameters": {
+            "symbol": {
+              "type": "string",
+              "description": "The stock's symbol that identifies the stock to be removed from the watchlist."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Indicates the success or failure of the stock removal operation, providing relevant information."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "location_services",
+      "description": "Tools for geographic location operations including distance calculations and zipcode lookups",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "estimate_distance",
+          "description": "Estimates the distance between two specified cities based on their zip codes.",
+          "parameters": {
+            "cityA": {
+              "type": "string",
+              "description": "The zip code of the first city used for distance calculation."
+            },
+            "cityB": {
+              "type": "string",
+              "description": "The zip code of the second city used for distance calculation."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "distance": {
+                "type": "float",
+                "description": "The calculated distance between the two cities in kilometers."
+              },
+              "intermediaryCities": {
+                "type": "array",
+                "description": "[Optional] A list of cities located between the two specified cities.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "get_zipcode_based_on_city",
+          "description": "Retrieves the corresponding zipcode for a specified city.",
+          "parameters": {
+            "city": {
+              "type": "string",
+              "description": "The full name of the city for which the zipcode is requested."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "zipcode": {
+                "type": "string",
+                "description": "The zipcode associated with the specified city."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "trading_management",
+      "description": "Tools for managing trading orders and operations within the trading system",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "cancel_order",
+          "description": "Cancels a specified trading order within the trading system.",
+          "parameters": {
+            "order_id": {
+              "type": "integer",
+              "description": "Unique identifier of the order that is to be cancelled."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "order_id": {
+                "type": "integer",
+                "description": "Unique identifier of the order that was successfully cancelled."
+              },
+              "status": {
+                "type": "string",
+                "description": "Current status of the order following the cancellation request (e.g., 'Cancelled', 'Not Found')."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_order_details",
+          "description": "Retrieve detailed information about a specific order in the trading system.",
+          "parameters": {
+            "order_id": {
+              "type": "integer",
+              "description": "Unique identifier for the order whose details are being requested."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "Unique identifier associated with the order."
+              },
+              "order_type": {
+                "type": "string",
+                "description": "Specification of the order type, such as 'buy' or 'sell'."
+              },
+              "symbol": {
+                "type": "string",
+                "description": "Stock symbol corresponding to the order, representing the traded stock."
+              },
+              "price": {
+                "type": "float",
+                "description": "Price per share at which the order was executed."
+              },
+              "amount": {
+                "type": "integer",
+                "description": "Total number of shares specified in the order."
+              },
+              "status": {
+                "type": "string",
+                "description": "Current operational state of the order, which can be one of the following: [\"Open\", \"Pending\", \"Completed\", \"Cancelled\"]"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "support_ticketing",
+      "description": "Tools for managing support tickets throughout their lifecycle",
+      "tool_count": 4,
+      "tools": [
+        {
+          "name": "close_ticket",
+          "description": "Closes a specified support ticket in the company's ticketing system.",
+          "parameters": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "The unique identifier of the ticket that needs to be closed."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Indicates the result of the ticket closure operation (e.g., 'success' or 'failure')."
+              }
+            }
+          }
+        },
+        {
+          "name": "edit_ticket",
+          "description": "Modifies the details of an existing support ticket within the ticketing system.",
+          "parameters": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "The unique identifier of the ticket that is to be modified."
+            },
+            "updates": {
+              "type": "dict",
+              "description": "A dictionary containing the fields to update. Possible fields include: - title (str): [Optional] The new title for the ticket."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Indicates the outcome of the update operation, such as 'success' or 'failure'."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_ticket",
+          "description": "Retrieves detailed information about a specific support ticket using its ID.",
+          "parameters": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "The unique identifier for the ticket to be retrieved, which must be valid and exist in the system."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "The unique identifier assigned to the retrieved ticket."
+              },
+              "title": {
+                "type": "string",
+                "description": "The title or summary of the ticket."
+              },
+              "description": {
+                "type": "string",
+                "description": "A detailed description providing further information about the ticket's issue."
+              },
+              "status": {
+                "type": "string",
+                "description": "The current status of the ticket, indicating whether it is open, in progress, or closed."
+              },
+              "priority": {
+                "type": "integer",
+                "description": "The priority level of the ticket, often defined as a numeric scale (e.g., 1 for highest priority, 5 for lowest)."
+              },
+              "created_by": {
+                "type": "string",
+                "description": "The username of the individual who created the ticket, allowing for tracking and accountability."
+              }
+            }
+          }
+        },
+        {
+          "name": "resolve_ticket",
+          "description": "Resolve a support ticket by providing necessary resolution details.",
+          "parameters": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "Unique identifier for the ticket that needs to be resolved."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Detailed information regarding the resolution applied to the ticket."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Indicates the outcome of the ticket resolution operation (e.g., 'success' or 'failure')."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "user_management",
+      "description": "Tools for managing user accounts and profile information",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "delete_user",
+          "description": "Removes a specified user's account from the system, ensuring the permanent deletion of user data for privacy and security.",
+          "parameters": {
+            "user_id": {
+              "type": "integer",
+              "description": "The unique identifier of the user account to be deleted. This must correspond to an existing user in the system."
+            }
+          },
+          "returns": {
+            "type": "boolean",
+            "description": "Returns true if the user account was successfully deleted; otherwise, returns false."
+          }
+        },
+        {
+          "name": "get_user",
+          "description": "Retrieves detailed information about a user based on their unique ID.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "description": "The unique identifier for the user whose information is to be retrieved."
+            }
+          }
+        },
+        {
+          "name": "update_user",
+          "description": "Modifies the profile information for a specified user.",
+          "parameters": {
+            "user_id": {
+              "type": "integer",
+              "description": "The unique identifier of the user whose profile is to be updated."
+            },
+            "data": {
+              "type": "object",
+              "description": "An object containing the profile attributes to be updated, such as name, email, or address."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "messaging_system",
+      "description": "Tools for user messaging and communication within workspaces",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "delete_message",
+          "description": "Delete a specified message from a user's message history in a workspace.",
+          "parameters": {
+            "receiver_id": {
+              "type": "string",
+              "description": "Unique identifier of the user to whom the message was sent."
+            },
+            "message_id": {
+              "type": "integer",
+              "description": "Unique identifier of the message that is to be deleted."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "deleted_status": {
+                "type": "boolean",
+                "description": "Indicates whether the deletion was successful (True) or not (False)."
+              },
+              "message_id": {
+                "type": "integer",
+                "description": "Unique identifier of the message that was deleted."
+              },
+              "message": {
+                "type": "string",
+                "description": "A descriptive message providing the result of the deletion process."
+              }
+            }
+          }
+        },
+        {
+          "name": "message_login",
+          "description": "Authenticates a user for the messaging application using their unique user ID.",
+          "parameters": {
+            "user_id": {
+              "type": "string",
+              "description": "The unique identifier of the user attempting to log in."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "login_status": {
+                "type": "boolean",
+                "description": "Indicates whether the login was successful (True) or failed (False)."
+              },
+              "message": {
+                "type": "string",
+                "description": "Detailed message providing feedback on the login attempt, such as success or failure reasons."
+              }
+            }
+          }
+        },
+        {
+          "name": "send_message",
+          "description": "Sends a message to a specified user within a workspace for user interaction.",
+          "parameters": {
+            "receiver_id": {
+              "type": "string",
+              "description": "The unique user ID of the recipient to whom the message will be sent."
+            },
+            "message": {
+              "type": "string",
+              "description": "The content of the message that is to be transmitted to the recipient."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "sent_status": {
+                "type": "boolean",
+                "description": "Indicates whether the message was sent successfully (true) or not (false)."
+              },
+              "message_id": {
+                "type": "integer",
+                "description": "A unique identifier for the message that was successfully sent."
+              },
+              "message": {
+                "type": "string",
+                "description": "A textual description of the outcome of the message sending attempt, providing additional information."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "twitter_api",
+      "description": "Tools for interacting with Twitter platform including tweets and comments",
+      "tool_count": 4,
+      "tools": [
+        {
+          "name": "comment",
+          "description": "This tool belongs to the TwitterAPI, which provides core functionality for posting tweets, retweeting, commenting, and following users on Twitter. Tool description: Comment on a tweet for the authenticated user.",
+          "parameters": {
+            "tweet_id": {
+              "type": "integer",
+              "description": "ID of the tweet to comment on."
+            },
+            "comment_content": {
+              "type": "string",
+              "description": "Content of the comment."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "comment_status": {
+                "type": "string",
+                "description": "Status of the comment action."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_tweet",
+          "description": "Retrieve a specific tweet using its unique identifier.",
+          "parameters": {
+            "tweet_id": {
+              "type": "integer",
+              "description": "The unique identifier of the tweet to be retrieved."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "The unique identifier of the retrieved tweet."
+              },
+              "username": {
+                "type": "string",
+                "description": "The username of the user who authored the tweet."
+              },
+              "content": {
+                "type": "string",
+                "description": "The textual content of the tweet."
+              },
+              "tags": {
+                "type": "array",
+                "description": "An array of hashtags associated with the tweet.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "mentions": {
+                "type": "array",
+                "description": "An array of usernames that are mentioned in the tweet.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "get_tweet_comments",
+          "description": "Retrieves all comments associated with a specific tweet via the TwitterAPI.",
+          "parameters": {
+            "tweet_id": {
+              "type": "integer",
+              "description": "Unique identifier of the tweet for which comments are to be retrieved."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "comments": {
+                "type": "array",
+                "description": "An array of objects, each representing a comment on the specified tweet.",
+                "items": {
+                  "type": "dict",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "The Twitter username of the individual who posted the comment."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "The textual content of the comment."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "retweet",
+          "description": "This tool allows the authenticated user to retweet a specified tweet on Twitter.",
+          "parameters": {
+            "tweet_id": {
+              "type": "integer",
+              "description": "The unique identifier of the tweet that the user wants to retweet."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "retweet_status": {
+                "type": "string",
+                "description": "Indicates whether the retweet action was successful or if an error occurred."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "stock_monitoring",
+      "description": "Tools for monitoring and tracking stock market data and price movements",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "filter_stocks_by_price",
+          "description": "Filter stocks by a specified price range within the trading system.",
+          "parameters": {
+            "stocks": {
+              "type": "array",
+              "description": "An array of stock symbols that will be filtered based on the defined price range."
+            },
+            "min_price": {
+              "type": "float",
+              "description": "The minimum price threshold for filtering stocks. Stocks priced below this value will be excluded from the results."
+            },
+            "max_price": {
+              "type": "float",
+              "description": "The maximum price threshold for filtering stocks. Stocks priced above this value will be excluded from the results."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "filtered_stocks": {
+                "type": "array",
+                "description": "An array of stock symbols that fall within the specified price range (inclusive of min_price and max_price).",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "notify_price_change",
+          "description": "Notify users of significant price changes in specified stocks based on a percentage threshold.",
+          "parameters": {
+            "stocks": {
+              "type": "array",
+              "description": "An array of stock symbols (e.g., 'AAPL', 'GOOGL') to monitor for price changes."
+            },
+            "threshold": {
+              "type": "float",
+              "description": "The percentage change in stock price that will trigger a notification when exceeded."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "notification": {
+                "type": "string",
+                "description": "A message detailing the significant price change for the monitored stocks, including which stocks were affected and the extent of the change."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "market_timing",
+      "description": "Tools for managing market time operations and status tracking",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "get_current_time",
+          "description": "Fetches the current system time for trading sessions.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "current_time": {
+                "type": "string",
+                "description": "Current time in 12-hour format (HH:MM AM/PM) indicating the local time of the trading system."
+              }
+            }
+          }
+        },
+        {
+          "name": "update_market_status",
+          "description": "Updates the market status (Open/Closed) based on the provided current time.",
+          "parameters": {
+            "current_time_str": {
+              "type": "string",
+              "description": "The current time formatted as 'HH:MM AM/PM', indicating the local time to assess market status."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Indicates the current operational status of the market. Possible values are 'Open' or 'Closed'."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "authentication_management",
+      "description": "Tools for managing user authentication status across different systems including login status retrieval and logout functionality",
+      "tool_count": 7,
+      "tools": [
+        {
+          "name": "trading_get_login_status",
+          "description": "Retrieves the current login status of the user in the trading system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "boolean",
+                "description": "Indicates whether the user is currently logged in (true) or not (false)."
+              }
+            }
+          }
+        },
+        {
+          "name": "trading_logout",
+          "description": "Facilitates user logout from the trading system for account security.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "A message indicating the result of the logout process (e.g., 'Logout successful' or 'Logout failed')."
+              }
+            }
+          }
+        },
+        {
+          "name": "logout",
+          "description": "Logs out the currently authenticated user from the ticketing system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Indicates whether the logout operation was successful (true) or failed (false)."
+              }
+            }
+          }
+        },
+        {
+          "name": "ticket_get_login_status",
+          "description": "Retrieves the username of the currently authenticated user in the ticketing system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "username": {
+                "type": "string",
+                "description": "The username of the logged-in user, or an empty string if no user is authenticated."
+              },
+              "is_logged_in": {
+                "type": "boolean",
+                "description": "Indicates whether a user is currently logged in. Returns true if logged in, false otherwise."
+              }
+            }
+          }
+        },
+        {
+          "name": "message_get_login_status",
+          "description": "Retrieves the login status of the current user within the Message API framework.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "login_status": {
+                "type": "boolean",
+                "description": "Indicates whether the current user is logged in (true) or not (false)."
+              }
+            }
+          }
+        },
+        {
+          "name": "travel_get_login_status",
+          "description": "Fetch the current login status for the travel system user account.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "boolean",
+                "description": "True indicates the user is logged in; false indicates the user is logged out."
+              }
+            }
+          }
+        },
+        {
+          "name": "posting_get_login_status",
+          "description": "Retrieves the current user's login status in the Twitter API.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "login_status": {
+                "type": "boolean",
+                "description": "Indicates whether the current user is logged in (true) or not (false)."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "authentication_management",
+      "description": "Tools for user authentication and login across various systems and platforms",
+      "tool_count": 4,
+      "tools": [
+        {
+          "name": "trading_login",
+          "description": "Facilitates user authentication for trading operations, enabling account access and management.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "The unique username associated with the user's trading account, required for authentication."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password corresponding to the provided username, used to validate user identity."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Message indicating the result of the login attempt, such as 'success' or 'invalid credentials'."
+              }
+            }
+          }
+        },
+        {
+          "name": "ticket_login",
+          "description": "Authenticates a user for the company ticketing system, enabling access to ticket management functionalities.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "The unique username associated with the user's account in the ticketing system."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password corresponding to the provided username, used for authentication."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Indicates whether the login attempt was successful (true) or failed (false)."
+              }
+            }
+          }
+        },
+        {
+          "name": "authenticate_user",
+          "description": "Validates user credentials for access to secure resources.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "The unique identifier for the user, typically an email address or username."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password associated with the user account, used for authentication."
+            }
+          }
+        },
+        {
+          "name": "authenticate_twitter",
+          "description": "Authenticates a Twitter user using their username and password credentials.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "The Twitter username of the user attempting to authenticate."
+            },
+            "password": {
+              "type": "string",
+              "description": "The password associated with the user's Twitter account."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "authentication_status": {
+                "type": "boolean",
+                "description": "Indicates whether the authentication was successful (True) or failed (False)."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "twitter_operations",
+      "description": "Tools for Twitter social media operations including user interactions, content retrieval, and account management",
+      "tool_count": 6,
+      "tools": [
+        {
+          "name": "follow_user",
+          "description": "Follow a specified user for the authenticated Twitter account.",
+          "parameters": {
+            "username_to_follow": {
+              "type": "string",
+              "description": "The Twitter username of the user to be followed, excluding the '@' symbol."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "follow_status": {
+                "type": "boolean",
+                "description": "Indicates the result of the follow action: 'True' if the user was successfully followed, 'False' if the authenticated account is already following the specified user."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_user_stats",
+          "description": "Retrieves detailed statistics for a specified Twitter user.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "The Twitter username (handle) of the user for whom statistics are to be retrieved."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "tweet_count": {
+                "type": "integer",
+                "description": "The total number of tweets authored by the user."
+              },
+              "following_count": {
+                "type": "integer",
+                "description": "The total number of accounts that the specified user is currently following."
+              },
+              "retweet_count": {
+                "type": "integer",
+                "description": "The total number of tweets that the user has retweeted."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_user_tweets",
+          "description": "This tool belongs to the TwitterAPI, which provides core functionality for posting tweets, retweeting, commenting, and following users on Twitter. Tool description: Retrieve all tweets from a specific user.",
+          "parameters": {
+            "username": {
+              "type": "string",
+              "description": "Username of the user whose tweets to retrieve."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "user_tweets": {
+                "type": "array",
+                "description": "List of dictionaries, each containing tweet information.",
+                "items": {
+                  "type": "dict",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the retrieved tweet."
+                    },
+                    "username": {
+                      "type": "string",
+                      "description": "Username of the tweet's author."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Content of the tweet."
+                    },
+                    "tags": {
+                      "type": "array",
+                      "description": "List of tags associated with the tweet.",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "mentions": {
+                      "type": "array",
+                      "description": "List of users mentioned in the tweet.",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "list_all_following",
+          "description": "Retrieves a list of users followed by the authenticated Twitter user.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "following_list": {
+                "type": "array",
+                "description": "An array containing the usernames of all users that the authenticated user is currently following.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "search_tweets",
+          "description": "This tool belongs to the TwitterAPI, which provides core functionality for posting tweets, retweeting, commenting, and following users on Twitter. Tool description: Search for tweets containing a specific keyword.",
+          "parameters": {
+            "keyword": {
+              "type": "string",
+              "description": "Keyword to search for in the content of the tweets."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "matching_tweets": {
+                "type": "array",
+                "description": "List of dictionaries, each containing tweet information.",
+                "items": {
+                  "type": "dict",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the retrieved tweet."
+                    },
+                    "username": {
+                      "type": "string",
+                      "description": "Username of the tweet's author."
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Content of the tweet."
+                    },
+                    "tags": {
+                      "type": "array",
+                      "description": "List of tags associated with the tweet.",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "mentions": {
+                      "type": "array",
+                      "description": "List of users mentioned in the tweet.",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "unfollow_user",
+          "description": "Unfollows a specified user for the authenticated Twitter account.",
+          "parameters": {
+            "username_to_unfollow": {
+              "type": "string",
+              "description": "The Twitter username of the user to be unfollowed, excluding the '@' symbol."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "unfollow_status": {
+                "type": "boolean",
+                "description": "Returns true if the user was successfully unfollowed; false if the user was not being followed or if the action failed."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "messaging_operations",
+      "description": "Tools for message-related operations and user management within messaging systems",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "get_user_id",
+          "description": "Retrieve the user ID associated with a specified username in the Message API.",
+          "parameters": {
+            "user": {
+              "type": "string",
+              "description": "The username of the user for whom the ID is being requested."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "description": "The unique identifier of the specified user."
+              }
+            }
+          }
+        },
+        {
+          "name": "search_messages",
+          "description": "Search for messages within a workspace that contain a specified keyword.",
+          "parameters": {
+            "keyword": {
+              "type": "string",
+              "description": "The specific word or phrase to search for in messages. This is case-sensitive."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "results": {
+                "type": "array",
+                "description": "An array of dictionaries, each representing a message that contains the specified keyword.",
+                "items": {
+                  "type": "dict",
+                  "properties": {
+                    "receiver_id": {
+                      "type": "string",
+                      "description": "The unique identifier of the user who received the message."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The content of the message that contains the specified keyword."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "file_operations",
+      "description": "Tools for creating, reading, and manipulating files in the file system",
+      "tool_count": 4,
+      "tools": [
+        {
+          "name": "cat",
+          "description": "Displays the contents of a specified file from the current directory.",
+          "parameters": {
+            "file_name": {
+              "type": "string",
+              "description": "The name of the file (without path) located in the current directory whose contents are to be displayed."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "file_content": {
+                "type": "string",
+                "description": "The complete content of the specified file, retrieved from the current directory."
+              }
+            }
+          }
+        },
+        {
+          "name": "echo",
+          "description": "Writes content to a specified file or displays it in the terminal if no file is indicated.",
+          "parameters": {
+            "content": {
+              "type": "string",
+              "description": "The text content to be written to the specified file or displayed in the terminal."
+            },
+            "file_name": {
+              "type": "string",
+              "description": "The name of the target file in the current directory to write the content to. If not specified, content will be displayed in the terminal.",
+              "default": "None"
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "terminal_output": {
+                "type": "string",
+                "description": "The content that is displayed in the terminal if no file name is provided; returns None if the content is written successfully to a file."
+              }
+            }
+          }
+        },
+        {
+          "name": "touch",
+          "description": "Creates a new file with a specified name in the current directory of the Gorilla file system.",
+          "parameters": {
+            "file_name": {
+              "type": "string",
+              "description": "The name of the file to be created. This name must not include any directory paths and should support various file extensions."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "description": "Returns an empty dictionary indicating that the file has been successfully created."
+          }
+        },
+        {
+          "name": "create_file",
+          "description": "Creates a new file at the specified path with the specified content.",
+          "parameters": {
+            "path": {
+              "type": "string",
+              "description": "The complete file path where the file will be created, including the file name and extension."
+            },
+            "content": {
+              "type": "string",
+              "description": "The textual content to be written to the new file."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "text_processing",
+      "description": "Tools for analyzing, comparing, and processing text content within files",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "diff",
+          "description": "Compares two files line by line in the current directory, highlighting differences.",
+          "parameters": {
+            "file_name1": {
+              "type": "string",
+              "description": "The name of the first file to compare, located in the current directory."
+            },
+            "file_name2": {
+              "type": "string",
+              "description": "The name of the second file to compare, located in the current directory."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "diff_lines": {
+                "type": "string",
+                "description": "A string representation of the differences between the two files line by line."
+              }
+            }
+          }
+        },
+        {
+          "name": "grep",
+          "description": "Searches for lines in a specified file that match a provided pattern within the current directory.",
+          "parameters": {
+            "file_name": {
+              "type": "string",
+              "description": "The name of the target file, without any path. The file must reside in the current local directory."
+            },
+            "pattern": {
+              "type": "string",
+              "description": "The string pattern to search for within the specified file."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "matching_lines": {
+                "type": "array",
+                "description": "An array of lines from the file that contain the specified pattern.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "sort",
+          "description": "Sorts the contents of a specified file line by line.",
+          "parameters": {
+            "file_name": {
+              "type": "string",
+              "description": "The name of the file located in the current directory whose contents are to be sorted."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "sorted_content": {
+                "type": "string",
+                "description": "The line-by-line sorted content of the specified file."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "file_system_operations",
+      "description": "Tools for managing files and directories including creation, deletion, movement, and information retrieval",
+      "tool_count": 8,
+      "tools": [
+        {
+          "name": "mkdir",
+          "description": "Create a new directory within the current working directory in the Gorilla file system.",
+          "parameters": {
+            "dir_name": {
+              "type": "string",
+              "description": "Specifies the name of the new directory to be created in the current directory."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Indicates whether the directory creation was successful."
+              },
+              "message": {
+                "type": "string",
+                "description": "Provides additional information regarding the result of the operation, including error messages if applicable."
+              }
+            }
+          }
+        },
+        {
+          "name": "rmdir",
+          "description": "Remove a specified directory from the current working directory within the Gorilla file system.",
+          "parameters": {
+            "dir_name": {
+              "type": "string",
+              "description": "The name of the directory to be removed. The directory must be located in the current working directory."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "string",
+                "description": "A message indicating the success or failure of the directory removal operation."
+              }
+            }
+          }
+        },
+        {
+          "name": "delete_file",
+          "description": "Removes a specified file from the filesystem permanently.",
+          "parameters": {
+            "file_path": {
+              "type": "string",
+              "description": "Absolute or relative path to the file that needs to be deleted."
+            }
+          },
+          "returns": {
+            "success": "Indicates whether the file deletion was successful (true) or failed (false)."
+          }
+        },
+        {
+          "name": "list_files",
+          "description": "Retrieve a list of files in the specified directory.",
+          "parameters": {
+            "dir": {
+              "type": "string",
+              "description": "The file system path of the directory to be scanned for files."
+            }
+          }
+        },
+        {
+          "name": "file_info",
+          "description": "Retrieves and provides comprehensive information about specified files, including their characteristics and metadata.",
+          "parameters": {
+            "file_path": {
+              "type": "string",
+              "description": "The path to the file for which information is to be retrieved. This must be a valid file path in the system."
+            }
+          },
+          "returns": {
+            "type": "object",
+            "description": "An object containing detailed information about the specified file, including attributes such as file size, creation date, modification date, and file type."
+          }
+        },
+        {
+          "name": "move_file",
+          "description": "Moves a file from a specified source location to a destination target path.",
+          "parameters": {
+            "source": {
+              "type": "string",
+              "description": "The full file path of the file to be moved, including its filename and extension."
+            },
+            "target": {
+              "type": "string",
+              "description": "The destination path where the file should be relocated, including the new filename and extension if applicable."
+            }
+          }
+        },
+        {
+          "name": "copy_file",
+          "description": "Copies a file from a specified source path to a designated destination path.",
+          "parameters": {
+            "src": {
+              "type": "string",
+              "description": "The file path of the source file that you wish to copy."
+            },
+            "dst": {
+              "type": "string",
+              "description": "The target file path where the copied file will be placed."
+            }
+          },
+          "returns": {
+            "success": {
+              "type": "bool",
+              "description": "Returns true if the file copy operation was successful; otherwise, returns false."
+            }
+          }
+        },
+        {
+          "name": "find",
+          "description": "Search for files and directories containing a specified name in a given path.",
+          "parameters": {
+            "path": {
+              "type": "string",
+              "description": "The starting directory path for the search. Defaults to the current directory (\".\").",
+              "default": "."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name pattern of the file or directory to locate. If not specified, all files and directories in the path are returned.",
+              "default": "None"
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "matches": {
+                "type": "array",
+                "description": "An array containing the paths of files and directories relative to the specified path that match the search criteria.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "file_transfer",
+      "description": "Tools for transferring files from external sources",
+      "tool_count": 1,
+      "tools": [
+        {
+          "name": "download_file",
+          "description": "Downloads a file from a specified URL to a designated local path.",
+          "parameters": {
+            "url": {
+              "type": "string",
+              "description": "The URL of the file to be downloaded. This should be a valid and accessible URL."
+            },
+            "save_path": {
+              "type": "string",
+              "description": "The local file system path where the downloaded file will be saved. Ensure that the directory exists and is writable."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "vehicle_control",
+      "description": "Tools for controlling core vehicle operational systems and safety features",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "activateparkingbrake",
+          "description": "Activates or releases the parking brake of the vehicle.",
+          "parameters": {
+            "mode": {
+              "type": "string",
+              "description": "Specifies the action to perform on the parking brake. Use 'engage' to activate the brake or 'release' to deactivate it."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "parkingBrakeStatus": {
+                "type": "string",
+                "description": "Indicates the current status of the parking brake. Possible values are 'engaged' when the brake is active and 'released' when it is inactive."
+              },
+              "_parkingBrakeForce": {
+                "type": "float",
+                "description": "The magnitude of the force applied to the parking brake, measured in Newtons."
+              },
+              "_slopeAngle": {
+                "type": "float",
+                "description": "The angle of the slope on which the vehicle is positioned, measured in degrees."
+              }
+            }
+          }
+        },
+        {
+          "name": "setheadlights",
+          "description": "Controls the headlight system of the vehicle, enabling various operational modes.",
+          "parameters": {
+            "mode": {
+              "type": "string",
+              "description": "Specifies the operational mode of the headlights. Possible values are: [\"on\" - headlights are turned on, \"off\" - headlights are turned off, \"auto\" - headlights are automatically controlled based on ambient light conditions.]"
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "headlightStatus": {
+                "type": "string",
+                "description": "Indicates the current status of the headlights after the command is executed. Possible values are: [\"on\" - headlights are currently activated, \"off\" - headlights are currently deactivated.]"
+              }
+            }
+          }
+        },
+        {
+          "name": "startengine",
+          "description": "Initiates the vehicle's engine, enabling operational functions.",
+          "parameters": {
+            "ignitionMode": {
+              "type": "string",
+              "description": "Specifies the desired ignition state of the vehicle. [Enum]: [\"START\" to activate the engine, \"STOP\" to deactivate it]"
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "engineState": {
+                "type": "string",
+                "description": "Indicates the current status of the engine. [Enum]: [\"running\" if the engine is active, \"stopped\" if the engine is inactive]"
+              },
+              "fuelLevel": {
+                "type": "float",
+                "description": "Represents the current fuel level of the vehicle, measured in gallons."
+              },
+              "batteryVoltage": {
+                "type": "float",
+                "description": "Displays the voltage of the vehicle's battery, measured in volts."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "vehicle_monitoring",
+      "description": "Tools for monitoring and displaying vehicle status information",
+      "tool_count": 1,
+      "tools": [
+        {
+          "name": "displaycarstatus",
+          "description": "Displays the vehicle's status based on the specified display option.",
+          "parameters": {
+            "option": {
+              "type": "string",
+              "description": "Specifies the display option for vehicle status. Valid options include: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "status": {
+                "type": "dict",
+                "description": "Detailed status of the vehicle according to the selected option.",
+                "properties": {
+                  "fuelLevel": {
+                    "type": "float",
+                    "description": "[Optional] The current fuel level of the vehicle measured in gallons."
+                  },
+                  "batteryVoltage": {
+                    "type": "float",
+                    "description": "[Optional] The voltage level of the vehicle's battery in volts."
+                  },
+                  "doorStatus": {
+                    "type": "dict",
+                    "description": "[Optional] The locked or unlocked status of each vehicle door.",
+                    "properties": {
+                      "driver": {
+                        "type": "string",
+                        "description": "The status of the driver's door. Possible values: [\"locked\", \"unlocked\"]"
+                      },
+                      "passenger": {
+                        "type": "string",
+                        "description": "The status of the passenger's door. Possible values: [\"locked\", \"unlocked\"]"
+                      },
+                      "rear_left": {
+                        "type": "string",
+                        "description": "The status of the rear left door. Possible values: [\"locked\", \"unlocked\"]"
+                      },
+                      "rear_right": {
+                        "type": "string",
+                        "description": "The status of the rear right door. Possible values: [\"locked\", \"unlocked\"]"
+                      }
+                    }
+                  },
+                  "currentACTemperature": {
+                    "type": "float",
+                    "description": "[Optional] The current temperature setting for air conditioning in degrees Celsius."
+                  },
+                  "fanSpeed": {
+                    "type": "integer",
+                    "description": "[Optional] The current fan speed setting, ranging from 0 to 100."
+                  },
+                  "climateMode": {
+                    "type": "string",
+                    "description": "[Optional] The currently set climate control mode. Possible values: [\"auto\", \"cool\", \"heat\", \"defrost\"]"
+                  },
+                  "humidityLevel": {
+                    "type": "float",
+                    "description": "[Optional] The current humidity level inside the vehicle expressed as a percentage."
+                  },
+                  "headlightStatus": {
+                    "type": "string",
+                    "description": "[Optional] The operational status of the headlights. Possible values: [\"on\", \"off\"]"
+                  },
+                  "parkingBrakeStatus": {
+                    "type": "string",
+                    "description": "[Optional] The status of the parking brake. Possible values: [\"engaged\", \"released\"]"
+                  },
+                  "parkingBrakeForce": {
+                    "type": "float",
+                    "description": "[Optional] The force being applied to the parking brake measured in Newtons."
+                  },
+                  "slopeAngle": {
+                    "type": "float",
+                    "description": "[Optional] The angle of the slope on which the vehicle is positioned, measured in degrees."
+                  },
+                  "brakePedalStatus": {
+                    "type": "string",
+                    "description": "[Optional] The status of the brake pedal. Possible values: [\"pressed\", \"released\"]"
+                  },
+                  "brakePedalForce": {
+                    "type": "float",
+                    "description": "[Optional] The force being applied to the brake pedal measured in Newtons."
+                  },
+                  "engineState": {
+                    "type": "string",
+                    "description": "[Optional] The current operational state of the engine. Possible values: [\"running\", \"stopped\"]"
+                  },
+                  "metadata": {
+                    "type": "string",
+                    "description": "[Optional] Additional metadata related to the vehicle's status."
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "volume_conversion",
+      "description": "Tools for converting volume measurements between different units",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "gallon_to_liter",
+          "description": "Converts a specified volume from gallons to liters.",
+          "parameters": {
+            "gallon": {
+              "type": "float",
+              "description": "The volume in gallons that needs to be converted to liters."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "liter": {
+                "type": "float",
+                "description": "The equivalent volume in liters after conversion from gallons."
+              }
+            }
+          }
+        },
+        {
+          "name": "liter_to_gallon",
+          "description": "Converts a volume measurement from liters to gallons.",
+          "parameters": {
+            "liter": {
+              "type": "float",
+              "description": "The volume in liters that you wish to convert to gallons."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "gallon": {
+                "type": "float",
+                "description": "The equivalent volume in gallons after conversion."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "weather_data",
+      "description": "Tools for retrieving current weather information from various data sources",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "get_outside_temperature_from_google",
+          "description": "Retrieves the current outside temperature from Google.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "outsideTemperature": {
+                "type": "float",
+                "description": "The current outside temperature in degrees Celsius."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_outside_temperature_from_weather_com",
+          "description": "Retrieves the current outside temperature from weather data sources.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "outsideTemperature": {
+                "type": "float",
+                "description": "The current outside temperature measured in degrees Celsius."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "data_backup_and_recovery",
+      "description": "Tools for backing up data to cloud storage and restoring data from backups",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "backup_data",
+          "description": "备份指定目录或文件到云存储",
+          "parameters": {
+            "source_path": {
+              "type": "string",
+              "description": "需要备份的源路径"
+            },
+            "backup_name": {
+              "type": "string",
+              "description": "备份任务名称"
+            },
+            "destination": {
+              "type": "string",
+              "description": "备份目标位置",
+              "default": "cloud_storage"
+            },
+            "compression": {
+              "type": "boolean",
+              "description": "是否压缩备份文件",
+              "default": true
+            },
+            "encryption": {
+              "type": "boolean",
+              "description": "是否加密备份文件",
+              "default": true
+            }
+          },
+          "returns": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "备份是否成功"
+              },
+              "backup_id": {
+                "type": "string",
+                "description": "备份任务唯一标识符"
+              },
+              "backup_size": {
+                "type": "integer",
+                "description": "备份文件大小（字节）"
+              },
+              "backup_url": {
+                "type": "string",
+                "description": "备份文件下载链接"
+              },
+              "message": {
+                "type": "string",
+                "description": "备份状态描述"
+              }
+            }
+          }
+        },
+        {
+          "name": "restore_data",
+          "description": "从备份恢复数据到指定位置",
+          "parameters": {
+            "backup_id": {
+              "type": "string",
+              "description": "备份任务标识符"
+            },
+            "restore_path": {
+              "type": "string",
+              "description": "数据恢复目标路径"
+            },
+            "overwrite": {
+              "type": "boolean",
+              "description": "是否覆盖现有文件",
+              "default": false
+            }
+          },
+          "returns": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "恢复是否成功"
+              },
+              "restored_files": {
+                "type": "array",
+                "description": "恢复的文件列表"
+              },
+              "message": {
+                "type": "string",
+                "description": "恢复状态描述"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "mathematical_operations",
+      "description": "Tools for performing various mathematical calculations and operations",
+      "tool_count": 4,
+      "tools": [
+        {
+          "name": "absolute_value",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the absolute value of a number.",
+          "parameters": {
+            "number": {
+              "type": "float",
+              "description": "The number to calculate the absolute value of."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The absolute value of the number."
+              }
+            }
+          }
+        },
+        {
+          "name": "logarithm",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Compute the logarithm of a number with adjustable precision using mpmath.",
+          "parameters": {
+            "value": {
+              "type": "float",
+              "description": "The number to compute the logarithm of."
+            },
+            "base": {
+              "type": "float",
+              "description": "The base of the logarithm."
+            },
+            "precision": {
+              "type": "integer",
+              "description": "Desired precision for the result."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The logarithm of the number with respect to the given base."
+              }
+            }
+          }
+        },
+        {
+          "name": "square_root",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the square root of a number with adjustable precision using the decimal module.",
+          "parameters": {
+            "number": {
+              "type": "float",
+              "description": "The number to calculate the square root of."
+            },
+            "precision": {
+              "type": "integer",
+              "description": "Desired precision for the result."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The square root of the number, or an error message."
+              }
+            }
+          }
+        },
+        {
+          "name": "subtract",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Subtract one number from another.",
+          "parameters": {
+            "a": {
+              "type": "float",
+              "description": "Number to subtract from."
+            },
+            "b": {
+              "type": "float",
+              "description": "Number to subtract."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "Difference between the two numbers."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "mathematical_operations",
+      "description": "Tools for performing basic arithmetic and mathematical calculations",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "add",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Add two numbers.",
+          "parameters": {
+            "a": {
+              "type": "float",
+              "description": "First number."
+            },
+            "b": {
+              "type": "float",
+              "description": "Second number."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "Sum of the two numbers."
+              }
+            }
+          }
+        },
+        {
+          "name": "multiply",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Multiply two numbers.",
+          "parameters": {
+            "a": {
+              "type": "float",
+              "description": "First number."
+            },
+            "b": {
+              "type": "float",
+              "description": "Second number."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "Product of the two numbers."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "unit_conversion",
+      "description": "Tools for converting measurements between different unit systems and scales",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "imperial_si_conversion",
+          "description": "Convert a numerical value between imperial units and SI (metric) units.",
+          "parameters": {
+            "value": {
+              "type": "float",
+              "description": "The numeric value that needs to be converted between units."
+            },
+            "unit_in": {
+              "type": "string",
+              "description": "The unit of measurement for the input value. This should be a recognized imperial or SI unit."
+            },
+            "unit_out": {
+              "type": "string",
+              "description": "The desired unit of measurement for the output value. This should also be a recognized imperial or SI unit."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The value after conversion, expressed in the specified output unit."
+              }
+            }
+          }
+        },
+        {
+          "name": "si_unit_conversion",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Convert a value from one SI unit to another.",
+          "parameters": {
+            "value": {
+              "type": "float",
+              "description": "Value to be converted."
+            },
+            "unit_in": {
+              "type": "string",
+              "description": "Unit of the input value."
+            },
+            "unit_out": {
+              "type": "string",
+              "description": "Unit to convert the value to."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "Converted value in the new unit."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "statistical_analysis",
+      "description": "Tools for performing statistical calculations and data analysis on numerical datasets",
+      "tool_count": 5,
+      "tools": [
+        {
+          "name": "max_value",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Find the maximum value in a list of numbers.",
+          "parameters": {
+            "numbers": {
+              "type": "array",
+              "description": "List of numbers to find the maximum from."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The maximum value in the list."
+              }
+            }
+          }
+        },
+        {
+          "name": "mean",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the mean of a list of numbers.",
+          "parameters": {
+            "numbers": {
+              "type": "array",
+              "description": "List of numbers to calculate the mean of."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "Mean of the numbers."
+              }
+            }
+          }
+        },
+        {
+          "name": "min_value",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Find the minimum value in a list of numbers.",
+          "parameters": {
+            "numbers": {
+              "type": "array",
+              "description": "List of numbers to find the minimum from."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The minimum value in the list."
+              }
+            }
+          }
+        },
+        {
+          "name": "standard_deviation",
+          "description": "Calculate the standard deviation of a numerical dataset.",
+          "parameters": {
+            "numbers": {
+              "type": "array",
+              "description": "An array containing the numerical values for which the standard deviation will be computed."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The calculated standard deviation of the provided numbers, indicating the dispersion of the dataset."
+              }
+            }
+          }
+        },
+        {
+          "name": "sum_values",
+          "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Calculate the sum of a list of numbers.",
+          "parameters": {
+            "numbers": {
+              "type": "array",
+              "description": "List of numbers to sum."
+            }
+          },
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "result": {
+                "type": "float",
+                "description": "The sum of all numbers in the list."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "database_management",
+      "description": "Tools for managing database tables and records, including table creation, deletion, and data insertion operations",
+      "tool_count": 3,
+      "tools": [
+        {
+          "name": "create_table",
+          "description": "Creates a new database table based on the specified schema.",
+          "parameters": {
+            "table_name": {
+              "type": "string",
+              "description": "The name of the table to be created in the database."
+            },
+            "schema": {
+              "type": "object",
+              "description": "An object defining the structure of the table, including columns and their data types."
+            }
+          }
+        },
+        {
+          "name": "drop_table",
+          "description": "Permanently removes a specified table from the database, including all its data.",
+          "parameters": {
+            "table": {
+              "type": "string",
+              "description": "The name of the table to be dropped from the database. This name must match the existing table exactly."
+            }
+          }
+        },
+        {
+          "name": "insert_record",
+          "description": "Inserts a new record into the specified database table.",
+          "parameters": {
+            "table": {
+              "type": "string",
+              "description": "The name of the table where the record will be inserted."
+            },
+            "data": {
+              "type": "object",
+              "description": "An object representing the data for the record, with key-value pairs corresponding to the table's columns and their respective values."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "web_content_retrieval",
+      "description": "Tools for fetching and extracting content from web pages",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "browse_web",
+          "description": "Fetch and display the content of a specified web page.",
+          "parameters": {
+            "url": {
+              "type": "string",
+              "description": "The complete URL of the web page to be accessed and retrieved."
+            }
+          }
+        },
+        {
+          "name": "get_page_content",
+          "description": "Retrieve and extract textual and multimedia content from a specified web page.",
+          "parameters": {
+            "url": {
+              "type": "string",
+              "description": "The URL of the web page from which content will be extracted. It should start with 'http://' or 'https://'."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "message_analytics",
+      "description": "Tools for analyzing and retrieving message-related data and statistics",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "get_message_stats",
+          "description": "Retrieve message statistics for the current user within a workspace.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "stats": {
+                "type": "dict",
+                "description": "A dictionary containing detailed statistics about messages for the user.",
+                "properties": {
+                  "received_count": {
+                    "type": "integer",
+                    "description": "The total number of messages received by the current user."
+                  },
+                  "total_contacts": {
+                    "type": "integer",
+                    "description": "The total number of unique contacts that the user has interacted with."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "view_messages_sent",
+          "description": "Retrieve all historical messages sent by the current user within the Message API framework.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "messages": {
+                "type": "dict",
+                "description": "A dictionary containing messages organized by recipient. For example, the structure may look like: {\"USR001\":[\"Hello\"], \"USR002\":[\"World\"]}, where keys are user identifiers and values are lists of messages sent to those users."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "domain": "travel_data_retrieval",
+      "description": "Tools for retrieving comprehensive travel-related data and resources",
+      "tool_count": 2,
+      "tools": [
+        {
+          "name": "get_all_credit_cards",
+          "description": "Retrieve all registered credit cards within the travel system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "credit_card_list": {
+                "type": "dict",
+                "description": "A dictionary containing details of all registered credit cards.",
+                "properties": {
+                  "card_number": {
+                    "type": "string",
+                    "description": "The unique number associated with the credit card."
+                  },
+                  "expiration_date": {
+                    "type": "string",
+                    "description": "The expiration date of the credit card in the format YYYY-MM-DD."
+                  },
+                  "cardholder_name": {
+                    "type": "string",
+                    "description": "The full name of the individual to whom the credit card is issued."
+                  },
+                  "card_verification_value": {
+                    "type": "integer",
+                    "description": "The three or four-digit verification number on the credit card."
+                  },
+                  "balance": {
+                    "type": "float",
+                    "description": "The current available balance on the credit card."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "list_all_airports",
+          "description": "Retrieves a comprehensive list of all available airports within the travel system.",
+          "parameters": {},
+          "returns": {
+            "type": "dict",
+            "properties": {
+              "airports": {
+                "type": "array",
+                "description": "An array containing the names of all airports available for booking.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

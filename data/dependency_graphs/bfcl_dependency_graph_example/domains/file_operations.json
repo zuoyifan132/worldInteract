@@ -1,0 +1,78 @@
+{
+  "domain": "file_operations",
+  "description": "Tools for creating, reading, and manipulating files in the file system",
+  "tool_count": 4,
+  "tools": [
+    {
+      "name": "cat",
+      "description": "Displays the contents of a specified file from the current directory.",
+      "parameters": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file (without path) located in the current directory whose contents are to be displayed."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "file_content": {
+            "type": "string",
+            "description": "The complete content of the specified file, retrieved from the current directory."
+          }
+        }
+      }
+    },
+    {
+      "name": "echo",
+      "description": "Writes content to a specified file or displays it in the terminal if no file is indicated.",
+      "parameters": {
+        "content": {
+          "type": "string",
+          "description": "The text content to be written to the specified file or displayed in the terminal."
+        },
+        "file_name": {
+          "type": "string",
+          "description": "The name of the target file in the current directory to write the content to. If not specified, content will be displayed in the terminal.",
+          "default": "None"
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "terminal_output": {
+            "type": "string",
+            "description": "The content that is displayed in the terminal if no file name is provided; returns None if the content is written successfully to a file."
+          }
+        }
+      }
+    },
+    {
+      "name": "touch",
+      "description": "Creates a new file with a specified name in the current directory of the Gorilla file system.",
+      "parameters": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file to be created. This name must not include any directory paths and should support various file extensions."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "description": "Returns an empty dictionary indicating that the file has been successfully created."
+      }
+    },
+    {
+      "name": "create_file",
+      "description": "Creates a new file at the specified path with the specified content.",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "The complete file path where the file will be created, including the file name and extension."
+        },
+        "content": {
+          "type": "string",
+          "description": "The textual content to be written to the new file."
+        }
+      }
+    }
+  ]
+}

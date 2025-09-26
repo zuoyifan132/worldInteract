@@ -42,9 +42,11 @@ class DependencyGraphBuilder:
         self.max_community_size = self.env_config.get("max_community_size", 20)
         self.louvain_resolution = self.env_config.get("louvain_resolution", 1.0)
         self.enable_llm_validation = self.env_config.get("enable_llm_validation", True)
+        self.handle_singleton = self.env_config.get("handle_singleton", False)
         self.singleton_tool_similarity_threshold = self.env_config.get("singleton_tool_similarity_threshold", 0.6)
         
         logger.info(f"Initialized Dependency Graph Builder with threshold: {self.similarity_threshold}")
+        logger.info(f"Singleton handling: {'enabled' if self.handle_singleton else 'disabled'}")
     
     def build_dependency_graph(
         self, 
@@ -83,16 +85,19 @@ class DependencyGraphBuilder:
         communities, singleton_tools = self._detect_communities(graph)
         
         # Step 4: Validate communities and create domains with LLM (if enabled)
+        # TODO: return outlier tools append to singleton tools
         if self.enable_llm_validation:
             logger.info("Validating communities and creating domains with LLM...")
             domains = self._validate_communities_with_llm(apis, communities)
         else:
             raise ValueError("LLM validation is not enabled for graph building, please enable it in the config")
         
-        # Step 6: Handle singleton tools
-        if singleton_tools:
+        # Step 6: Handle singleton tools (if enabled)
+        if singleton_tools and self.handle_singleton:
             logger.info(f"Handling {len(singleton_tools)} singleton tools...")
             domains = self._handle_singleton_tools(singleton_tools, domains, apis)
+        elif singleton_tools:
+            logger.info(f"Skipping handling of {len(singleton_tools)} singleton tools (disabled in config)")
         
         # Step 7: Save outputs
         output_data = self._save_outputs(
@@ -185,11 +190,10 @@ class DependencyGraphBuilder:
             if len(tools) >= self.min_community_size:
                 if len(tools) <= self.max_community_size:
                     filtered_communities[len(filtered_communities)] = tools
-                # else:
-                #     # Split large communities
-                #     split_communities = self._split_large_community(tools, graph)
-                #     for split_comm in split_communities:
-                #         filtered_communities[len(filtered_communities)] = split_comm
+                else:
+                    logger.warning(f"Community {comm_id} is too large, the size is {len(tools)}, add it for now")
+                    # TODO: Handle to large communities 
+                    filtered_communities[len(filtered_communities)] = tools
             else:
                 singleton_tools.extend(tools)
         
@@ -402,10 +406,11 @@ class DependencyGraphBuilder:
                         tool_descriptions.append(f"- {tool}: {api_dict[tool]['description']}")
                 
                 # Ask LLM to analyze and reorganize tools into proper domains
-                llm_domain = self._llm_analyze_and_create_domains(tool_descriptions, api_dict)
+                llm_domains = self._llm_analyze_and_create_domains(tool_descriptions, api_dict)
                 
-                if llm_domain:
-                    domains.append(llm_domain)
+                if llm_domains:
+                    domains.extend(llm_domains)
+                    logger.info(f"LLM analysis created {len(llm_domains)} domains for community {comm_id}")
                 else:
                     logger.warning(f"LLM analysis failed for community {comm_id}, skip this community for tool names {tools}")
                     continue
@@ -425,37 +430,47 @@ class DependencyGraphBuilder:
         """Use LLM to analyze tools and create proper domain groupings."""
         
         system_prompt = textwrap.dedent("""
-            You are an API analysis expert. Please analyze the given tools and create ONE coherent functional domain.
+            You are an API analysis expert. Please analyze the given tools and create coherent functional domains.
             
             Your task:
-            1. Identify the most appropriate single domain that best represents the core functionality
-            2. Include only tools that clearly belong to this main functional domain
-            3. Remove tools that don't fit well with the main domain (outliers)
-            4. Generate a meaningful domain name and description for the identified domain
-            5. Focus on finding the strongest functional relationship among the tools
+            1. Identify one or more functional domains that best represent the core functionalities
+            2. Group tools by their functional relationships - tools that work together or belong to the same business area
+            3. Include only tools that clearly belong to each functional domain
+            4. Remove tools that don't fit well with any identified domain (outliers)
+            5. Generate meaningful domain names and descriptions for each identified domain
+            6. Remove functionally duplicate tools within the same domain
             
             Please respond with a JSON structure like this:
             ```json
             {
-                "domain": {
-                    "domain_name": "file_operations",
-                    "description": "Tools for file system operations and management",
-                    "tools": ["create_file", "read_file", "delete_file"]
-                },
-                "outliers": ["unrelated_tool1", "unrelated_tool2"]
+                "domains": [
+                    {
+                        "domain_name": "file_operations",
+                        "description": "Tools for file system operations and management",
+                        "tools": ["create_file", "read_file", "delete_file"]
+                    },
+                    {
+                        "domain_name": "user_management", 
+                        "description": "Tools for managing user accounts and authentication",
+                        "tools": ["create_user", "authenticate_user", "delete_user"]
+                    }
+                ]
             }
             ```
             
-            Only include tools that have clear functional relationships with the main domain. It's better to exclude outliers than force them into an inappropriate domain.
+            Guidelines:
+            - Each domain should have at least 2 tools (unless there's only 1 tool total)
+            - Tools within a domain should have clear functional relationships
+            - It's better to exclude outliers than force them into inappropriate domains
         """).strip()
 
         tools_text = "\n".join(tool_descriptions)
         user_prompt = textwrap.dedent(f"""
-            Please analyze the following tools and identify the most appropriate single functional domain:
+            Please analyze the following tools and identify the most appropriate functional domains:
             
             {tools_text}
             
-            Find the core functional domain that best represents these tools, include only tools that clearly belong to this domain, and identify any outliers that don't fit well.
+            Group these tools into coherent functional domains based on their relationships and functionalities. Include only tools that clearly belong to each domain, and exclude any outliers that don't fit well.
         """).strip()
 
         try:
@@ -470,28 +485,35 @@ class DependencyGraphBuilder:
             extracted_json = extract_json_from_text(answer_text.strip())
             response_data = json.loads(extracted_json)
             
-            if "domain" in response_data:
-                domain_info = response_data["domain"]
-                domain_name = domain_info.get("domain_name", "unknown_domain")
-                description = domain_info.get("description", "Generated domain")
-                tool_names = domain_info.get("tools", [])
-                
-                # Collect tool objects
-                domain_tools = []
-                for tool_name in tool_names:
-                    if tool_name in api_dict:
-                        domain_tools.append(api_dict[tool_name])
-                
-                if domain_tools:  # Only create domain if it has valid tools
-                    domain = {
-                        "domain": domain_name,
-                        "description": description,
-                        "tool_count": len(domain_tools),
-                        "tools": domain_tools
-                    }
-                    return domain
+            domains = []
             
-            return None
+            if "domains" in response_data:
+                domains_info = response_data["domains"]
+                
+                for domain_info in domains_info:
+                    domain_name = domain_info.get("domain_name", "unknown_domain")
+                    description = domain_info.get("description", "Generated domain")
+                    tool_names = domain_info.get("tools", [])
+                    
+                    # Collect tool objects
+                    domain_tools = []
+                    for tool_name in tool_names:
+                        if tool_name in api_dict:
+                            domain_tools.append(api_dict[tool_name])
+                        else:
+                            logger.warning(f"Tool {tool_name} not found in api_dict")
+                    
+                    if domain_tools:  # Only create domain if it has valid tools
+                        domain = {
+                            "domain": domain_name,
+                            "description": description,
+                            "tool_count": len(domain_tools),
+                            "tools": domain_tools
+                        }
+                        domains.append(domain)
+                        logger.info(f"Created domain '{domain_name}' with {len(domain_tools)} tools")
+            
+            return domains
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM JSON response: {e}")

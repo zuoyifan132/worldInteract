@@ -110,9 +110,12 @@ class OpenAIEmbeddings:
         Returns:
             Dictionary mapping parameter names to their embeddings
         """
+        tool_name = tool.get("name", "")
         parameters = tool.get("parameters", {})
+
+        # if no parameters, using tool description embedding instead
         if not parameters:
-            return {}
+            return {"__description__": self.embed_texts([tool["description"]])[0]}
         
         param_descriptions = []
         param_names = []
@@ -121,9 +124,6 @@ class OpenAIEmbeddings:
             if isinstance(param_info, dict) and "description" in param_info:
                 param_descriptions.append(param_info["description"])
                 param_names.append(param_name)
-        
-        if not param_descriptions:
-            return {}
         
         embeddings = self.embed_texts(param_descriptions)
         
@@ -169,28 +169,66 @@ class OpenAIEmbeddings:
         tool2_embeddings: Dict[str, List[float]]
     ) -> float:
         """
-        Calculate average similarity between parameters of two tools.
+        Calculate similarity between two tools based on their parameters or descriptions.
         
         Args:
-            tool1_embeddings: Parameter embeddings for tool 1
-            tool2_embeddings: Parameter embeddings for tool 2
+            tool1_embeddings: Parameter embeddings for tool 1 (or tool description embedding)
+            tool2_embeddings: Parameter embeddings for tool 2 (or tool description embedding)
             
         Returns:
-            Average cosine similarity between any pair of parameters
+            Similarity score between tools
         """
         if not tool1_embeddings or not tool2_embeddings:
             return 0.0
         
-        total_similarity = 0.0
-        counter = 0
+        # Check if tools use description embeddings (no parameters)
+        # Description-based tools have "__description__" as the key
+        tool1_is_description_based = "__description__" in tool1_embeddings
+        tool2_is_description_based = "__description__" in tool2_embeddings
         
-        for param1_name, embedding1 in tool1_embeddings.items():
-            for param2_name, embedding2 in tool2_embeddings.items():
-                similarity = self.cosine_similarity(embedding1, embedding2)
-                total_similarity += similarity
-                counter += 1
+        # Case 1: Both tools use description embeddings (no parameters)
+        if tool1_is_description_based and tool2_is_description_based:
+            embedding1 = tool1_embeddings["__description__"]
+            embedding2 = tool2_embeddings["__description__"]
+            similarity = self.cosine_similarity(embedding1, embedding2)
+            logger.debug("Both tools use description embeddings")
+            return similarity
+        
+        # Case 2: One tool has parameters, the other uses description
+        elif tool1_is_description_based or tool2_is_description_based:
+            # Get the description embedding and parameter embeddings
+            if tool1_is_description_based:
+                desc_embedding = tool1_embeddings["__description__"]
+                param_embeddings = tool2_embeddings
+            else:
+                desc_embedding = tool2_embeddings["__description__"]
+                param_embeddings = tool1_embeddings
+            
+            # Calculate similarity between description and each parameter
+            similarities = []
+            for param_embedding in param_embeddings.values():
+                similarity = self.cosine_similarity(desc_embedding, param_embedding)
+                similarities.append(similarity)
+            
+            # Return the average similarity
+            avg_similarity = sum(similarities) / len(similarities) if similarities else 0.0
+            logger.debug(f"Mixed embedding types: avg similarity = {avg_similarity:.3f}")
+            return avg_similarity
+        
+        # Case 3: Both tools have parameters - use original logic
+        else:
+            total_similarity = 0.0
+            counter = 0
+            
+            for param1_name, embedding1 in tool1_embeddings.items():
+                for param2_name, embedding2 in tool2_embeddings.items():
+                    similarity = self.cosine_similarity(embedding1, embedding2)
+                    total_similarity += similarity
+                    counter += 1
 
-        if counter == 0:
-            return 0.0
+            if counter == 0:
+                return 0.0
 
-        return total_similarity / counter
+            avg_similarity = total_similarity / counter
+            logger.debug(f"Both tools have parameters: avg similarity = {avg_similarity:.3f}")
+            return avg_similarity

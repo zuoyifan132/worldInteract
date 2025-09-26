@@ -1,0 +1,69 @@
+{
+  "domain": "trading_management",
+  "description": "Tools for managing trading orders and operations within the trading system",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "cancel_order",
+      "description": "Cancels a specified trading order within the trading system.",
+      "parameters": {
+        "order_id": {
+          "type": "integer",
+          "description": "Unique identifier of the order that is to be cancelled."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "Unique identifier of the order that was successfully cancelled."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the order following the cancellation request (e.g., 'Cancelled', 'Not Found')."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_order_details",
+      "description": "Retrieve detailed information about a specific order in the trading system.",
+      "parameters": {
+        "order_id": {
+          "type": "integer",
+          "description": "Unique identifier for the order whose details are being requested."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier associated with the order."
+          },
+          "order_type": {
+            "type": "string",
+            "description": "Specification of the order type, such as 'buy' or 'sell'."
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol corresponding to the order, representing the traded stock."
+          },
+          "price": {
+            "type": "float",
+            "description": "Price per share at which the order was executed."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Total number of shares specified in the order."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current operational state of the order, which can be one of the following: [\"Open\", \"Pending\", \"Completed\", \"Cancelled\"]"
+          }
+        }
+      }
+    }
+  ]
+}

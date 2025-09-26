@@ -1,0 +1,45 @@
+{
+  "domain": "message_analytics",
+  "description": "Tools for analyzing and retrieving message-related data and statistics",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "get_message_stats",
+      "description": "Retrieve message statistics for the current user within a workspace.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "stats": {
+            "type": "dict",
+            "description": "A dictionary containing detailed statistics about messages for the user.",
+            "properties": {
+              "received_count": {
+                "type": "integer",
+                "description": "The total number of messages received by the current user."
+              },
+              "total_contacts": {
+                "type": "integer",
+                "description": "The total number of unique contacts that the user has interacted with."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "view_messages_sent",
+      "description": "Retrieve all historical messages sent by the current user within the Message API framework.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "messages": {
+            "type": "dict",
+            "description": "A dictionary containing messages organized by recipient. For example, the structure may look like: {\"USR001\":[\"Hello\"], \"USR002\":[\"World\"]}, where keys are user identifiers and values are lists of messages sent to those users."
+          }
+        }
+      }
+    }
+  ]
+}

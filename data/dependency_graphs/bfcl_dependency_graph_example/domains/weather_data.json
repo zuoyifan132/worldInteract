@@ -1,0 +1,35 @@
+{
+  "domain": "weather_data",
+  "description": "Tools for retrieving current weather information from various data sources",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "get_outside_temperature_from_google",
+      "description": "Retrieves the current outside temperature from Google.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "outsideTemperature": {
+            "type": "float",
+            "description": "The current outside temperature in degrees Celsius."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_outside_temperature_from_weather_com",
+      "description": "Retrieves the current outside temperature from weather data sources.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "outsideTemperature": {
+            "type": "float",
+            "description": "The current outside temperature measured in degrees Celsius."
+          }
+        }
+      }
+    }
+  ]
+}

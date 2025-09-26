@@ -1,0 +1,27 @@
+{
+  "domain": "web_content_retrieval",
+  "description": "Tools for fetching and extracting content from web pages",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "browse_web",
+      "description": "Fetch and display the content of a specified web page.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The complete URL of the web page to be accessed and retrieved."
+        }
+      }
+    },
+    {
+      "name": "get_page_content",
+      "description": "Retrieve and extract textual and multimedia content from a specified web page.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the web page from which content will be extracted. It should start with 'http://' or 'https://'."
+        }
+      }
+    }
+  ]
+}

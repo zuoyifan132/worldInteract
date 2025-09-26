@@ -1,0 +1,148 @@
+{
+  "domain": "file_system_operations",
+  "description": "Tools for managing files and directories including creation, deletion, movement, and information retrieval",
+  "tool_count": 8,
+  "tools": [
+    {
+      "name": "mkdir",
+      "description": "Create a new directory within the current working directory in the Gorilla file system.",
+      "parameters": {
+        "dir_name": {
+          "type": "string",
+          "description": "Specifies the name of the new directory to be created in the current directory."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the directory creation was successful."
+          },
+          "message": {
+            "type": "string",
+            "description": "Provides additional information regarding the result of the operation, including error messages if applicable."
+          }
+        }
+      }
+    },
+    {
+      "name": "rmdir",
+      "description": "Remove a specified directory from the current working directory within the Gorilla file system.",
+      "parameters": {
+        "dir_name": {
+          "type": "string",
+          "description": "The name of the directory to be removed. The directory must be located in the current working directory."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "string",
+            "description": "A message indicating the success or failure of the directory removal operation."
+          }
+        }
+      }
+    },
+    {
+      "name": "delete_file",
+      "description": "Removes a specified file from the filesystem permanently.",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Absolute or relative path to the file that needs to be deleted."
+        }
+      },
+      "returns": {
+        "success": "Indicates whether the file deletion was successful (true) or failed (false)."
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "Retrieve a list of files in the specified directory.",
+      "parameters": {
+        "dir": {
+          "type": "string",
+          "description": "The file system path of the directory to be scanned for files."
+        }
+      }
+    },
+    {
+      "name": "file_info",
+      "description": "Retrieves and provides comprehensive information about specified files, including their characteristics and metadata.",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "The path to the file for which information is to be retrieved. This must be a valid file path in the system."
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "An object containing detailed information about the specified file, including attributes such as file size, creation date, modification date, and file type."
+      }
+    },
+    {
+      "name": "move_file",
+      "description": "Moves a file from a specified source location to a destination target path.",
+      "parameters": {
+        "source": {
+          "type": "string",
+          "description": "The full file path of the file to be moved, including its filename and extension."
+        },
+        "target": {
+          "type": "string",
+          "description": "The destination path where the file should be relocated, including the new filename and extension if applicable."
+        }
+      }
+    },
+    {
+      "name": "copy_file",
+      "description": "Copies a file from a specified source path to a designated destination path.",
+      "parameters": {
+        "src": {
+          "type": "string",
+          "description": "The file path of the source file that you wish to copy."
+        },
+        "dst": {
+          "type": "string",
+          "description": "The target file path where the copied file will be placed."
+        }
+      },
+      "returns": {
+        "success": {
+          "type": "bool",
+          "description": "Returns true if the file copy operation was successful; otherwise, returns false."
+        }
+      }
+    },
+    {
+      "name": "find",
+      "description": "Search for files and directories containing a specified name in a given path.",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "The starting directory path for the search. Defaults to the current directory (\".\").",
+          "default": "."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name pattern of the file or directory to locate. If not specified, all files and directories in the path are returned.",
+          "default": "None"
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "description": "An array containing the paths of files and directories relative to the specified path that match the search criteria.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

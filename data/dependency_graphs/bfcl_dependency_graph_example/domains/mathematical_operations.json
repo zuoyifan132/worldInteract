@@ -1,0 +1,53 @@
+{
+  "domain": "mathematical_operations",
+  "description": "Tools for performing basic arithmetic and mathematical calculations",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "add",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Add two numbers.",
+      "parameters": {
+        "a": {
+          "type": "float",
+          "description": "First number."
+        },
+        "b": {
+          "type": "float",
+          "description": "Second number."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "Sum of the two numbers."
+          }
+        }
+      }
+    },
+    {
+      "name": "multiply",
+      "description": "This tool belongs to the Math API, which provides various mathematical operations. Tool description: Multiply two numbers.",
+      "parameters": {
+        "a": {
+          "type": "float",
+          "description": "First number."
+        },
+        "b": {
+          "type": "float",
+          "description": "Second number."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "result": {
+            "type": "float",
+            "description": "Product of the two numbers."
+          }
+        }
+      }
+    }
+  ]
+}

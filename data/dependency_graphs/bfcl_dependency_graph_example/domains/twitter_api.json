@@ -1,0 +1,122 @@
+{
+  "domain": "twitter_api",
+  "description": "Tools for interacting with Twitter platform including tweets and comments",
+  "tool_count": 4,
+  "tools": [
+    {
+      "name": "comment",
+      "description": "This tool belongs to the TwitterAPI, which provides core functionality for posting tweets, retweeting, commenting, and following users on Twitter. Tool description: Comment on a tweet for the authenticated user.",
+      "parameters": {
+        "tweet_id": {
+          "type": "integer",
+          "description": "ID of the tweet to comment on."
+        },
+        "comment_content": {
+          "type": "string",
+          "description": "Content of the comment."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "comment_status": {
+            "type": "string",
+            "description": "Status of the comment action."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tweet",
+      "description": "Retrieve a specific tweet using its unique identifier.",
+      "parameters": {
+        "tweet_id": {
+          "type": "integer",
+          "description": "The unique identifier of the tweet to be retrieved."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique identifier of the retrieved tweet."
+          },
+          "username": {
+            "type": "string",
+            "description": "The username of the user who authored the tweet."
+          },
+          "content": {
+            "type": "string",
+            "description": "The textual content of the tweet."
+          },
+          "tags": {
+            "type": "array",
+            "description": "An array of hashtags associated with the tweet.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mentions": {
+            "type": "array",
+            "description": "An array of usernames that are mentioned in the tweet.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_tweet_comments",
+      "description": "Retrieves all comments associated with a specific tweet via the TwitterAPI.",
+      "parameters": {
+        "tweet_id": {
+          "type": "integer",
+          "description": "Unique identifier of the tweet for which comments are to be retrieved."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "description": "An array of objects, each representing a comment on the specified tweet.",
+            "items": {
+              "type": "dict",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "The Twitter username of the individual who posted the comment."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The textual content of the comment."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "retweet",
+      "description": "This tool allows the authenticated user to retweet a specified tweet on Twitter.",
+      "parameters": {
+        "tweet_id": {
+          "type": "integer",
+          "description": "The unique identifier of the tweet that the user wants to retweet."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "retweet_status": {
+            "type": "string",
+            "description": "Indicates whether the retweet action was successful or if an error occurred."
+          }
+        }
+      }
+    }
+  ]
+}

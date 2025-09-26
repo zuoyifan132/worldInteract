@@ -1,0 +1,845 @@
+{
+  "metadata": {
+    "source": "/Users/evan/Desktop/work/wind/面试/蚂蚁/worldInteract/data/raw_apis",
+    "processing_stats": {
+      "total_input": 40,
+      "fixed": 39,
+      "removed_duplicates": 3,
+      "removed_invalid": 1,
+      "final_count": 36
+    },
+    "total_apis": 36
+  },
+  "apis": [
+    {
+      "name": "send_email",
+      "description": "通过SMTP协议发送电子邮件，支持HTML内容、附件、抄送和密送，并提供状态跟踪",
+      "parameters": {
+        "to_address": {
+          "type": "string",
+          "description": "主要收件人的电子邮箱地址，必须符合RFC 5322标准格式，例如：user@example.com。同时支持国际化域名。"
+        },
+        "subject": {
+          "type": "string",
+          "description": "邮件主题行，最大长度为998字符，支持UTF-8编码，用于简要描述邮件内容，将显示在收件人邮箱列表中。"
+        },
+        "body": {
+          "type": "string",
+          "description": "邮件正文内容，支持纯文本和HTML格式。HTML内容将自动处理内联样式和图像。最大大小为25MB，支持多种语言字符集。"
+        },
+        "cc": {
+          "type": "array",
+          "description": "抄送收件人邮箱地址的列表，这些收件人将收到邮件的副本，且所有收件人均可看到抄送列表。每个地址必须为有效的邮箱格式。",
+          "default": []
+        },
+        "attachments": {
+          "type": "array",
+          "description": "附件文件路径的列表，支持常见文件格式（如PDF、DOC、图片等）。单个文件最大25MB，总附件大小不得超过50MB。文件路径必须为服务器可访问的绝对路径。",
+          "default": []
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "指示邮件发送操作是否成功完成，true表示邮件已成功提交至邮件服务器队列，false表示发送失败。"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "邮件的全球唯一标识符（Message-ID），由邮件服务器生成，格式为'<unique-id@domain.com>'，可用于邮件跟踪和问题诊断。"
+          },
+          "message": {
+            "type": "string",
+            "description": "详细的发送状态描述信息，包括成功确认或具体的错误原因，如'邮件发送成功'或'收件人地址格式错误'。"
+          }
+        }
+      }
+    },
+    {
+      "name": "schedule_meeting",
+      "description": "创建并安排线上或线下会议，自动发送邀请并提供提醒和冲突检测功能。",
+      "parameters": {
+        "title": {
+          "type": "string",
+          "description": "会议的主题，用于标识会议。最大长度为200字符，支持emoji和特殊字符，将在所有参会人员的日历中显示。"
+        },
+        "start_time": {
+          "type": "string",
+          "description": "会议开始时间，需遵循ISO 8601格式（例如：2024-03-15T14:30:00Z或2024-03-15T14:30:00+08:00），支持时区信息且不能早于当前时间。"
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "description": "会议的持续时间，以分钟为单位，范围为5至1440分钟（最多24小时）。系统将根据此时间计算结束时间并检查与参会人员的时间冲突。"
+        },
+        "attendees": {
+          "type": "array",
+          "description": "参会人员的邮箱地址列表。系统将向这些邮箱发送会议邀请和提醒。支持最多500个有效的邮箱地址，且每个地址必须符合RFC标准。"
+        },
+        "location": {
+          "type": "string",
+          "description": "会议的地点信息，可以是物理地址（如'北京市朝阳区xxx会议室'）或在线会议平台的名称。如果选择在线会议，系统将自动生成会议链接。",
+          "default": "在线会议"
+        },
+        "description": {
+          "type": "string",
+          "description": "会议的详细描述和议程，包括会议目标、讨论要点及预期成果等，支持Markdown格式，最大长度为2000字符。",
+          "default": ""
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "指示会议创建操作是否成功。true表示会议已成功创建并发送邀请，false表示创建失败，例如时间冲突或参会者无效。"
+          },
+          "meeting_id": {
+            "type": "string",
+            "description": "会议的全球唯一标识符，格式为UUID，用于后续会议管理操作（如修改、取消和查询等），长度为36个字符。"
+          },
+          "meeting_url": {
+            "type": "string",
+            "description": "在线会议的加入链接，支持主流平台（如Zoom、Teams、腾讯会议等）。参会者可直接点击该链接加入会议。仅在location被指定为在线会议时返回。"
+          },
+          "message": {
+            "type": "string",
+            "description": "会议创建状态的详细描述，包括成功确认信息或具体错误原因，例如'会议创建成功，已发送邀请给3位参会者'或'时间冲突：与已有会议重叠'。"
+          }
+        }
+      }
+    },
+    {
+      "name": "search_contacts",
+      "description": "在企业通讯录和个人联系人数据库中执行智能搜索，支持多种匹配方式并提供隐私保护功能",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "搜索关键词，支持姓名、邮箱、电话号码、公司名称等信息的模糊查询。支持中文、英文、拼音首字母及部分匹配，最大长度为100字符。"
+        },
+        "search_fields": {
+          "type": "array",
+          "description": "指定要搜索的字段范围，包含：name（姓名）、email（邮箱）、phone（电话）、company（公司）、department（部门）、title（职位）。此参数优化搜索性能及精准度。",
+          "default": [
+            "name",
+            "email",
+            "phone"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "description": "返回结果的最大数量限制，范围为1到1000。较小的值可以提高响应速度，建议根据用户界面展示需求设置合适的值。",
+          "default": 10
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "指示搜索操作是否成功，true表示搜索已完成（即使无结果），false表示在搜索过程中发生了错误（例如数据库连接失败）。"
+          },
+          "contacts": {
+            "type": "array",
+            "description": "与搜索条件匹配的联系人信息列表，按相关性排序，包含每位联系人的基本信息及扩展属性。",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contact_id": {
+                  "type": "string",
+                  "description": "联系人的唯一标识符。"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "联系人的完整姓名。"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "主邮箱地址。"
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "主要联系电话。"
+                },
+                "company": {
+                  "type": "string",
+                  "description": "所在公司或组织的名称。"
+                }
+              }
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "符合搜索条件的联系人总数（可能超过返回的limit限制），用于分页显示及统计信息。"
+          },
+          "message": {
+            "type": "string",
+            "description": "搜索操作的详细状态信息，包括搜索耗时、匹配策略说明或错误详情，示例：'找到5个匹配联系人，用时0.12秒'或'数据库连接超时'。"
+          }
+        }
+      }
+    },
+    {
+      "name": "backup_data",
+      "description": "Backs up specified directories or files to cloud storage.",
+      "parameters": {
+        "source_path": {
+          "type": "string",
+          "description": "The path of the source files or directories to be backed up."
+        },
+        "backup_name": {
+          "type": "string",
+          "description": "The name assigned to the backup task."
+        },
+        "destination": {
+          "type": "string",
+          "description": "The target location for the backup, defaulting to 'cloud_storage'.",
+          "default": "cloud_storage"
+        },
+        "compression": {
+          "type": "boolean",
+          "description": "Indicates whether to compress the backup files; defaults to true.",
+          "default": true
+        },
+        "encryption": {
+          "type": "boolean",
+          "description": "Indicates whether to encrypt the backup files; defaults to true.",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the backup operation was successful."
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Unique identifier for the backup task."
+          },
+          "backup_size": {
+            "type": "integer",
+            "description": "Size of the backup file in bytes."
+          },
+          "backup_url": {
+            "type": "string",
+            "description": "Download link for the backup file."
+          },
+          "message": {
+            "type": "string",
+            "description": "Description of the backup status."
+          }
+        }
+      }
+    },
+    {
+      "name": "restore_data",
+      "description": "Restores data from a backup to a specified location.",
+      "parameters": {
+        "backup_id": {
+          "type": "string",
+          "description": "Identifier for the backup task to be restored."
+        },
+        "restore_path": {
+          "type": "string",
+          "description": "Target path where the data will be restored."
+        },
+        "overwrite": {
+          "type": "boolean",
+          "description": "Indicates whether to overwrite existing files at the restore path.",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the restoration process was successful."
+          },
+          "restored_files": {
+            "type": "array",
+            "description": "List of files that were successfully restored."
+          },
+          "message": {
+            "type": "string",
+            "description": "Description of the restoration status or any errors encountered."
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_performance",
+      "description": "Analyze system performance metrics and generate a comprehensive report.",
+      "parameters": {
+        "time_range": {
+          "type": "string",
+          "description": "The time range for analysis, specified as a duration (e.g., '1h', '24h', '7d')."
+        },
+        "metrics": {
+          "type": "array",
+          "description": "A list of performance metrics to analyze. Defaults to ['cpu', 'memory', 'disk', 'network'].",
+          "default": [
+            "cpu",
+            "memory",
+            "disk",
+            "network"
+          ]
+        },
+        "report_format": {
+          "type": "string",
+          "description": "The format for the generated report. Defaults to 'json'.",
+          "default": "json"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the analysis was successful."
+          },
+          "report": {
+            "type": "object",
+            "description": "The detailed performance analysis report."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A summary of the performance analysis results."
+          },
+          "recommendations": {
+            "type": "array",
+            "description": "A list of recommendations for performance optimization."
+          },
+          "message": {
+            "type": "string",
+            "description": "A description of the analysis status."
+          }
+        }
+      }
+    },
+    {
+      "name": "generate_report",
+      "description": "生成自定义报告，基于指定模板和数据源",
+      "parameters": {
+        "template_name": {
+          "type": "string",
+          "description": "指定用于生成报告的模板名称"
+        },
+        "data_source": {
+          "type": "string",
+          "description": "标识数据源的唯一标识符"
+        },
+        "output_format": {
+          "type": "string",
+          "description": "生成报告的输出格式，包括 pdf, docx, 或 html",
+          "default": "pdf"
+        },
+        "filters": {
+          "type": "object",
+          "description": "应用于数据源的过滤条件，用于定制报告内容",
+          "default": {}
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "指示报告是否成功生成"
+          },
+          "report_id": {
+            "type": "string",
+            "description": "生成的报告的唯一标识符"
+          },
+          "download_url": {
+            "type": "string",
+            "description": "提供下载生成的报告的链接"
+          },
+          "page_count": {
+            "type": "integer",
+            "description": "报告的总页数"
+          },
+          "message": {
+            "type": "string",
+            "description": "描述报告生成状态的信息"
+          }
+        }
+      }
+    },
+    {
+      "name": "process_payment",
+      "description": "Processes online payment transactions, supporting various payment methods and currencies with real-time fraud detection, PCI DSS compliant encryption, transaction tracking, and automatic reconciliation.",
+      "parameters": {
+        "amount": {
+          "type": "number",
+          "description": "The transaction amount, must be a positive number with up to 2 decimal places. Minimum amount is 0.01 and maximum amount is 999999.99. The system performs amount validity checks and anti-money laundering assessments."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The type of currency, represented by ISO 4217 three-letter codes, such as CNY (Chinese Yuan), USD (US Dollar), EUR (Euro). Supports automatic exchange rate conversions and multi-currency settlements.",
+          "default": "CNY"
+        },
+        "payment_method": {
+          "type": "string",
+          "description": "Identifier for the payment method, supporting: credit_card (Credit Card), debit_card (Debit Card), alipay (Alipay), wechat (WeChat Pay), bank_transfer (Bank Transfer). Each method has different processing workflows and fees."
+        },
+        "order_id": {
+          "type": "string",
+          "description": "Merchant's unique order identifier, must not exceed 64 characters, used to correlate with the merchant's system order information. Supports alphanumeric characters, underscores, and hyphens for transaction tracking and reconciliation."
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique identifier for the customer in the merchant's system, used for user profiling, risk assessment, and linking transaction history. Length must not exceed 128 characters, and supports anonymization."
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the payment transaction was successfully completed; true means funds have been successfully transferred and confirmed, while false indicates failure or denial (refer to 'message' for specific reasons)."
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "A globally unique transaction identifier generated by the payment gateway, formatted as a 32-character hexadecimal string, used for future actions such as refunds, inquiries, and reconciliation; remains valid indefinitely."
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the transaction, possible values include: success (successful), failed (failed), pending (processing), canceled (canceled), refunded (refunded). The status will be updated in real-time."
+          },
+          "receipt_url": {
+            "type": "string",
+            "description": "Download link for the electronic receipt in PDF format, containing comprehensive transaction details, merchant information, and legal terms. The link is valid for 30 days and supports multiple downloads."
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed description of the transaction status and processing results, including success confirmation or reasons for failure (e.g., insufficient balance, card expiration, risk control interception), to assist user understanding and customer service handling."
+          }
+        }
+      }
+    },
+    {
+      "name": "verify_identity",
+      "description": "Perform multi-layered user identity verification, supporting various methods including SMS, email, biometrics, and hardware tokens.",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique identifier for the user, which can be a system internal ID, email address, or mobile number. This identifier is used to retrieve the user's authentication configuration and historical behavior patterns, with a maximum length of 128 characters."
+        },
+        "verification_method": {
+          "type": "string",
+          "description": "Method of identity verification. Supported options include: 'sms' (SMS code), 'email' (email code), 'biometric' (biometric verification), 'totp' (time-based one-time password), 'hardware_token' (hardware token), and 'password' (password verification). Methods can be combined to achieve multi-factor authentication."
+        },
+        "verification_code": {
+          "type": "string",
+          "description": "The verification code or credential which varies depending on the selected verification_method: SMS/email generates a 6-digit code, TOTP yields a 6-8 digit number, biometrics use encrypted feature data, and hardware tokens produce a dynamic code generated by the device."
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the verification operation was successfully executed. A value of true means the verification process completed normally, while false indicates system errors or invalid parameters (not related to identity verification failure)."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Indicates whether the user's identity was successfully verified. A value of true signifies successful identity authentication, while false indicates authentication failure (e.g., incorrect code, mismatch in biometric traits)."
+          },
+          "confidence_score": {
+            "type": "number",
+            "description": "Confidence score of the identity verification, ranging from 0.0 to 1.0. It is computed based on factors such as the security level of the verification method, user behavior analysis, and device trustworthiness. A score above 0.8 indicates high confidence."
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "Expiration time of the verification result, formatted in ISO 8601. Once expired, re-verification is required. Different verification methods have varying valid durations: SMS lasts 5 minutes, biometrics for 24 hours, and hardware tokens for 1 hour."
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed verification status and result message, including confirmation of success, reasons for failure, and safety recommendations. Examples include 'Identity verification successful, confidence 95%' or 'Verification code has expired, please request a new one.'"
+          }
+        }
+      }
+    },
+    {
+      "name": "monitor_health",
+      "description": "Monitors system health status and sends alerts when thresholds are met.",
+      "parameters": {
+        "service_name": {
+          "type": "string",
+          "description": "The name of the service to be monitored."
+        },
+        "check_interval": {
+          "type": "integer",
+          "description": "The interval (in seconds) at which to check the service health.",
+          "default": 60
+        },
+        "alert_threshold": {
+          "type": "object",
+          "description": "Configuration settings for alert thresholds."
+        },
+        "notification_channels": {
+          "type": "array",
+          "description": "List of channels for notifications.",
+          "default": [
+            "email"
+          ]
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the monitoring setup was successful."
+          },
+          "monitor_id": {
+            "type": "string",
+            "description": "Identifier for the monitoring task."
+          },
+          "current_status": {
+            "type": "string",
+            "description": "Current status of the monitored service."
+          },
+          "next_check": {
+            "type": "string",
+            "description": "Time of the next scheduled health check."
+          },
+          "message": {
+            "type": "string",
+            "description": "Description of the monitoring setup status."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_file",
+      "description": "Creates a new file at the specified path with the given content.",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "The file system path where the new file will be created."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content to be written into the newly created file."
+        }
+      }
+    },
+    {
+      "name": "delete_file",
+      "description": "Removes a specified file from the filesystem.",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "The absolute or relative path to the file that needs to be deleted."
+        }
+      },
+      "returns": {
+        "success": "Indicates whether the file deletion was successfully executed (true) or failed (false)."
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "Retrieve a list of all files within a specified directory.",
+      "parameters": {
+        "dir": {
+          "type": "string",
+          "description": "The absolute or relative path to the directory whose files will be listed."
+        }
+      }
+    },
+    {
+      "name": "file_info",
+      "description": "Retrieves detailed information and attributes of a specified file.",
+      "parameters": {}
+    },
+    {
+      "name": "move_file",
+      "description": "Moves a file from the source path to the specified target location.",
+      "parameters": {
+        "source": {
+          "type": "string",
+          "description": "The file path of the file to be moved."
+        },
+        "target": {
+          "type": "string",
+          "description": "The destination path where the file will be moved."
+        }
+      }
+    },
+    {
+      "name": "upload_file",
+      "description": "Upload a file to the server at the specified URL.",
+      "parameters": {
+        "file": {
+          "type": "file",
+          "description": "The file object that needs to be uploaded."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL endpoint to which the file will be uploaded."
+        }
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Downloads a file from a specified URL and saves it to a local path.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the file to be downloaded."
+        },
+        "save_path": {
+          "type": "string",
+          "description": "The local path where the downloaded file will be saved."
+        }
+      }
+    },
+    {
+      "name": "search_web",
+      "description": "Perform a web search based on a specified query",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "The search query string to execute"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "The maximum number of search results to return",
+          "default": 10
+        }
+      }
+    },
+    {
+      "name": "get_weather",
+      "description": "Fetches current weather information for a specified location.",
+      "parameters": {
+        "location": {
+          "type": "string",
+          "description": "The geographical location for which to retrieve weather data."
+        },
+        "units": {
+          "type": "string",
+          "default": "celsius",
+          "description": "The unit of measurement for temperature. Default is Celsius. Can be set to 'fahrenheit' for Fahrenheit."
+        }
+      }
+    },
+    {
+      "name": "create_user",
+      "description": "Creates a new user account with specified credentials.",
+      "parameters": {
+        "username": {
+          "type": "string",
+          "description": "The unique username for the new user account."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address associated with the new user account."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password for the new user account, which must meet security requirements."
+        }
+      }
+    },
+    {
+      "name": "delete_user",
+      "description": "Removes a specified user account from the system, ensuring complete data deletion.",
+      "parameters": {
+        "user_id": {
+          "type": "integer",
+          "description": "The unique identifier of the user account to be deleted."
+        }
+      }
+    },
+    {
+      "name": "get_user",
+      "description": "Retrieve detailed user information based on the provided user ID.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "description": "The unique identifier associated with the user."
+        }
+      }
+    },
+    {
+      "name": "update_user",
+      "description": "Modify the details of a user's profile using their unique identifier.",
+      "parameters": {
+        "user_id": {
+          "type": "integer",
+          "description": "Unique identifier for the user whose profile is to be updated."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the fields to be updated in the user's profile."
+        }
+      }
+    },
+    {
+      "name": "list_users",
+      "description": "Retrieves and displays a comprehensive list of all registered users.",
+      "parameters": {}
+    },
+    {
+      "name": "authenticate_user",
+      "description": "Validates user credentials for access to the system.",
+      "parameters": {
+        "username": {
+          "type": "string",
+          "description": "The unique identifier for the user, used for login purposes."
+        },
+        "password": {
+          "type": "string",
+          "description": "The secret key associated with the user account, required for authentication."
+        }
+      }
+    },
+    {
+      "name": "create_database",
+      "description": "Create a new database with the specified name.",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The unique name to assign to the new database."
+        }
+      }
+    },
+    {
+      "name": "execute_query",
+      "description": "Executes a specified SQL query with provided parameters.",
+      "parameters": {
+        "sql": {
+          "type": "string",
+          "description": "The SQL query string to be executed, including any placeholders for parameters."
+        },
+        "params": {
+          "type": "array",
+          "description": "An array of values to substitute for the placeholders in the SQL query."
+        }
+      }
+    },
+    {
+      "name": "create_table",
+      "description": "Creates a new database table with a specified schema.",
+      "parameters": {
+        "table_name": {
+          "type": "string",
+          "description": "The name of the table to be created in the database."
+        },
+        "schema": {
+          "type": "object",
+          "description": "An object defining the structure of the table, including columns and their data types."
+        }
+      }
+    },
+    {
+      "name": "drop_table",
+      "description": "Removes a specified table from the database permanently.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the table to be dropped from the database."
+        }
+      }
+    },
+    {
+      "name": "insert_record",
+      "description": "Inserts a new record into the specified database table.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the database table where the record will be inserted."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the key-value pairs that represent the record's data to be inserted."
+        }
+      }
+    },
+    {
+      "name": "update_record",
+      "description": "Updates an existing record in a specified database table.",
+      "parameters": {
+        "table": {
+          "type": "string",
+          "description": "The name of the database table where the record exists."
+        },
+        "id": {
+          "type": "integer",
+          "description": "The unique identifier of the record to be updated."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the fields and their new values to update in the record."
+        }
+      }
+    },
+    {
+      "name": "delete_record",
+      "description": "Removes a specific record from the specified database table.",
+      "parameters": {
+        "table_name": {
+          "type": "string",
+          "description": "The name of the database table from which the record will be deleted."
+        },
+        "record_id": {
+          "type": "integer",
+          "description": "The unique identifier of the record to be deleted."
+        }
+      }
+    },
+    {
+      "name": "browse_web",
+      "description": "Fetch and display content from a specified web page.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The web address (URL) of the page to be accessed."
+        }
+      }
+    },
+    {
+      "name": "click_element",
+      "description": "Simulates a mouse click on a specified web element.",
+      "parameters": {
+        "selector": {
+          "type": "string",
+          "description": "A valid CSS selector to identify the web element to be clicked."
+        },
+        "page_id": {
+          "type": "string",
+          "description": "A unique identifier for the page containing the web element."
+        }
+      }
+    },
+    {
+      "name": "fill_form",
+      "description": "Submits data to fill a web form with specified values.",
+      "parameters": {
+        "form_data": {
+          "type": "object",
+          "description": "An object containing key-value pairs representing the form field names and their respective values."
+        },
+        "page_id": {
+          "type": "string",
+          "description": "A unique identifier for the specific web page that contains the form to be filled."
+        }
+      }
+    },
+    {
+      "name": "get_page_content",
+      "description": "Extracts the textual content and metadata from a specified web page.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The complete URL of the web page from which content will be extracted."
+        }
+      }
+    }
+  ]
+}

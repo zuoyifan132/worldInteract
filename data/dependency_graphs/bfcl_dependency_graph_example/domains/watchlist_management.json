@@ -1,0 +1,62 @@
+{
+  "domain": "watchlist_management",
+  "description": "Tools for managing user's stock watchlist including adding, removing, and viewing stocks",
+  "tool_count": 3,
+  "tools": [
+    {
+      "name": "add_to_watchlist",
+      "description": "Facilitates adding a specified stock symbol to the user's watchlist for monitoring.",
+      "parameters": {
+        "stock": {
+          "type": "string",
+          "description": "The stock symbol (ticker) that the user wishes to add to their watchlist."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock symbol that has been successfully added to the watchlist."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_watchlist",
+      "description": "Retrieves the user's stock watchlist from the trading system.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "watchlist": {
+            "type": "array",
+            "description": "An array containing the stock symbols currently on the user's watchlist.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "remove_stock_from_watchlist",
+      "description": "Removes a specified stock from the user's watchlist in the trading system.",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "The stock's symbol that identifies the stock to be removed from the watchlist."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates the success or failure of the stock removal operation, providing relevant information."
+          }
+        }
+      }
+    }
+  ]
+}

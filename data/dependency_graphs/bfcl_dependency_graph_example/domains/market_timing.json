@@ -1,0 +1,40 @@
+{
+  "domain": "market_timing",
+  "description": "Tools for managing market time operations and status tracking",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "get_current_time",
+      "description": "Fetches the current system time for trading sessions.",
+      "parameters": {},
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "current_time": {
+            "type": "string",
+            "description": "Current time in 12-hour format (HH:MM AM/PM) indicating the local time of the trading system."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_market_status",
+      "description": "Updates the market status (Open/Closed) based on the provided current time.",
+      "parameters": {
+        "current_time_str": {
+          "type": "string",
+          "description": "The current time formatted as 'HH:MM AM/PM', indicating the local time to assess market status."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates the current operational status of the market. Possible values are 'Open' or 'Closed'."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "domain": "vehicle_control",
+  "description": "Tools for controlling core vehicle operational systems and safety features",
+  "tool_count": 3,
+  "tools": [
+    {
+      "name": "activateparkingbrake",
+      "description": "Activates or releases the parking brake of the vehicle.",
+      "parameters": {
+        "mode": {
+          "type": "string",
+          "description": "Specifies the action to perform on the parking brake. Use 'engage' to activate the brake or 'release' to deactivate it."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "parkingBrakeStatus": {
+            "type": "string",
+            "description": "Indicates the current status of the parking brake. Possible values are 'engaged' when the brake is active and 'released' when it is inactive."
+          },
+          "_parkingBrakeForce": {
+            "type": "float",
+            "description": "The magnitude of the force applied to the parking brake, measured in Newtons."
+          },
+          "_slopeAngle": {
+            "type": "float",
+            "description": "The angle of the slope on which the vehicle is positioned, measured in degrees."
+          }
+        }
+      }
+    },
+    {
+      "name": "setheadlights",
+      "description": "Controls the headlight system of the vehicle, enabling various operational modes.",
+      "parameters": {
+        "mode": {
+          "type": "string",
+          "description": "Specifies the operational mode of the headlights. Possible values are: [\"on\" - headlights are turned on, \"off\" - headlights are turned off, \"auto\" - headlights are automatically controlled based on ambient light conditions.]"
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "headlightStatus": {
+            "type": "string",
+            "description": "Indicates the current status of the headlights after the command is executed. Possible values are: [\"on\" - headlights are currently activated, \"off\" - headlights are currently deactivated.]"
+          }
+        }
+      }
+    },
+    {
+      "name": "startengine",
+      "description": "Initiates the vehicle's engine, enabling operational functions.",
+      "parameters": {
+        "ignitionMode": {
+          "type": "string",
+          "description": "Specifies the desired ignition state of the vehicle. [Enum]: [\"START\" to activate the engine, \"STOP\" to deactivate it]"
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "engineState": {
+            "type": "string",
+            "description": "Indicates the current status of the engine. [Enum]: [\"running\" if the engine is active, \"stopped\" if the engine is inactive]"
+          },
+          "fuelLevel": {
+            "type": "float",
+            "description": "Represents the current fuel level of the vehicle, measured in gallons."
+          },
+          "batteryVoltage": {
+            "type": "float",
+            "description": "Displays the voltage of the vehicle's battery, measured in volts."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -8,6 +8,7 @@ and create cleaned scenarios for further processing.
 import os
 import sys
 import dotenv
+import argparse
 from pathlib import Path
 
 # Add project root directory to Python path
@@ -21,20 +22,70 @@ from worldInteract.core.scenario_collection import APICleaner
 dotenv.load_dotenv("../.env")
 
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="Run scenario collection example to process raw API data and create cleaned scenarios",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Example usage:
+  python scenario_collection_example.py
+  python scenario_collection_example.py --input-dir /path/to/raw/apis --output-file /path/to/cleaned_apis.json
+  python scenario_collection_example.py -i data/raw_apis -o output/my_cleaned_apis.json
+        """
+    )
+    
+    parser.add_argument(
+        "--input-dir", "-i",
+        type=str,
+        default=None,
+        help="Input directory path for raw API data (default: data/raw_apis)"
+    )
+    
+    parser.add_argument(
+        "--output-file", "-o", 
+        type=str,
+        default=None,
+        help="Output file path for cleaned API data (default: data/processed_apis/scenario_collection_example/cleaned_apis.json)"
+    )
+    
+    return parser.parse_args()
+
+
 def main():
     """Run the scenario collection example"""
+    
+    # Parse command line arguments
+    args = parse_arguments()
     
     logger.info("Starting Scenario Collection Example")
     
     # Set up paths
     project_root = Path(__file__).parent.parent
-    raw_apis_path = project_root / "data" / "raw_apis"
     
-    # Create output directory for processed APIs
-    processed_apis_output_dir = project_root / "data" / "processed_apis" / "scenario_collection_example"
-    processed_apis_output_dir.mkdir(parents=True, exist_ok=True)
+    # Use command line arguments or default paths
+    if args.input_dir:
+        raw_apis_path = Path(args.input_dir)
+        if not raw_apis_path.is_absolute():
+            raw_apis_path = project_root / raw_apis_path
+    else:
+        raw_apis_path = project_root / "data" / "raw_apis"
     
-    processed_apis_path = processed_apis_output_dir / "cleaned_apis.json"
+    if args.output_file:
+        processed_apis_path = Path(args.output_file)
+        if not processed_apis_path.is_absolute():
+            processed_apis_path = project_root / processed_apis_path
+        # Create output directory if it doesn't exist
+        processed_apis_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        # Create output directory for processed APIs (default path)
+        processed_apis_output_dir = project_root / "data" / "processed_apis" / "scenario_collection_example"
+        processed_apis_output_dir.mkdir(parents=True, exist_ok=True)
+        processed_apis_path = processed_apis_output_dir / "cleaned_apis.json"
+    
+    # Log the paths being used
+    logger.info(f"Input directory: {raw_apis_path}")
+    logger.info(f"Output file: {processed_apis_path}")
     
     # Validate input directory exists
     if not raw_apis_path.exists():

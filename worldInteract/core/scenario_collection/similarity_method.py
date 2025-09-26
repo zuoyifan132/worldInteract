@@ -14,6 +14,9 @@ class SimilarityMethod(Enum):
     SEQUENCE_MATCHER = "sequence_matcher"
     """Use SequenceMatcher for text similarity calculation (faster, no external dependencies)"""
     
+    NONE = "none"
+    """Only check for exact function name duplicates (fastest, no similarity calculation)"""
+    
     @classmethod
     def from_string(cls, value: str) -> 'SimilarityMethod':
         """
@@ -56,3 +59,7 @@ class SimilarityMethod(Enum):
     def is_text_based(self) -> bool:
         """Check if this is a text-based method"""
         return self == self.SEQUENCE_MATCHER
+    
+    def is_none(self) -> bool:
+        """Check if this is the none method (only name-based deduplication)"""
+        return self == self.NONE

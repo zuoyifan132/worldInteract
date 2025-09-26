@@ -65,7 +65,11 @@ class APICleaner:
         # Parse similarity method from config
         similarity_method_str = self.env_config.get("similarity_method", SimilarityMethod.get_default().value)
         try:
-            self.similarity_method = SimilarityMethod.from_string(similarity_method_str)
+            # Handle None as a special case
+            if similarity_method_str is None or str(similarity_method_str).lower() == "none":
+                self.similarity_method = SimilarityMethod.NONE
+            else:
+                self.similarity_method = SimilarityMethod.from_string(similarity_method_str)
         except ValueError as e:
             logger.warning(f"{e}. Using default method.")
             self.similarity_method = SimilarityMethod.get_default()
@@ -114,8 +118,10 @@ class APICleaner:
                     logger.info(f"Loading APIs from: {json_file.name}")
                     with open(json_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                    
-                    apis = data.get("apis", [])
+                    if isinstance(data, dict):
+                        apis = data.get("apis", [])
+                    elif isinstance(data, list):
+                        apis = data
                     all_apis.extend(apis)
                     logger.info(f"Loaded {len(apis)} APIs from {json_file.name}")
                     
@@ -171,7 +177,6 @@ class APICleaner:
         logger.info(f"Fixed {len(fixed_apis)} APIs")
         
         # Step 2: Remove duplicates
-        # BUG: too slow
         unique_apis = self._remove_duplicates(fixed_apis)
         stats["removed_duplicates"] = len(fixed_apis) - len(unique_apis)
         stats["final_count"] = len(unique_apis)
@@ -180,8 +185,6 @@ class APICleaner:
         
         # Step 3: Enhance descriptions using LLM
         enhanced_apis = self._enhance_descriptions(unique_apis)
-
-        # TODO: Step 4: Generate tool implementation and unit test cases
         
         # Prepare output
         output_data = {
@@ -280,6 +283,10 @@ class APICleaner:
         for field in param_fields:
             if field in api and isinstance(api[field], dict):
                 params = api[field]
+
+                if "properties" in params:
+                    params = params["properties"]
+
                 standardized_params = {}
                 
                 for param_name, param_info in params.items():
@@ -403,21 +410,24 @@ class APICleaner:
             
             # Check for semantic duplicates using configured similarity method
             is_duplicate = False
-            for existing_api in unique_apis:
-                if self.similarity_method.is_embedding_based():
-                    # Use semantic similarity with embeddings
-                    similarity = self._calculate_api_semantical_similarity(api, existing_api)
-                else:
-                    # Use text similarity with sequence matcher
-                    similarity = self._calculate_text_similarity(
-                        f"{api['name']} {api['description']}", 
-                        f"{existing_api['name']} {existing_api['description']}"
-                    )
-                
-                if similarity > self.duplicate_threshold:
-                    logger.debug(f"Removed {self.similarity_method.value} similar API: {name} (similar to {existing_api['name']}, similarity: {similarity:.3f})")
-                    is_duplicate = True
-                    break
+            
+            # If similarity method is None, skip semantic similarity check
+            if not self.similarity_method.is_none():
+                for existing_api in unique_apis:
+                    if self.similarity_method.is_embedding_based():
+                        # Use semantic similarity with embeddings
+                        similarity = self._calculate_api_semantical_similarity(api, existing_api)
+                    else:
+                        # Use text similarity with sequence matcher
+                        similarity = self._calculate_text_similarity(
+                            f"{api['name']} {api['description']}", 
+                            f"{existing_api['name']} {existing_api['description']}"
+                        )
+                    
+                    if similarity > self.duplicate_threshold:
+                        logger.debug(f"Removed {self.similarity_method.value} similar API: {name} (similar to {existing_api['name']}, similarity: {similarity:.3f})")
+                        is_duplicate = True
+                        break
             
             if not is_duplicate:
                 unique_apis.append(api)
@@ -427,7 +437,7 @@ class APICleaner:
     
     def _calculate_api_semantical_similarity(self, api1: Dict[str, Any], api2: Dict[str, Any]) -> float:
         """Calculate semantic similarity between two APIs using embeddings."""
-        if not self.embeddings or not self.similarity_method.is_embedding_based():
+        if not self.embeddings or not self.similarity_method.is_embedding_based() or self.similarity_method.is_none():
             return 0.0
         
         try:
@@ -450,20 +460,184 @@ class APICleaner:
         """Calculate text similarity using sequence matcher."""
         return SequenceMatcher(None, text1, text2).ratio()
     
+    def _check_description_clarity(self, api: Dict[str, Any]) -> bool:
+        """
+        Check if API description is clear and unambiguous using LLM.
+        
+        Args:
+            api: API dictionary to check
+            
+        Returns:
+            True if description is clear, False if needs enhancement
+        """
+        try:
+            system_prompt = textwrap.dedent(
+                """You are an API documentation expert. Your task is to evaluate whether a tool specification has clear and unambiguous descriptions.
+
+                ## Evaluation criteria:
+                1. **Tool description**: Is it clear what the tool does? (not too vague or confusing)
+                2. **Description missing**: Any tool description, parameter description or return description missing?
+                3. **Parameter descriptions**: Are parameter purposes clearly explained?
+                4. **Return descriptions**: Is the return value clearly described (if present)?
+                5. **Overall clarity**: Can a developer understand how to use this tool from the descriptions?
+
+                ## Response format:
+                Output a JSON object with the following structure:
+                ```json
+                {
+                    "reason": "Brief explanation of why the specification is clear or unclear",
+                    "output": "CLEAR" or "UNCLEAR"
+                }
+                ```
+
+                ## Examples
+
+                ### Example 1 - Missing Parameter Description
+                Input:
+                {
+                    "name": "delete_user",
+                    "description": "The delete_user tool is designed to remove a specified user from the system. This functionality ensures that user data can be effectively managed and maintained according to administrative needs.",
+                    "parameters": {
+                        "user_id": {
+                            "type": "integer"
+                        }
+                    }
+                }
+                Reason: The parameter 'user_id' description is missing
+                Output: {"reason": "The parameter 'user_id' description is missing", "output": "UNCLEAR"}
+
+                ### Example 2 - Missing Return Description
+                Input:
+                {
+                    "name": "get_user_id_from_name",
+                    "description": "Retrieve the user ID based on the provided username.",
+                    "parameters": {
+                        "username": {
+                            "type": "string",
+                            "description": "The provided user name"
+                        }
+                    }
+                }
+                Reason: The return description is missing
+                Output: {"reason": "The return description is missing", "output": "UNCLEAR"}
+
+                ### Example 3 - Vague Tool Description
+                Input:
+                {
+                    "name": "process_data",
+                    "description": "Handles data processing operations",
+                    "parameters": {
+                        "data": {
+                            "type": "object",
+                            "description": "Input data to process"
+                        },
+                        "options": {
+                            "type": "object", 
+                            "description": "Configuration options"
+                        }
+                    },
+                    "returns": {
+                        "type": "object",
+                        "description": "Processed result"
+                    }
+                }
+                Reason: Tool description is too vague - doesn't specify what kind of processing is done
+                Output: {"reason": "Tool description is too vague - doesn't specify what kind of processing is done", "output": "UNCLEAR"}
+
+                ### Example 4 - Clear and Complete
+                Input:
+                {
+                    "name": "calculate_tax",
+                    "description": "Calculates income tax based on annual salary and tax bracket information for the specified tax year.",
+                    "parameters": {
+                        "annual_salary": {
+                            "type": "number",
+                            "description": "The annual gross salary in USD"
+                        },
+                        "tax_year": {
+                            "type": "integer",
+                            "description": "The tax year for which to calculate taxes (e.g., 2023)"
+                        },
+                        "filing_status": {
+                            "type": "string",
+                            "description": "Tax filing status: 'single', 'married_joint', or 'married_separate'"
+                        }
+                    },
+                    "returns": {
+                        "type": "object",
+                        "description": "Tax calculation result containing total_tax, effective_rate, and marginal_rate"
+                    }
+                }
+                Reason: All descriptions are clear, specific, and provide sufficient detail for developers to understand usage
+                Output: {"reason": "All descriptions are clear, specific, and provide sufficient detail for developers to understand usage", "output": "CLEAR"}
+
+                Only output the JSON object as specified in the response format."""
+            )
+
+            # Format the API for review
+            api_text = json.dumps(api, indent=2, ensure_ascii=False)
+
+            user_prompt = textwrap.dedent(
+                f"""Please evaluate the clarity of this tool specification:
+
+                {api_text}
+
+                Is this tool specification clear and unambiguous? Answer with only "CLEAR" or "UNCLEAR":"""
+            )
+
+            thinking_content, answer_text, function_calls = generate(
+                self.model_config["model"],
+                system_prompt,
+                user_prompt,
+                temperature=self.model_config.get("temperature", 0.1),
+                max_tokens=100
+            )
+
+            # Extract json from response
+            response_json = extract_json_from_text(answer_text)
+
+            logger.info(f"Check tool LLM response: {response_json}")
+
+            response = json.loads(response_json)
+            response = response.get("output", "UNCLEAR")
+            if response == "CLEAR":
+                logger.debug(f"API {api['name']}: Description is clear")
+                return True
+            else:
+                logger.debug(f"API {api['name']}: Description is unclear")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to check clarity for API {api['name']}: {e}")
+            # If check fails, assume enhancement is needed
+            return False
+
     def _enhance_descriptions(self, apis: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Enhance API descriptions using LLM for better quality."""
         enhanced_apis = []
         
         for api in tqdm(apis, desc="Enhancing descriptions"):
             try:
-                logger.info(f"Enhancing API: {api['name']}")
+                logger.info(f"Processing API: {api['name']}")
                 logger.info(f"The original tool description is: {json.dumps(api, indent=2, ensure_ascii=False)}")
-                enhanced_api = self._enhance_complete_api(api)
-                enhanced_apis.append(enhanced_api)
-                logger.info(f"The enhanced tool description is: {json.dumps(enhanced_api, indent=2, ensure_ascii=False)}")
+                
+                # Step 1: Check if description is clear
+                is_clear = self._check_description_clarity(api)
+                
+                if is_clear:
+                    # Description is clear, keep original
+                    logger.info(f"API {api['name']}: Description is clear, keeping original")
+                    enhanced_apis.append(api)
+                else:
+                    # Description needs enhancement
+                    logger.info(f"API {api['name']}: Description needs enhancement")
+                    enhanced_api = self._enhance_complete_api(api)
+                    enhanced_apis.append(enhanced_api)
+                    logger.info(f"The enhanced tool description is: {json.dumps(enhanced_api, indent=2, ensure_ascii=False)}")
+                    
             except Exception as e:
-                logger.error(f"Failed to enhance API {api.get('name', 'unknown')}: {e}")
-                enhanced_apis.append(api)  # Keep original if enhancement fails
+                logger.error(f"Failed to process API {api.get('name', 'unknown')}: {e}")
+                enhanced_apis.append(api)  # Keep original if processing fails
         
         return enhanced_apis
     
@@ -471,13 +645,12 @@ class APICleaner:
         """Enhance complete API including tool description, parameters, and returns using LLM."""
         try:
             system_prompt = textwrap.dedent(
-                """You are an API documentation expert. Review the provided tool specification and improve any unclear, ambiguous, or missing descriptions.
+                """You are an API documentation expert. Improve the provided tool specification by enhancing unclear, ambiguous, or missing descriptions.
 
                 Your task:
                 1. Using the same language as the input tool description
-                2. Check the tool description, parameter descriptions, and return descriptions
-                3. If all descriptions are clear and professional, output only "yes"
-                4. If any descriptions need improvement, output a properly formatted JSON with enhanced descriptions
+                2. Improve the tool description, parameter descriptions, and return descriptions
+                3. Output a properly formatted JSON with enhanced descriptions
 
                 Requirements for improvements:
                 - Tool description: Clear, concise explanation of main functionality (50-100 characters)
@@ -487,20 +660,18 @@ class APICleaner:
                 - Maintain consistency in style and terminology
                 - Fix any grammatical errors or unclear phrasing
 
-                Output format:
-                - If no changes needed: "yes"
-                - If changes needed: Complete JSON within ```json``` block in the same format as input with improved descriptions only"""
+                Output format: Complete JSON within ```json``` block in the same format as input with improved descriptions"""
             )
 
             # Format the API for review
             api_text = json.dumps(api, indent=2, ensure_ascii=False)
 
             user_prompt = textwrap.dedent(
-                f"""Please review this tool specification and improve any unclear or ambiguous descriptions:
+                f"""Please improve this tool specification by enhancing any unclear or ambiguous descriptions:
 
                 {api_text}
 
-                Output either "yes" if no improvements are needed, or the complete improved JSON specification:"""
+                Output the complete improved JSON specification:"""
             )
 
             thinking_content, answer_text, function_calls = generate(
@@ -511,11 +682,6 @@ class APICleaner:
                 max_tokens=4096
             )
 
-            # Check if LLM says no changes needed
-            if answer_text.lower().startswith("yes"):
-                logger.debug(f"API {api['name']}: No enhancement needed")
-                return api
-            
             response = extract_json_from_text(answer_text)
             
             # Try to parse the enhanced API

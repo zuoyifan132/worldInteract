@@ -1,0 +1,21 @@
+{
+  "domain": "file_transfer",
+  "description": "Tools for transferring files from external sources",
+  "tool_count": 1,
+  "tools": [
+    {
+      "name": "download_file",
+      "description": "Downloads a file from a specified URL to a designated local path.",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the file to be downloaded. This should be a valid and accessible URL."
+        },
+        "save_path": {
+          "type": "string",
+          "description": "The local file system path where the downloaded file will be saved. Ensure that the directory exists and is writable."
+        }
+      }
+    }
+  ]
+}

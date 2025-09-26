@@ -1,0 +1,56 @@
+{
+  "domain": "location_services",
+  "description": "Tools for geographic location operations including distance calculations and zipcode lookups",
+  "tool_count": 2,
+  "tools": [
+    {
+      "name": "estimate_distance",
+      "description": "Estimates the distance between two specified cities based on their zip codes.",
+      "parameters": {
+        "cityA": {
+          "type": "string",
+          "description": "The zip code of the first city used for distance calculation."
+        },
+        "cityB": {
+          "type": "string",
+          "description": "The zip code of the second city used for distance calculation."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "distance": {
+            "type": "float",
+            "description": "The calculated distance between the two cities in kilometers."
+          },
+          "intermediaryCities": {
+            "type": "array",
+            "description": "[Optional] A list of cities located between the two specified cities.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_zipcode_based_on_city",
+      "description": "Retrieves the corresponding zipcode for a specified city.",
+      "parameters": {
+        "city": {
+          "type": "string",
+          "description": "The full name of the city for which the zipcode is requested."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "zipcode": {
+            "type": "string",
+            "description": "The zipcode associated with the specified city."
+          }
+        }
+      }
+    }
+  ]
+}

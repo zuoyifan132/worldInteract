@@ -18,20 +18,24 @@ scenario_collection:
   min_tool_name_length: 3
   max_tool_name_length: 50
   required_fields: ["name", "description", "parameters", "returns"]
-  duplicate_threshold: 0.8  # Similarity threshold for detecting duplicates
+  duplicate_threshold: 0.8  # Similarity threshold for detecting duplicates (ignored when similarity_method is "none")
   description_min_length: 10
-  similarity_method: "sequence_matcher"  # Options: "sequence_matcher" or "sequence_matcher"
+  similarity_method: None  # Options:
+                                         # - "embedding_model": Use OpenAI embeddings for semantic similarity (most accurate, requires API key)
+                                         # - "sequence_matcher": Use text-based similarity (fast, no external dependencies)
+                                         # - "none": Only remove exact function name duplicates (fastest)
 
 # =============================================================================
 # PHASE 2: TOOL DEPENDENCY GRAPH MODELING
 # Domain clustering and dependency analysis
 # =============================================================================
 dependency_graph:
-  similarity_threshold: 0.4  # Cosine similarity threshold for creating edges
+  similarity_threshold: 0.5  # Cosine similarity threshold for creating edges
   min_community_size: 2      # Minimum tools per domain
   max_community_size: 20     # Maximum tools per domain
   louvain_resolution: 1.0    # Louvain algorithm resolution parameter
   enable_llm_validation: true # Whether to use LLM for dependency validation
+  handle_singleton: false    # Whether to handle singleton tools by assigning them to existing domains
   singleton_tool_similarity_threshold: 0.6  # Similarity threshold for singleton tools to join domains
 
 # =============================================================================

@@ -1,0 +1,75 @@
+{
+  "domain": "text_processing",
+  "description": "Tools for analyzing, comparing, and processing text content within files",
+  "tool_count": 3,
+  "tools": [
+    {
+      "name": "diff",
+      "description": "Compares two files line by line in the current directory, highlighting differences.",
+      "parameters": {
+        "file_name1": {
+          "type": "string",
+          "description": "The name of the first file to compare, located in the current directory."
+        },
+        "file_name2": {
+          "type": "string",
+          "description": "The name of the second file to compare, located in the current directory."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "diff_lines": {
+            "type": "string",
+            "description": "A string representation of the differences between the two files line by line."
+          }
+        }
+      }
+    },
+    {
+      "name": "grep",
+      "description": "Searches for lines in a specified file that match a provided pattern within the current directory.",
+      "parameters": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the target file, without any path. The file must reside in the current local directory."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "The string pattern to search for within the specified file."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "matching_lines": {
+            "type": "array",
+            "description": "An array of lines from the file that contain the specified pattern.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "sort",
+      "description": "Sorts the contents of a specified file line by line.",
+      "parameters": {
+        "file_name": {
+          "type": "string",
+          "description": "The name of the file located in the current directory whose contents are to be sorted."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "sorted_content": {
+            "type": "string",
+            "description": "The line-by-line sorted content of the specified file."
+          }
+        }
+      }
+    }
+  ]
+}

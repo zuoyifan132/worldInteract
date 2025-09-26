@@ -1,0 +1,83 @@
+{
+  "domain": "stock_information_lookup",
+  "description": "Tools for retrieving stock data, company information, and market listings",
+  "tool_count": 3,
+  "tools": [
+    {
+      "name": "get_stock_info",
+      "description": "Retrieve detailed information about a specified stock including pricing and volume data.",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "A unique ticker symbol representing the stock to be queried."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "price": {
+            "type": "float",
+            "description": "The current market price of the specified stock."
+          },
+          "percent_change": {
+            "type": "float",
+            "description": "The percentage change in the stock's price compared to the previous trading session."
+          },
+          "volume": {
+            "type": "float",
+            "description": "The total trading volume of the stock during the last trading session."
+          },
+          "MA(5)": {
+            "type": "float",
+            "description": "The 5-day moving average price of the stock, indicative of short-term trends."
+          },
+          "MA(20)": {
+            "type": "float",
+            "description": "The 20-day moving average price of the stock, indicative of medium-term trends."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_symbol_by_name",
+      "description": "Retrieve the stock symbol associated with a specified company name.",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The full name of the company for which the stock symbol is requested."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The stock symbol of the requested company. Returns 'Stock not found' if the symbol cannot be identified."
+          }
+        }
+      }
+    },
+    {
+      "name": "get_available_stocks",
+      "description": "This tool belongs to the trading system, which allows users to trade stocks, manage their account, and view stock information. Tool description: Get a list of stock symbols in the given sector.",
+      "parameters": {
+        "sector": {
+          "type": "string",
+          "description": "The sector to retrieve stocks from (e.g., 'Technology')."
+        }
+      },
+      "returns": {
+        "type": "dict",
+        "properties": {
+          "stock_list": {
+            "type": "array",
+            "description": "List of stock symbols in the specified sector.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
