@@ -5,9 +5,12 @@ This example demonstrates how to create a complete environment
 from an API collection.
 """
 
+import sys
 import json
 import logging
 from pathlib import Path
+
+sys.path.append("..")
 
 from worldInteract.core.environment import EnvironmentManager
 
@@ -33,6 +36,7 @@ def main():
     # Path to API collection
     project_root = Path(__file__).parent.parent
     api_collection_path = project_root / "data" / "apis_collections" / "api_collection_example.json"
+    # api_collection_path = project_root / "data" / "apis_collections" / "ticket_api_example.json"
     
     if not api_collection_path.exists():
         logger.error(f"API collection file not found: {api_collection_path}")

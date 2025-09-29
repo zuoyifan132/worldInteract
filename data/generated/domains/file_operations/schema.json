@@ -1,111 +1,29 @@
 {
-  "files": {
-    "description": "Table storing file records and metadata",
-    "primary_key": "file_id",
+  "directories": {
+    "description": "Directory structure and metadata in the file system",
+    "primary_key": "path",
     "fields": {
-      "file_id": {
+      "path": {
         "type": "string",
-        "description": "Unique identifier for the file",
-        "required": true
-      },
-      "file_path": {
-        "type": "string",
-        "description": "Full path to the file",
+        "description": "Absolute path of the directory",
         "required": true
       },
       "name": {
         "type": "string",
-        "description": "File name without path",
+        "description": "Directory name",
         "required": true
       },
-      "parent_directory_id": {
+      "parent_path": {
         "type": "string",
-        "description": "Reference to parent directory",
-        "required": true
-      },
-      "content": {
-        "type": "string",
-        "description": "File content as string",
+        "description": "Path of parent directory",
         "required": false,
-        "default": ""
-      },
-      "encoding": {
-        "type": "string",
-        "description": "File encoding format",
-        "required": false,
-        "default": "utf-8"
+        "default": null
       },
       "size": {
         "type": "integer",
-        "description": "File size in bytes",
+        "description": "Directory size in bytes",
         "required": true,
         "default": 0
-      },
-      "file_type": {
-        "type": "string",
-        "description": "File type/extension",
-        "required": false
-      },
-      "is_hidden": {
-        "type": "boolean",
-        "description": "Whether file is hidden",
-        "required": false,
-        "default": false
-      },
-      "created_at": {
-        "type": "string",
-        "description": "File creation timestamp",
-        "required": true
-      },
-      "modified_at": {
-        "type": "string",
-        "description": "Last modification timestamp",
-        "required": true
-      },
-      "permissions": {
-        "type": "string",
-        "description": "File permissions string",
-        "required": false,
-        "default": "644"
-      }
-    },
-    "relationships": {
-      "parent_directory_id": {
-        "type": "many_to_one",
-        "table": "directories",
-        "field": "directory_id"
-      }
-    }
-  },
-  "directories": {
-    "description": "Table storing directory records and hierarchy",
-    "primary_key": "directory_id",
-    "fields": {
-      "directory_id": {
-        "type": "string",
-        "description": "Unique identifier for the directory",
-        "required": true
-      },
-      "directory_path": {
-        "type": "string",
-        "description": "Full path to the directory",
-        "required": true
-      },
-      "name": {
-        "type": "string",
-        "description": "Directory name without path",
-        "required": true
-      },
-      "parent_directory_id": {
-        "type": "string",
-        "description": "Reference to parent directory (null for root)",
-        "required": false
-      },
-      "is_hidden": {
-        "type": "boolean",
-        "description": "Whether directory is hidden",
-        "required": false,
-        "default": false
       },
       "created_at": {
         "type": "string",
@@ -114,128 +32,249 @@
       },
       "modified_at": {
         "type": "string",
-        "description": "Last modification timestamp",
+        "description": "Directory last modification timestamp",
         "required": true
       },
       "permissions": {
         "type": "string",
-        "description": "Directory permissions string",
-        "required": false,
-        "default": "755"
+        "description": "Directory permissions (e.g., rwxr-xr-x)",
+        "required": true,
+        "default": "rwxr-xr-x"
       }
     },
     "relationships": {
-      "parent_directory_id": {
+      "parent_path": {
         "type": "many_to_one",
         "table": "directories",
-        "field": "directory_id"
+        "field": "path"
       }
     }
   },
-  "file_operations": {
-    "description": "Table tracking file system operations and history",
+  "files": {
+    "description": "File metadata and content in the file system",
+    "primary_key": "path",
+    "fields": {
+      "path": {
+        "type": "string",
+        "description": "Absolute path of the file",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "description": "File name with extension",
+        "required": true
+      },
+      "directory_path": {
+        "type": "string",
+        "description": "Path of containing directory",
+        "required": true
+      },
+      "content": {
+        "type": "string",
+        "description": "File content as text",
+        "required": true,
+        "default": ""
+      },
+      "size": {
+        "type": "integer",
+        "description": "File size in bytes",
+        "required": true,
+        "default": 0
+      },
+      "extension": {
+        "type": "string",
+        "description": "File extension (e.g., txt, py, js)",
+        "required": false,
+        "default": ""
+      },
+      "line_count": {
+        "type": "integer",
+        "description": "Number of lines in the file",
+        "required": true,
+        "default": 0
+      },
+      "word_count": {
+        "type": "integer",
+        "description": "Number of words in the file",
+        "required": true,
+        "default": 0
+      },
+      "character_count": {
+        "type": "integer",
+        "description": "Number of characters in the file",
+        "required": true,
+        "default": 0
+      },
+      "created_at": {
+        "type": "string",
+        "description": "File creation timestamp",
+        "required": true
+      },
+      "modified_at": {
+        "type": "string",
+        "description": "File last modification timestamp",
+        "required": true
+      },
+      "accessed_at": {
+        "type": "string",
+        "description": "File last access timestamp",
+        "required": true
+      },
+      "permissions": {
+        "type": "string",
+        "description": "File permissions (e.g., rw-r--r--)",
+        "required": true,
+        "default": "rw-r--r--"
+      }
+    },
+    "relationships": {
+      "directory_path": {
+        "type": "many_to_one",
+        "table": "directories",
+        "field": "path"
+      }
+    }
+  },
+  "sessions": {
+    "description": "Current session state and working directory information",
+    "primary_key": "session_id",
+    "fields": {
+      "session_id": {
+        "type": "string",
+        "description": "Unique session identifier",
+        "required": true,
+        "default": "default"
+      },
+      "current_working_directory": {
+        "type": "string",
+        "description": "Current working directory path",
+        "required": true,
+        "default": "/"
+      },
+      "last_command": {
+        "type": "string",
+        "description": "Last executed command",
+        "required": false,
+        "default": ""
+      },
+      "created_at": {
+        "type": "string",
+        "description": "Session creation timestamp",
+        "required": true
+      },
+      "updated_at": {
+        "type": "string",
+        "description": "Session last update timestamp",
+        "required": true
+      }
+    },
+    "relationships": {
+      "current_working_directory": {
+        "type": "many_to_one",
+        "table": "directories",
+        "field": "path"
+      }
+    }
+  },
+  "operations_log": {
+    "description": "Log of file system operations for auditing and history",
     "primary_key": "operation_id",
     "fields": {
       "operation_id": {
         "type": "string",
-        "description": "Unique identifier for the operation",
+        "description": "Unique operation identifier",
         "required": true
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Session that performed the operation",
+        "required": true,
+        "default": "default"
       },
       "operation_type": {
         "type": "string",
-        "description": "Type of operation (create, read, delete, move, etc.)",
+        "description": "Type of operation (create, read, update, delete, copy, move)",
         "required": true
       },
-      "file_id": {
+      "command": {
         "type": "string",
-        "description": "Reference to affected file",
-        "required": false
-      },
-      "directory_id": {
-        "type": "string",
-        "description": "Reference to affected directory",
-        "required": false
+        "description": "Command that was executed",
+        "required": true
       },
       "source_path": {
         "type": "string",
-        "description": "Source path for operations like move",
+        "description": "Source file or directory path",
         "required": false
       },
       "destination_path": {
         "type": "string",
-        "description": "Destination path for operations like move",
+        "description": "Destination file or directory path",
         "required": false
-      },
-      "timestamp": {
-        "type": "string",
-        "description": "When the operation occurred",
-        "required": true
       },
       "success": {
         "type": "boolean",
         "description": "Whether the operation was successful",
         "required": true
       },
-      "message": {
+      "error_message": {
         "type": "string",
-        "description": "Operation result message",
+        "description": "Error message if operation failed",
         "required": false
+      },
+      "timestamp": {
+        "type": "string",
+        "description": "Operation execution timestamp",
+        "required": true
       }
     },
     "relationships": {
-      "file_id": {
+      "session_id": {
         "type": "many_to_one",
-        "table": "files",
-        "field": "file_id"
-      },
-      "directory_id": {
-        "type": "many_to_one",
-        "table": "directories",
-        "field": "directory_id"
+        "table": "sessions",
+        "field": "session_id"
       }
     }
   },
-  "search_index": {
-    "description": "Table for search operations and content indexing",
-    "primary_key": "index_id",
+  "search_cache": {
+    "description": "Cached search results for performance optimization",
+    "primary_key": "cache_id",
     "fields": {
-      "index_id": {
+      "cache_id": {
         "type": "string",
-        "description": "Unique identifier for the index entry",
+        "description": "Unique cache entry identifier",
         "required": true
       },
-      "file_id": {
+      "search_type": {
         "type": "string",
-        "description": "Reference to indexed file",
+        "description": "Type of search (find, grep)",
         "required": true
       },
-      "content_snippet": {
+      "search_path": {
         "type": "string",
-        "description": "Indexed content snippet",
-        "required": false
-      },
-      "line_number": {
-        "type": "integer",
-        "description": "Line number where match was found",
-        "required": false
-      },
-      "match_type": {
-        "type": "string",
-        "description": "Type of match (filename, content, etc.)",
+        "description": "Path where search was performed",
         "required": true
       },
-      "last_indexed": {
+      "search_pattern": {
         "type": "string",
-        "description": "When the file was last indexed",
+        "description": "Search pattern or name",
+        "required": true
+      },
+      "results": {
+        "type": "array",
+        "description": "Array of search results",
+        "required": true
+      },
+      "created_at": {
+        "type": "string",
+        "description": "Cache entry creation timestamp",
+        "required": true
+      },
+      "expires_at": {
+        "type": "string",
+        "description": "Cache entry expiration timestamp",
         "required": true
       }
     },
-    "relationships": {
-      "file_id": {
-        "type": "many_to_one",
-        "table": "files",
-        "field": "file_id"
-      }
-    }
+    "relationships": {}
   }
 }

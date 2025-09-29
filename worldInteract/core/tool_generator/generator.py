@@ -5,13 +5,13 @@ Tool code generator that creates executable Python implementations from API desc
 import json
 import logging
 import ast
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
-from worldInteract.utils.parser_utils import extract_python_code_from_text
+from worldInteract.utils.parser_utils import extract_python_code_from_text, extract_json_from_text, extract_requirements_from_text
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class ToolGenerator:
         api_collection: Dict[str, Any], 
         schema: Dict[str, Any],
         initial_state: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, str]:
+    ) -> Tuple[Dict[str, str], List[str]]:
         """
         Generate tool implementations for all tools in the API collection.
         
@@ -45,7 +45,7 @@ class ToolGenerator:
             initial_state: Initial database state to ensure compatibility
             
         Returns:
-            Dictionary mapping tool names to their Python implementations
+            Tuple of (Dictionary mapping tool names to their Python implementations, List of requirements)
         """
         domain = api_collection.get("domain", "unknown")
         tools = api_collection.get("tools", [])
@@ -53,21 +53,23 @@ class ToolGenerator:
         logger.info(f"Generating {len(tools)} tools for domain: {domain}")
         
         generated_tools = {}
+        all_requirements = set()
         
         for tool in tools:
             tool_name = tool["name"]
             logger.info(f"Generating tool: {tool_name}")
             
             try:
-                tool_code = self._generate_tool_with_llm(tool, schema, domain, initial_state)
+                tool_code, requirements = self._generate_tool_with_llm(tool, schema, domain, initial_state)
                 generated_tools[tool_name] = tool_code
+                all_requirements.update(requirements)
                 logger.info(f"Successfully generated tool: {tool_name}")
             except Exception as e:
                 logger.error(f"Failed to generate tool {tool_name}: {e}")
                 raise
         
         logger.info(f"Successfully generated all {len(generated_tools)} tools")
-        return generated_tools
+        return generated_tools, list(all_requirements)
     
     @retry(
         stop=stop_after_attempt(3),
@@ -79,7 +81,7 @@ class ToolGenerator:
         schema: Dict[str, Any],
         domain: str,
         initial_state: Optional[Dict[str, Any]] = None
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         """
         Generate tool implementation using LLM with retry mechanism.
         
@@ -90,7 +92,7 @@ class ToolGenerator:
             initial_state: Initial database state for compatibility
             
         Returns:
-            Generated Python code for the tool
+            Tuple of (Generated Python code for the tool, List of requirements)
         """
         system_prompt = self._create_tool_system_prompt()
         user_prompt = self._create_tool_user_prompt(tool, schema, domain, initial_state)
@@ -107,17 +109,21 @@ class ToolGenerator:
             # Extract Python code from the response
             tool_code = extract_python_code_from_text(answer_text)
             
+            # Extract requirements from the response
+            requirements = extract_requirements_from_text(answer_text)
+            
             # Validate the generated code
             self._validate_tool_code(tool_code, tool["name"])
 
             logger.info(f"Tool code generated: {tool_code}")
+            logger.info(f"Requirements extracted: {requirements}")
             
-            return tool_code
+            return tool_code, requirements
             
         except Exception as e:
             logger.error(f"Failed to generate tool {tool['name']}: {e}")
             raise
-    
+
     def _create_tool_system_prompt(self) -> str:
         """Create system prompt for tool generation."""
         return """You are an expert Python developer specializing in creating tool implementations for database operations.
@@ -179,7 +185,16 @@ Important Notes:
 - Maintain relationships between entities according to the schema
 - Always return valid JSON strings
 - Include comprehensive error handling
-- **CRITICAL**: ALWAYS include `after_execution_state: data` in the result JSON to capture final database state"""
+- **CRITICAL**: ALWAYS include `after_execution_state: data` in the result JSON to capture final database state
+
+Requirements Specification:
+If your implementation requires external Python packages (beyond standard library), provide them in a JSON format:
+
+```json
+["package1", "package2==1.0.0", "package3>=2.0"]
+```
+
+Place this JSON block after your Python code implementation."""
     
     def _create_tool_user_prompt(
         self, 
@@ -377,7 +392,7 @@ Generate ONLY the Python function implementation. Do not include imports or addi
             "import json",
             "import uuid",
             "import datetime",
-            "from typing import Dict, Any, List, Optional",
+            "from typing import Dict, Any, List, Optional, Tuple",
             ""
         ]
         
@@ -389,7 +404,7 @@ Generate ONLY the Python function implementation. Do not include imports or addi
             "import json",
             "import uuid", 
             "import datetime",
-            "from typing import Dict, Any, List, Optional",
+            "from typing import Dict, Any, List, Optional, Tuple",
             "",
             '"""',
             "Generated tool implementations for domain operations.",

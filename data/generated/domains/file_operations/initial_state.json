@@ -1,182 +1,114 @@
 {
   "directories": {
-    "dir_001": {
-      "directory_id": "dir_001",
-      "directory_path": "/home/user/projects",
-      "name": "projects",
-      "parent_directory_id": null,
-      "is_hidden": false,
+    "/home/user": {
+      "path": "/home/user",
+      "name": "user",
+      "parent_path": "/home",
+      "size": 4096,
       "created_at": "2024-01-15T10:30:00Z",
-      "modified_at": "2024-01-20T14:22:00Z",
-      "permissions": "rwxr-xr-x"
+      "modified_at": "2024-01-20T14:22:15Z",
+      "permissions": "drwxr-xr-x"
     },
-    "dir_002": {
-      "directory_id": "dir_002",
-      "directory_path": "/home/user/projects/webapp",
-      "name": "webapp",
-      "parent_directory_id": "dir_001",
-      "is_hidden": false,
-      "created_at": "2024-01-16T09:15:00Z",
-      "modified_at": "2024-01-22T16:45:00Z",
-      "permissions": "rwxr-xr-x"
-    },
-    "dir_003": {
-      "directory_id": "dir_003",
-      "directory_path": "/home/user/projects/.config",
-      "name": ".config",
-      "parent_directory_id": "dir_001",
-      "is_hidden": true,
-      "created_at": "2024-01-16T09:20:00Z",
-      "modified_at": "2024-01-18T11:30:00Z",
-      "permissions": "rwx------"
-    },
-    "dir_004": {
-      "directory_id": "dir_004",
-      "directory_path": "/home/user/documents",
-      "name": "documents",
-      "parent_directory_id": null,
-      "is_hidden": false,
-      "created_at": "2024-01-10T08:00:00Z",
-      "modified_at": "2024-01-25T13:15:00Z",
-      "permissions": "rwxr-xr-x"
+    "/home/user/projects": {
+      "path": "/home/user/projects",
+      "name": "projects",
+      "parent_path": "/home/user",
+      "size": 4096,
+      "created_at": "2024-01-16T09:15:30Z",
+      "modified_at": "2024-01-19T16:45:22Z",
+      "permissions": "drwxr-xr-x"
     }
   },
   "files": {
-    "file_001": {
-      "file_id": "file_001",
-      "file_path": "/home/user/projects/webapp/index.html",
-      "name": "index.html",
-      "parent_directory_id": "dir_002",
-      "content": "<!DOCTYPE html>\n<html>\n<head>\n    <title>My Web App</title>\n</head>\n<body>\n    <h1>Welcome to My App</h1>\n    <p>This is the main page.</p>\n</body>\n</html>",
-      "encoding": "utf-8",
-      "size": 156,
-      "file_type": "text/html",
-      "is_hidden": false,
-      "created_at": "2024-01-17T14:30:00Z",
-      "modified_at": "2024-01-22T16:45:00Z",
-      "permissions": "rw-r--r--"
+    "/home/user/README.md": {
+      "path": "/home/user/README.md",
+      "name": "README.md",
+      "directory_path": "/home/user",
+      "content": "# Welcome to My Home Directory\n\nThis is my personal workspace where I keep all my projects and documents.\n\n## Current Projects\n- Web development\n- Data analysis scripts\n- Personal notes\n\nLast updated: January 2024",
+      "size": 245,
+      "extension": "md",
+      "line_count": 12,
+      "word_count": 35,
+      "character_count": 245,
+      "created_at": "2024-01-15T11:00:00Z",
+      "modified_at": "2024-01-18T13:30:45Z",
+      "accessed_at": "2024-01-20T09:15:30Z",
+      "permissions": "-rw-r--r--"
     },
-    "file_002": {
-      "file_id": "file_002",
-      "file_path": "/home/user/projects/webapp/app.js",
-      "name": "app.js",
-      "parent_directory_id": "dir_002",
-      "content": "// Main application logic\nfunction initApp() {\n    console.log('App initialized');\n    setupEventListeners();\n}\n\nfunction setupEventListeners() {\n    // Add event handlers here\n}\n\ninitApp();",
-      "encoding": "utf-8",
-      "size": 203,
-      "file_type": "application/javascript",
-      "is_hidden": false,
-      "created_at": "2024-01-18T10:15:00Z",
-      "modified_at": "2024-01-21T09:30:00Z",
-      "permissions": "rw-r--r--"
-    },
-    "file_003": {
-      "file_id": "file_003",
-      "file_path": "/home/user/projects/.config/settings.json",
-      "name": "settings.json",
-      "parent_directory_id": "dir_003",
-      "content": "{\n  \"theme\": \"dark\",\n  \"language\": \"en\",\n  \"debug\": true,\n  \"api_endpoint\": \"https://api.example.com\"\n}",
-      "encoding": "utf-8",
-      "size": 89,
-      "file_type": "application/json",
-      "is_hidden": true,
-      "created_at": "2024-01-16T09:25:00Z",
-      "modified_at": "2024-01-18T11:30:00Z",
-      "permissions": "rw-------"
-    },
-    "file_004": {
-      "file_id": "file_004",
-      "file_path": "/home/user/documents/readme.txt",
-      "name": "readme.txt",
-      "parent_directory_id": "dir_004",
-      "content": "Project Documentation\n====================\n\nThis document contains important information about the project setup and configuration.\n\nGetting Started:\n1. Install dependencies\n2. Configure settings\n3. Run the application\n\nFor more help, contact support@example.com",
-      "encoding": "utf-8",
-      "size": 267,
-      "file_type": "text/plain",
-      "is_hidden": false,
-      "created_at": "2024-01-12T15:45:00Z",
-      "modified_at": "2024-01-25T13:15:00Z",
-      "permissions": "rw-r--r--"
+    "/home/user/projects/main.py": {
+      "path": "/home/user/projects/main.py",
+      "name": "main.py",
+      "directory_path": "/home/user/projects",
+      "content": "#!/usr/bin/env python3\n\"\"\"\nMain application entry point\n\"\"\"\n\nimport os\nimport sys\nfrom datetime import datetime\n\ndef main():\n    print(\"Application started at:\", datetime.now())\n    print(\"Current working directory:\", os.getcwd())\n    \n    # Add your application logic here\n    pass\n\nif __name__ == \"__main__\":\n    main()",
+      "size": 287,
+      "extension": "py",
+      "line_count": 16,
+      "word_count": 42,
+      "character_count": 287,
+      "created_at": "2024-01-16T14:20:15Z",
+      "modified_at": "2024-01-19T10:45:30Z",
+      "accessed_at": "2024-01-19T16:20:10Z",
+      "permissions": "-rwxr-xr-x"
     }
   },
-  "file_operations": {
+  "sessions": {
+    "sess_001": {
+      "session_id": "sess_001",
+      "current_working_directory": "/home/user",
+      "last_command": "ls -la",
+      "created_at": "2024-01-20T08:30:00Z",
+      "updated_at": "2024-01-20T14:45:22Z"
+    },
+    "sess_002": {
+      "session_id": "sess_002",
+      "current_working_directory": "/home/user/projects",
+      "last_command": "python main.py",
+      "created_at": "2024-01-19T16:15:30Z",
+      "updated_at": "2024-01-19T16:30:45Z"
+    }
+  },
+  "operations_log": {
     "op_001": {
       "operation_id": "op_001",
-      "operation_type": "create",
-      "file_id": "file_001",
-      "directory_id": "dir_002",
+      "session_id": "sess_001",
+      "operation_type": "create_file",
+      "command": "touch /home/user/README.md",
       "source_path": null,
-      "destination_path": "/home/user/projects/webapp/index.html",
-      "timestamp": "2024-01-17T14:30:00Z",
+      "destination_path": "/home/user/README.md",
       "success": true,
-      "message": "File created successfully"
+      "error_message": null,
+      "timestamp": "2024-01-15T11:00:00Z"
     },
     "op_002": {
       "operation_id": "op_002",
-      "operation_type": "modify",
-      "file_id": "file_001",
-      "directory_id": null,
-      "source_path": "/home/user/projects/webapp/index.html",
-      "destination_path": "/home/user/projects/webapp/index.html",
-      "timestamp": "2024-01-22T16:45:00Z",
-      "success": true,
-      "message": "File content updated"
-    },
-    "op_003": {
-      "operation_id": "op_003",
-      "operation_type": "copy",
-      "file_id": "file_003",
-      "directory_id": "dir_003",
-      "source_path": "/home/user/projects/config/settings.json",
-      "destination_path": "/home/user/projects/.config/settings.json",
-      "timestamp": "2024-01-18T11:20:00Z",
-      "success": true,
-      "message": "File copied to hidden directory"
-    },
-    "op_004": {
-      "operation_id": "op_004",
-      "operation_type": "delete",
-      "file_id": null,
-      "directory_id": "dir_001",
-      "source_path": "/home/user/projects/old_backup.zip",
-      "destination_path": null,
-      "timestamp": "2024-01-19T12:00:00Z",
+      "session_id": "sess_002",
+      "operation_type": "copy_file",
+      "command": "cp /tmp/backup.py /home/user/projects/main.py",
+      "source_path": "/tmp/backup.py",
+      "destination_path": "/home/user/projects/main.py",
       "success": false,
-      "message": "Permission denied: insufficient privileges"
+      "error_message": "Permission denied: cannot access /tmp/backup.py",
+      "timestamp": "2024-01-19T15:30:22Z"
     }
   },
-  "search_index": {
-    "idx_001": {
-      "index_id": "idx_001",
-      "file_id": "file_001",
-      "content_snippet": "Welcome to My App",
-      "line_number": 7,
-      "match_type": "text",
-      "last_indexed": "2024-01-22T17:00:00Z"
+  "search_cache": {
+    "cache_001": {
+      "cache_id": "cache_001",
+      "search_type": "filename",
+      "search_path": "/home/user",
+      "search_pattern": "*.py",
+      "results": "[{\"path\": \"/home/user/projects/main.py\", \"name\": \"main.py\", \"size\": 287}]",
+      "created_at": "2024-01-20T10:15:30Z",
+      "expires_at": "2024-01-20T11:15:30Z"
     },
-    "idx_002": {
-      "index_id": "idx_002",
-      "file_id": "file_002",
-      "content_snippet": "function initApp()",
-      "line_number": 2,
-      "match_type": "function",
-      "last_indexed": "2024-01-21T10:00:00Z"
-    },
-    "idx_003": {
-      "index_id": "idx_003",
-      "file_id": "file_003",
-      "content_snippet": "api_endpoint",
-      "line_number": 5,
-      "match_type": "keyword",
-      "last_indexed": "2024-01-18T12:00:00Z"
-    },
-    "idx_004": {
-      "index_id": "idx_004",
-      "file_id": "file_004",
-      "content_snippet": "contact support@example.com",
-      "line_number": 10,
-      "match_type": "email",
-      "last_indexed": "2024-01-25T14:00:00Z"
+    "cache_002": {
+      "cache_id": "cache_002",
+      "search_type": "content",
+      "search_path": "/home/user",
+      "search_pattern": "datetime",
+      "results": "[{\"path\": \"/home/user/projects/main.py\", \"line_number\": 8, \"match\": \"from datetime import datetime\"}, {\"path\": \"/home/user/projects/main.py\", \"line_number\": 11, \"match\": \"datetime.now()\"}]",
+      "created_at": "2024-01-19T14:20:15Z",
+      "expires_at": "2024-01-19T15:20:15Z"
     }
   }
 }

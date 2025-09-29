@@ -65,8 +65,8 @@ tool_generation:
 
 # State generation settings
 state_generation:
-  min_records_per_table: 5
-  max_records_per_table: 20
+  min_records_per_table: 3
+  max_records_per_table: 5
   data_diversity: true
   realistic_relationships: true
 
@@ -76,6 +76,20 @@ validation:
   check_state_consistency: true
   validate_return_types: true
   max_test_cases: 5
+
+# Validation agent settings
+validation_agent:
+  test_case_num: 3
+  max_validation_agent_rounds: 10
+  enable_sandbox: true
+  sandbox_timeout: 30
+
+# Code agent settings (replaces tool generation + validation)
+code_agent:
+  test_case_num: 3
+  max_code_agent_rounds: 10
+  enable_sandbox: true
+  sandbox_timeout: 30
 
 # Domain-specific settings
 domains:

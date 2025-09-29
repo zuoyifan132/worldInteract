@@ -9,13 +9,14 @@ from loguru import logger
 dotenv.load_dotenv("../../../.env")
 
 
-def generate(system: str, user: str, **kwargs) -> Tuple[Dict[str, Any], str, List[Dict[str, Any]]]:
+def generate(system: str = None, user: str = None, messages: list = None, **kwargs) -> Tuple[Dict[str, Any], str, List[Dict[str, Any]]]:
     """
     Generate response using OpenAI GPT model with thinking process and function calls support.
     
     Args:
-        system: System prompt
-        user: User input
+        system: System prompt (方式1)
+        user: User input (方式1)
+        messages: 预组织的消息数组 (方式2)
         **kwargs: Additional parameters:
             - model_name: Model to use (default: o4-mini-2025-04-16)
             - temperature: Sampling temperature (default: 1.0)
@@ -44,19 +45,22 @@ def generate(system: str, user: str, **kwargs) -> Tuple[Dict[str, Any], str, Lis
     # Initialize client
     client = openai.OpenAI(api_key=api_key)
     
-    # Prepare messages with special prompt for reasoning extraction
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
+    # 根据调用方式准备消息
+    if messages is not None:
+        # 方式2: 使用预组织的消息数组
+        api_messages = messages
+    else:
+        # 方式1: 使用 system 和 user 参数
+        api_messages = []
+        if system:
+            api_messages.append({"role": "system", "content": system})
+        api_messages.append({"role": "user", "content": user})
         
     try:
         # Make API call
         response = client.chat.completions.create(
             model=model_name,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user}
-            ],
+            messages=api_messages,
             temperature=temperature,
             max_completion_tokens=max_tokens,
             tools=tools,

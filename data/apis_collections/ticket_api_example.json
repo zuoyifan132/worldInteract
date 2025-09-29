@@ -1,0 +1,143 @@
+{
+    "domain": "ticketing_system",
+    "description": "A comprehensive ticketing system that is part of a company infrastructure, designed to streamline support operations and business workflow management. This system enables users to create, view, edit, and manage support tickets with various priority levels and status tracking. Built for enterprise environments, it provides robust functionality for ticket lifecycle management, priority-based queuing, and collaborative issue resolution. The system supports multiple user roles and maintains detailed audit trails for all ticket operations, ensuring accountability and transparency in support processes.",
+    "tools": [
+      {
+        "name": "create_ticket",
+        "description": "This tool belongs to the ticketing system that is part of a company, which allows users to create, view, and manage support business tickets. Tool description: Create a new support ticket in the system and automatically queue it for processing based on priority level.",
+        "parameters": {
+          "type": "dict",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Title of the ticket - should be concise and descriptive of the issue or request."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed description of the ticket including problem details, steps to reproduce, expected behavior, and any relevant context. Defaults to an empty string.",
+              "default": ""
+            },
+            "priority": {
+              "type": "integer",
+              "description": "Priority level of the ticket, ranging from 1 to 5. Defaults to 1 (lowest priority). Priority levels: 1=Low, 2=Normal, 3=Medium, 4=High, 5=Critical (highest priority).",
+              "default": 1
+            }
+          },
+          "required": ["title"]
+        },
+        "returns": {
+          "type": "dict",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "description": "Unique identifier assigned to the newly created ticket."
+            },
+            "title": {
+              "type": "string",
+              "description": "Title of the created ticket."
+            },
+            "description": {
+              "type": "string",
+              "description": "Description of the created ticket."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the ticket (typically 'open' for newly created tickets)."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "Priority level assigned to the ticket."
+            }
+          }
+        }
+      },
+      {
+        "name": "edit_ticket",
+        "description": "This tool belongs to the ticketing system that is part of a company, which allows users to create, view, and manage support business tickets. Tool description: Modify the details of an existing ticket including title, description, status, and priority level.",
+        "parameters": {
+          "type": "dict",
+          "properties": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "Unique ID of the ticket to be modified."
+            },
+            "updates": {
+              "type": "dict",
+              "description": "Dictionary containing the fields to be updated. All fields are optional - only include the fields you want to change.",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "New title for the ticket."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "New description for the ticket."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "New status for the ticket. Common statuses include: 'open', 'in_progress', 'resolved', 'closed', 'on_hold'."
+                },
+                "priority": {
+                  "type": "integer",
+                  "description": "New priority level for the ticket (1-5 scale)."
+                }
+              }
+            }
+          },
+          "required": ["ticket_id", "updates"]
+        },
+        "returns": {
+          "type": "dict",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Status of the update operation, typically 'success' or error message if the update failed."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_ticket",
+        "description": "This tool belongs to the ticketing system that is part of a company, which allows users to create, view, and manage support business tickets. Tool description: Retrieve detailed information about a specific ticket using its unique identifier.",
+        "parameters": {
+          "type": "dict",
+          "properties": {
+            "ticket_id": {
+              "type": "integer",
+              "description": "Unique ID of the ticket to retrieve information for."
+            }
+          },
+          "required": ["ticket_id"]
+        },
+        "returns": {
+          "type": "dict",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "description": "Unique identifier of the ticket."
+            },
+            "title": {
+              "type": "string",
+              "description": "Title of the ticket."
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed description of the ticket."
+            },
+            "status": {
+              "type": "string",
+              "description": "Current status of the ticket."
+            },
+            "priority": {
+              "type": "integer",
+              "description": "Priority level of the ticket (1-5 scale)."
+            },
+            "created_by": {
+              "type": "string",
+              "description": "Username of the person who created the ticket."
+            }
+          }
+        }
+      }
+    ]
+  }

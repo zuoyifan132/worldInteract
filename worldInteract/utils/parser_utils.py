@@ -5,7 +5,7 @@ Utility functions for parsing and extracting content from text responses.
 import json
 import re
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 logger = logging.getLogger(__name__)
@@ -228,3 +228,102 @@ def validate_json_structure(json_str: str, required_keys: list = None) -> bool:
         
     except json.JSONDecodeError:
         return False
+
+    
+def extract_requirements_from_text(text: str) -> List[str]:
+    """Extract requirements list from LLM response text."""
+    try:
+        # Try to find JSON block with requirements
+        json_content = extract_json_from_text(text)
+        if json_content:
+            requirements = json.loads(json_content.strip())
+            if isinstance(requirements, list):
+                return [str(req) for req in requirements]
+        
+        # If no JSON found, look for common patterns
+        requirements = []
+        lines = text.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            # Look for pip install patterns
+            if 'pip install' in line.lower():
+                # Extract package names after pip install
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if part.lower() == 'install':
+                        requirements.extend(parts[i+1:])
+                        break
+            # Look for import statements that might indicate external packages
+            elif line.startswith('import ') or line.startswith('from '):
+                # Skip standard library imports
+                standard_libs = {
+                    'json', 'sys', 'os', 'datetime', 'uuid', 'copy', 
+                    'typing', 'pathlib', 're', 'collections', 'itertools'
+                }
+                if 'import ' in line:
+                    module = line.split('import ')[1].split()[0].split('.')[0]
+                    if module not in standard_libs and not module.startswith('worldInteract'):
+                        requirements.append(module)
+        
+        return list(set(requirements))  # Remove duplicates
+        
+    except Exception as e:
+        logger.warning(f"Failed to extract requirements: {e}")
+        return []
+
+
+def normalize_api_collection(api_collection: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize API collection to unified format that the codebase expects.
+    
+    Supports both JSON Schema format and simplified format, converting all to simplified format:
+    - JSON Schema: parameters.properties -> parameters
+    - JSON Schema: returns.properties -> returns  
+    - Simplified: keeps as-is
+    
+    Args:
+        api_collection: API collection dictionary from various formats
+        
+    Returns:
+        Normalized API collection in simplified format
+    """
+    if not api_collection or not isinstance(api_collection, dict):
+        return api_collection
+    
+    # Create a deep copy to avoid modifying the original
+    normalized = json.loads(json.dumps(api_collection))
+    
+    # Process tools
+    tools = normalized.get("tools", [])
+    if not isinstance(tools, list):
+        return normalized
+    
+    for tool in tools:
+        if not isinstance(tool, dict):
+            continue
+            
+        # Normalize parameters
+        parameters = tool.get("parameters", {})
+        if isinstance(parameters, dict):
+            # Check if it's JSON Schema format (has "type", "properties")
+            if ("type" in parameters and "properties" in parameters and 
+                isinstance(parameters.get("properties"), dict)):
+                # Convert from JSON Schema to simplified format
+                tool["parameters"] = parameters["properties"]
+                logger.debug(f"Normalized parameters for tool: {tool.get('name', 'unknown')}")
+            # If it's already simplified format (direct parameter definitions), keep as-is
+            
+        # Normalize returns
+        returns = tool.get("returns", {})
+        if isinstance(returns, dict):
+            # Check if it's JSON Schema format (has "type", "properties")
+            if ("type" in returns and "properties" in returns and 
+                isinstance(returns.get("properties"), dict)):
+                # Convert from JSON Schema to simplified format  
+                tool["returns"] = returns["properties"]
+                logger.debug(f"Normalized returns for tool: {tool.get('name', 'unknown')}")
+            # If it's already simplified format (direct return definitions), keep as-is
+    
+    logger.info(f"Normalized API collection for domain: {normalized.get('domain', 'unknown')}")
+    return normalized

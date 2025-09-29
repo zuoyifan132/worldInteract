@@ -5,6 +5,7 @@ Tool validator that tests generated tools and validates their execution results.
 import json
 import logging
 import copy
+from textwrap import dedent
 import traceback
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
@@ -37,7 +38,8 @@ class ToolValidator:
         tools: Dict[str, str],
         schema: Dict[str, Any],
         initial_state: Dict[str, Any],
-        api_collection: Dict[str, Any]
+        api_collection: Dict[str, Any],
+        requirements: Optional[List[str]] = None
     ) -> Dict[str, bool]:
         """
         Validate all tools through execution testing.
@@ -47,6 +49,7 @@ class ToolValidator:
             schema: Database schema
             initial_state: Initial database state
             api_collection: Original API collection with tool descriptions
+            requirements: List of pip requirements (optional)
             
         Returns:
             Dictionary mapping tool names to validation results (True/False)
@@ -69,7 +72,7 @@ class ToolValidator:
                 
                 # Validate the tool
                 is_valid = self._validate_single_tool(
-                    tool_name, tool_code, tool_desc, schema, initial_state
+                    tool_name, tool_code, tool_desc, schema, initial_state, requirements or []
                 )
                 validation_results[tool_name] = is_valid
                 
@@ -95,7 +98,8 @@ class ToolValidator:
         tool_code: str,
         tool_desc: Dict[str, Any],
         schema: Dict[str, Any],
-        initial_state: Dict[str, Any]
+        initial_state: Dict[str, Any],
+        requirements: List[str]
     ) -> bool:
         """
         Validate a single tool through execution testing.
@@ -106,22 +110,26 @@ class ToolValidator:
             tool_desc: Tool description from API collection
             schema: Database schema
             initial_state: Initial database state
+            requirements: List of pip requirements
             
         Returns:
             True if validation passes, False otherwise
         """
         try:
-            # Step 1: Generate test case
-            # TODO: using function calling stead of prompting LLM to generate call from content
-            test_case = self._generate_test_case(tool_name, tool_desc, schema, initial_state)
+            # Use ValidationAgent for ReAct-based validation
+            from worldInteract.core.validator.validation_agent import ValidationAgent
+            validation_agent = ValidationAgent()
             
-            # Step 2: Execute the tool
-            result, final_state = self._execute_tool(tool_code, test_case, initial_state, tool_name)
-            
-            # Step 3: Validate the result
-            is_valid = self._validate_result(
-                tool_name, tool_desc, test_case, result, initial_state, final_state
+            is_valid, final_code, validation_message = validation_agent.validate_tool(
+                tool_name=tool_name,
+                tool_code=tool_code,
+                requirements=requirements,
+                tool_desc=tool_desc,
+                schema=schema,
+                initial_state=initial_state
             )
+            
+            logger.info(f"Validation result for {tool_name}: {validation_message}")
             
             return is_valid
             
@@ -175,35 +183,37 @@ class ToolValidator:
     
     def _create_test_generation_system_prompt(self) -> str:
         """Create system prompt for test case generation."""
-        return """You are a test case generator for tool validation.
+        return dedent(
+            """You are a test case generator for tool validation.
 
-Your task is to generate realistic test parameters for a given tool that can be used to validate its implementation.
+            Your task is to generate realistic test parameters for a given tool that can be used to validate its implementation.
 
-Requirements:
-1. **Realistic Parameters**: Generate parameters that reflect real-world usage
-2. **Schema Compliance**: Ensure parameters work with the provided database schema
-3. **Expected Behavior**: Describe what the tool should do with these parameters
-4. **Edge Cases**: Consider boundary conditions when appropriate
+            Requirements:
+            1. **Realistic Parameters**: Generate parameters that reflect real-world usage
+            2. **Schema Compliance**: Ensure parameters work with the provided database schema
+            3. **Expected Behavior**: Describe what the tool should do with these parameters
+            4. **Edge Cases**: Consider boundary conditions when appropriate
 
-Output Format:
-Return ONLY a valid JSON object with this structure:
-```json
-{
-  "parameters": {
-    "param_name": "param_value",
-    ...
-  },
-  "expected_behavior": {
-    "type": "read|write|mixed",
-    "description": "What the tool should accomplish",
-    "should_succeed": true|false,
-    "expected_changes": "Description of expected database changes (for write operations)"
-  },
-  "test_description": "Brief description of what this test validates"
-}
-```
+            Output Format:
+            Return ONLY a valid JSON object with this structure:
+            ```json
+            {
+            "parameters": {
+                "param_name": "param_value",
+                ...
+            },
+            "expected_behavior": {
+                "type": "read|write|mixed",
+                "description": "What the tool should accomplish",
+                "should_succeed": true|false,
+                "expected_changes": "Description of expected database changes (for write operations)"
+            },
+            "test_description": "Brief description of what this test validates"
+            }
+            ```
 
-Make the test case realistic and appropriate for the tool's functionality."""
+            Make the test case realistic and appropriate for the tool's functionality."""
+        )
     
     def _create_test_generation_user_prompt(
         self,
@@ -230,25 +240,27 @@ Make the test case realistic and appropriate for the tool's functionality."""
                 sample_keys = list(table_data.keys())[:3]
                 state_sample[table_name] = {k: table_data[k] for k in sample_keys}
         
-        return f"""Generate a test case for this tool:
+        return dedent(
+            f"""Generate a test case for this tool:
 
-**Tool**: {tool_name}
-**Description**: {tool_desc['description']}
+            **Tool**: {tool_name}
+            **Description**: {tool_desc['description']}
 
-**Parameters**:
-{chr(10).join(param_info) if param_info else "  No parameters"}
+            **Parameters**:
+            {chr(10).join(param_info) if param_info else "  No parameters"}
 
-**Database Schema**: {json.dumps(schema, indent=2)}
+            **Database Schema**: {json.dumps(schema, indent=2)}
 
-**Sample Current Data**: {json.dumps(state_sample, indent=2)}
+            **Sample Current Data**: {json.dumps(state_sample, indent=2)}
 
-Generate realistic test parameters that:
-1. Work with the current database state
-2. Test the tool's core functionality
-3. Are appropriate for the tool's purpose
-4. Include valid IDs/references where needed
+            Generate realistic test parameters that:
+            1. Work with the current database state
+            2. Test the tool's core functionality
+            3. Are appropriate for the tool's purpose
+            4. Include valid IDs/references where needed
 
-Provide a complete test case following the specified JSON format."""
+            Provide a complete test case following the specified JSON format."""
+        )
     
     def _create_fallback_test_case(self, tool_name: str, tool_desc: Dict[str, Any]) -> Dict[str, Any]:
         """Create a simple fallback test case."""

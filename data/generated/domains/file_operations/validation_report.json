@@ -1,18 +1,28 @@
 {
   "domain": "file_operations",
   "validation_results": {
-    "create_file": true,
-    "read_file": true,
-    "delete_file": true,
-    "list_directory": true,
-    "create_directory": true,
-    "move_file": true,
-    "get_file_info": true,
-    "search_files": false
+    "cat": true,
+    "cd": true,
+    "cp": true,
+    "diff": true,
+    "du": true,
+    "echo": true,
+    "find": true,
+    "grep": true,
+    "ls": true,
+    "mkdir": true,
+    "mv": true,
+    "pwd": true,
+    "rm": true,
+    "rmdir": true,
+    "sort": true,
+    "tail": true,
+    "touch": true,
+    "wc": true
   },
   "summary": {
-    "total_tools": 8,
-    "passed": 7,
-    "failed": 1
+    "total_tools": 18,
+    "passed": 18,
+    "failed": 0
   }
 }

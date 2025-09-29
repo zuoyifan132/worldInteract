@@ -5,15 +5,16 @@ Environment manager that orchestrates the entire environment construction pipeli
 import json
 import logging
 import random
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from worldInteract.core.schema_generator import SchemaGenerator
 from worldInteract.core.tool_generator import ToolGenerator
 from worldInteract.core.validator import ToolValidator
+from worldInteract.core.validator.code_agent import CodeAgent
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.model_manager import generate
-from worldInteract.utils.parser_utils import extract_json_from_text
+from worldInteract.utils.parser_utils import extract_json_from_text, normalize_api_collection
 
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,9 @@ class EnvironmentManager:
         """
         self.config_manager = config_manager
         self.schema_generator = SchemaGenerator(config_dir)
-        self.tool_generator = ToolGenerator(config_dir)
-        self.validator = ToolValidator(config_dir)
+        self.tool_generator = ToolGenerator(config_dir)  # Keep for backward compatibility
+        self.validator = ToolValidator(config_dir)  # Keep for backward compatibility
+        self.code_agent = CodeAgent()  # New integrated code generation and validation
         
         # Get state generation config
         self.state_config = self.config_manager.get_model_config("state_generation")
@@ -41,7 +43,8 @@ class EnvironmentManager:
         self,
         api_collection_path: str,
         output_dir: Optional[str] = None,
-        validate_tools: bool = True
+        validate_tools: bool = True,
+        use_code_agent: bool = True
     ) -> Dict[str, Any]:
         """
         Create a complete environment from API collection.
@@ -50,48 +53,49 @@ class EnvironmentManager:
             api_collection_path: Path to API collection JSON file
             output_dir: Output directory for generated files. If None, automatically 
                        determined from domain field: data/generated/domains/{domain}/
-            validate_tools: Whether to validate generated tools
+            validate_tools: Whether to validate generated tools (only used if use_code_agent=False)
+            use_code_agent: Whether to use CodeAgent for integrated generation+validation
             
         Returns:
             Environment information dictionary
         """
         # Load API collection
         api_collection = self.load_api_collection(api_collection_path)
+        
+        # Normalize API collection to unified format
+        api_collection = normalize_api_collection(api_collection)
+        
         domain = api_collection.get("domain", "unknown")
         
         logger.info(f"Creating environment for domain: {domain}")
         
         try:
             # Step 1: Generate database schema
-            # TODO: provide tool implementations to generate schema
             logger.info("Step 1: Generating database schema...")
             schema = self.schema_generator.generate_schema(api_collection)
             
             # Step 2: Generate initial state
-            # TODO: provide tool implementations to generate initial state
             logger.info("Step 2: Generating initial database state...")
             initial_state = self.generate_initial_state(schema, api_collection)
             
-            # Step 3: Generate tool implementations
-            # skip  
-            logger.info("Step 3: Generating tool implementations...")
-            tools = self.tool_generator.generate_tools(api_collection, schema, initial_state)
-            
-            # Step 4: Validate tools (if requested)
-            validation_results = {}
-            if validate_tools:
-                logger.info("Step 4: Validating generated tools...")
-                validation_results = self.validator.validate_tools(
-                    tools, schema, initial_state, api_collection
+            # Step 3: Generate and validate tool implementations
+            if use_code_agent:
+                logger.info("Step 3: Generating and validating tool implementations with CodeAgent...")
+                tools, requirements, validation_results = self.code_agent.generate_and_validate_tools(
+                    api_collection, schema, initial_state
                 )
+            else:
+                # Fallback to original approach
+                logger.info("Step 3: Generating tool implementations...")
+                tools, requirements = self.tool_generator.generate_tools(api_collection, schema, initial_state)
                 
-                # Regenerate failed tools (up to 3 attempts)
-                # failed_tools = [name for name, passed in validation_results.items() if not passed]
-                # if failed_tools:
-                #     logger.warning(f"Regenerating {len(failed_tools)} failed tools...")
-                #     tools, validation_results = self._regenerate_failed_tools(
-                #         failed_tools, api_collection, schema, initial_state, tools, validation_results
-                #     )
+                # Step 4: Validate tools (if requested)
+                validation_results = {}
+                if validate_tools:
+                    logger.info("Step 4: Validating generated tools...")
+                    validation_results = self.validator.validate_tools(
+                        tools, schema, initial_state, api_collection, requirements
+                    )
             
             # Step 5: Save all generated components
             if output_dir is None:
@@ -99,7 +103,7 @@ class EnvironmentManager:
                 output_dir = project_root / "data" / "generated" / "domains" / domain
             
             self._save_environment(
-                domain, schema, initial_state, tools, validation_results, output_dir
+                domain, schema, initial_state, tools, validation_results, output_dir, requirements
             )
             
             environment_info = {
@@ -107,6 +111,7 @@ class EnvironmentManager:
                 "schema": schema,
                 "initial_state": initial_state,
                 "tools": tools,
+                "requirements": requirements,
                 "validation_results": validation_results,
                 "output_dir": str(output_dir)
             }
@@ -381,7 +386,8 @@ Generate a complete initial database state that provides a solid foundation for 
         initial_state: Dict[str, Any],
         tools: Dict[str, str],
         validation_results: Dict[str, bool],
-        output_dir: Path
+        output_dir: Path,
+        requirements: Optional[List[str]] = None
     ) -> None:
         """Save all environment components to files."""
         output_path = Path(output_dir)
@@ -398,6 +404,14 @@ Generate a complete initial database state that provides a solid foundation for 
         # Save tools
         self.tool_generator.save_tools(tools, domain, output_path)
         
+        # Save requirements if provided
+        if requirements:
+            requirements_file = output_path / "requirements.txt"
+            with open(requirements_file, 'w', encoding='utf-8') as f:
+                for req in requirements:
+                    f.write(f"{req}\n")
+            logger.info(f"Requirements saved to: {requirements_file}")
+        
         # Save validation report
         if validation_results:
             self.validator.save_validation_report(validation_results, domain, output_path)
@@ -409,9 +423,11 @@ Generate a complete initial database state that provides a solid foundation for 
             "initial_state_file": "initial_state.json",
             "tools_dir": "tools/",
             "tools_file": "tools.py",
+            "requirements_file": "requirements.txt" if requirements else None,
             "validation_report": "validation_report.json",
             "created_at": str(__import__('datetime').datetime.now()),
             "tool_count": len(tools),
+            "requirements_count": len(requirements) if requirements else 0,
             "validation_passed": sum(1 for result in validation_results.values() if result) if validation_results else 0
         }
         
