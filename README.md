@@ -163,7 +163,7 @@ WorldInteract/
 # Install all dependencies
 pip install -r requirements.txt
 
-# Configure environment variables for OPENAI and CLAUDE api key
+# Configure environment variables for OPENAI and CLAUDE api key in .env file
 ```
 
 ## Quick Start
