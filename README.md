@@ -196,24 +196,6 @@ Both files contain comprehensive comments explaining each configuration option. 
 - **[CodeAgent](worldInteract/core/validator/README.md)**: Integrated tool generation and validation using ReAct pattern
 - **[Sandbox Executor](worldInteract/core/sandbox/)**: Safe code execution environment
 
-## Generated Environment Structure
-
-Each generated domain environment contains the following files:
-
-```
-data/generated/domains/{domain}/
-├── schema.json                 # Database schema definition
-├── initial_state.json          # Initial database state
-├── tools.py                    # Integrated implementation of all tools
-├── tools/                      # Individual tool files
-│   ├── tool1.py
-│   ├── tool2.py
-│   └── ...
-├── test_cases.json             # Auto-generated test cases
-├── validation_report.json      # Validation results report
-└── environment_metadata.json   # Environment metadata
-```
-
 ## Roadmap
 
 - [x] Core environment construction pipeline
