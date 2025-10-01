@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import RetryError, retry, stop_after_attempt, wait_fixed
 
 from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
@@ -46,7 +46,14 @@ class SchemaGenerator:
         # Get domain-specific configuration
         domain_config = self.config_manager.get_domain_config(domain)
         
-        schema = self._generate_schema_with_llm(domain, tools, domain_config)
+        try:
+            schema = self._generate_schema_with_llm(domain, tools, domain_config)
+        except RetryError as e:
+            logger.error(f"Failed to generate schema for domain: {domain}, error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to generate schema for domain: {domain}, error: {e}")
+            raise
         
         logger.info(f"Successfully generated schema for domain: {domain}")
         return schema

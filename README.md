@@ -1,55 +1,62 @@
 # WorldInteract
 
-A scalable framework for automatic environment construction and agentic intelligence training, inspired by τ-bench and designed for dynamic function-calling scenarios.
+A scalable framework for automatic environment construction and agentic intelligence training, inspired by τ-bench, BFCL and designed for dynamic function-calling scenarios.
 
 ## Overview
 
 WorldInteract implements a systematic pipeline for building diverse, fully-simulated environments that enable Large Language Models to develop robust function-calling capabilities through interaction. The framework automatically constructs heterogeneous environments with domain-specific database schemas and tools.
 
-## Architecture
+## Core Architecture
 
 ```mermaid
 graph TB
-    subgraph "Input Layer"
-        A[API Collections] --> B[Domain Classification]
+    subgraph "Input Processing"
+        A[Raw API Collections] --> B[API Cleaning & Standardization]
+        B --> C[Dependency Graph Building]
     end
     
     subgraph "Environment Construction"
-        B --> C[Schema Generator]
-        C --> D[Database Schema]
-        D --> E[Tool Generator] 
-        E --> F[Tool Implementations]
-        D --> G[State Generator]
-        G --> H[Initial State]
+        C --> D[Schema Generator]
+        D --> E[Database Schema]
+        E --> F[State Generator]
+        F --> G[Initial State]
+        E --> H[CodeAgent]
+        G --> H
     end
     
-    subgraph "Validation Layer"
-        F --> I[Tool Validator]
-        H --> I
-        I --> J[Test Generation]
-        J --> K[Execution Testing]
+    subgraph "CodeAgent (Integrated Generation & Validation)"
+        H --> I[Tool Code Generation]
+        I --> J[Test Case Generation]
+        J --> K[Sandbox Execution]
         K --> L{Validation Pass?}
-        L -->|No| M[Regenerate<br/>Max 3 retries]
-        M --> E
-        L -->|Yes| N[Environment Ready]
+        L -->|No| M[ReAct Debugging<br/>Max n rounds]
+        M --> I
+        L -->|Yes| N[Validated Tools]
+    end
+    
+    subgraph "Output"
+        N --> O[Complete Environment]
+        O --> P[Domain-specific Tools]
+        O --> Q[Database State]
+        O --> R[Validation Reports]
     end
     
     subgraph "Task Construction (Future)"
-        N --> O[Task Generator]
-        O --> P[Agentic Tasks]
+        O --> S[Task Generator]
+        S --> T[Agentic Tasks]
     end
     
     subgraph "Model Support"
-        Q[Model Manager] --> C
-        Q --> E
-        Q --> G
-        Q --> I
+        U[Model Manager] --> D
+        U --> F
+        U --> H
     end
     
-    style D fill:#e1f5fe
-    style F fill:#e8f5e8
-    style H fill:#fff3e0
-    style N fill:#f3e5f5
+    style E fill:#e1f5fe
+    style G fill:#fff3e0
+    style H fill:#f3e5f5
+    style N fill:#e8f5e8
+    style O fill:#f0f4ff
 ```
 
 ## Project Structure
@@ -61,74 +68,93 @@ WorldInteract/
 │   ├── model_config.yaml          # Model configuration for different tasks
 │   └── environment_config.yaml    # Environment settings
 ├── data/
-│   ├── apis_collections/           # API collections by domain
-│   │   └── api_collection_example.json
-│   └── generated/                  # Generated schemas, tools, states
+│   ├── raw_apis/                   # Raw API data
+│   │   ├── gorilla_file_system.json
+│   │   ├── ticket_api.json
+│   │   └── ...
+│   ├── processed_apis/             # Cleaned API data
+│   │   └── my_cleaned_apis.json
+│   ├── apis_collections/           # Domain-classified API collections
+│   │   ├── api_collection_example.json
+│   │   └── ticket_api_example.json
+│   ├── dependency_graphs/          # Dependency graph analysis results
+│   │   └── my_dependency_graphs/
+│   │       ├── dependency_graph.json
+│   │       ├── communities.json
+│   │       └── domains/
+│   └── generated/                  # Generated environments
 │       └── domains/
-│           ├── file_operations/
-│           ├── web_browsing/
+│           ├── file_operations/    # File operations domain
+│           ├── database_operations/ # Database operations domain
 │           └── ...
 ├── worldInteract/
 │   ├── __init__.py
 │   ├── core/
-│   │   ├── __init__.py
 │   │   ├── environment/            # Environment management
-│   │   │   ├── __init__.py
-│   │   │   ├── env_manager.py
-│   │   │   └── README.md
+│   │   │   └── env_manager.py
+│   │   ├── scenario_collection/    # Scenario collection and API cleaning
+│   │   │   ├── api_cleaner.py
+│   │   │   └── similarity_method.py
+│   │   ├── dependency_graph/       # Dependency graph building
+│   │   │   └── graph_builder.py
 │   │   ├── schema_generator/       # Database schema generation
-│   │   │   ├── __init__.py
-│   │   │   ├── generator.py
-│   │   │   └── README.md
-│   │   ├── tool_generator/         # Tool code generation
-│   │   │   ├── __init__.py
-│   │   │   ├── generator.py
-│   │   │   └── README.md
-│   │   └── validator/              # Validation and testing
-│   │       ├── __init__.py
-│   │       ├── tool_validator.py
-│   │       └── README.md
+│   │   │   └── generator.py
+│   │   ├── tool_generator/         # Tool code generation (legacy)
+│   │   │   └── generator.py
+│   │   ├── validator/              # CodeAgent - integrated generation & validation
+│   │   │   └── code_agent.py
+│   │   └── sandbox/                # Sandbox execution environment
+│   │       └── code_executor.py
+│   ├── utils/                      # Utility modules
+│   │   ├── model_manager.py        # Model management
+│   │   ├── config_manager.py       # Configuration management
+│   │   ├── embedding/              # Embedding vectors
+│   │   │   └── openai_embeddings.py
+│   │   └── model_generator/        # Multi-model support
+│   │       ├── openai_gpt.py
+│   │       ├── claude_3d7.py
+│   │       ├── gemini_2d5_pro.py
+│   │       └── qwen3_32b.py
 │   ├── domains/                    # Domain-specific implementations
-│   │   ├── __init__.py
-│   │   └── base.py
-│   ├── tasks/                      # Task construction (future)
-│   │   ├── __init__.py
-│   │   └── README.md
-│   └── utils/                      # Utilities (existing)
-│       ├── __init__.py
-│       ├── model_manager.py
-│       └── ...
+│   └── tasks/                      # Task construction (future)
 ├── examples/
-│   └── create_env.py
-├── tests/
-│   ├── test_schema_generator.py
-│   ├── test_tool_generator.py
-│   └── test_validator.py
-└── scripts/
-    ├── generate_domain.py
-    └── scenario_pipeline.py
+│   ├── create_environment_example.py
+│   └── dependency_graph_example.py
+├── scripts/
+│   ├── generate_domain.py          # Domain generation script
+│   └── scenario_pipeline.py        # Complete pipeline script
+└── tests/
+    ├── test_api_normalization.py
+    └── example_new_generate_usage.py
 ```
 
 ## Key Features
 
-### 🏗️ **Automatic Environment Construction**
-- **Dynamic Schema Generation**: LLM-powered database schema creation from API collections
-- **Tool Code Generation**: Automatic Python implementation of tools based on schemas
+### 🔄 **Complete Data Processing Pipeline**
+- **API Cleaning & Standardization**: Automatically clean and standardize raw API descriptions, supporting multiple formats
+- **Dependency Graph Building**: Tool similarity analysis and community detection based on embedding vectors
+- **Automatic Domain Classification**: Intelligently identify and group related tools into specific domains
+
+### 🏗️ **Automated Environment Construction**
+- **Dynamic Schema Generation**: LLM-powered automatic database schema creation
+- **Integrated Tool Generation**: CodeAgent combines code generation and validation in one step
 - **State Initialization**: Dynamic generation of realistic initial database states
 
-### 🔍 **Robust Validation System**
-- **Execution Testing**: Generated tools are tested with LLM-generated test cases
-- **State Verification**: Database state changes are validated for correctness
-- **Auto-Retry Mechanism**: Up to 3 retries with tenacity for failed generations
+### 🤖 **CodeAgent - Intelligent Generation & Validation**
+- **ReAct Pattern**: Uses reasoning and acting pattern for iterative code improvement
+- **Integrated Workflow**: Combines tool code generation, test case creation, and validation
+- **Sandbox Execution**: Safe code execution environment with dependency installation support
+- **Auto-debugging**: Up to 10 rounds of ReAct-based debugging for failed validations
+- **Comprehensive Testing**: LLM-generated test cases validate tool correctness
 
 ### 🎯 **Multi-Model Support**
 - **Flexible Model Selection**: Different LLMs for different generation tasks
-- **Model Manager Integration**: Seamless integration with existing model infrastructure
-- **Configurable Pipelines**: YAML-based configuration for model assignments
+- **Multi-vendor Support**: OpenAI GPT, Claude, Gemini, Qwen, etc.
+- **Configurable Pipeline**: YAML-based model assignment configuration
 
 ### 📊 **Lightweight Design**
-- **JSON-based Storage**: Following τ-bench principles for simplicity
-- **In-memory Operations**: Fast database operations without traditional DBMS
+- **JSON Storage**: Simple storage solution following τ-bench BFCL in-memory database principles
+- **In-memory Operations**: Fast operations without traditional database management systems
 - **Stateless Design**: Clean reset capability for reproducible testing
 
 ## Installation
@@ -136,76 +162,84 @@ WorldInteract/
 ```bash
 # Install all dependencies
 pip install -r requirements.txt
+
+# Configure environment variables (copy .env.example to .env and fill in API keys)
+cp .env.example .env
 ```
 
 ## Quick Start
 
-```python
-from worldInteract.core.environment import EnvironmentManager
+For detailed usage examples and step-by-step tutorials, please see **[examples/README.md](examples/README.md)**.
 
-# Initialize environment manager
-env_manager = EnvironmentManager()
+The examples directory contains three main examples that demonstrate the complete WorldInteract workflow:
 
-# Create complete environment from API collection
-environment = env_manager.create_environment(
-    api_collection_path="data/apis_collections/api_collection_example.json",
-    use_code_agent=True
-)
-
-# Access generated components
-schema = environment["schema"]
-initial_state = environment["initial_state"]
-tools = environment["tools"]
-validation_results = environment["validation_results"]
-```
-
-### Command Line Usage
-```bash
-# Generate domain environment (output automatically goes to data/generated/domains/{domain}/)
-# Validation is always included with the integrated CodeAgent
-python scripts/generate_domain.py data/apis_collections/api_collection_example.json
-
-# Run examples
-python examples/create_env.py
-```
+1. **Scenario Collection Example** - Process raw API data into cleaned scenarios
+2. **Dependency Graph Example** - Create tool relationships and domain clustering  
+3. **Environment Creation Example** - Generate complete environments with CodeAgent
+4. **Task Trajectories Generation Example(Future)**
 
 ## Configuration
 
-Configure different models for different tasks in `config/model_config.yaml`:
+WorldInteract uses two main configuration files with detailed comments to guide your setup:
 
-```yaml
-schema_generation:
-  model: "openai_gpt"
-  temperature: 0.3
+- **[config/model_config.yaml](config/model_config.yaml)** - Configure different models for different tasks (scenario collection, dependency graph, schema generation, CodeAgent, etc.)
+- **[config/environment_config.yaml](config/environment_config.yaml)** - Configure environment parameters (thresholds, timeouts, sandbox settings, etc.)
 
-tool_generation:
-  model: "claude_3d7"
-  temperature: 0.1
-
-validation:
-  model: "qwen3_32b"
-  temperature: 0.5
-```
+Both files contain comprehensive comments explaining each configuration option. Simply edit these files to customize WorldInteract for your specific needs.
 
 ## Core Modules
 
 - **[Environment Manager](worldInteract/core/environment/README.md)**: Orchestrates the entire environment construction pipeline
+- **[Scenario Collection](worldInteract/core/scenario_collection/)**: API cleaning, standardization and similarity analysis
+- **[Dependency Graph Builder](worldInteract/core/dependency_graph/)**: Tool dependency modeling and domain clustering
 - **[Schema Generator](worldInteract/core/schema_generator/README.md)**: Generates database schemas from API collections
-- **[Tool Generator](worldInteract/core/tool_generator/README.md)**: Creates executable tool implementations
-- **[Validator](worldInteract/core/validator/README.md)**: Tests and validates generated tools
+- **[Tool Generator](worldInteract/core/tool_generator/README.md)**: Creates executable tool implementations (legacy)
+- **[CodeAgent](worldInteract/core/validator/README.md)**: Integrated tool generation and validation using ReAct pattern
+- **[Sandbox Executor](worldInteract/core/sandbox/)**: Safe code execution environment
+
+## Generated Environment Structure
+
+Each generated domain environment contains the following files:
+
+```
+data/generated/domains/{domain}/
+├── schema.json                 # Database schema definition
+├── initial_state.json          # Initial database state
+├── tools.py                    # Integrated implementation of all tools
+├── tools/                      # Individual tool files
+│   ├── tool1.py
+│   ├── tool2.py
+│   └── ...
+├── test_cases.json             # Auto-generated test cases
+├── validation_report.json      # Validation results report
+└── environment_metadata.json   # Environment metadata
+```
 
 ## Roadmap
 
 - [x] Core environment construction pipeline
+- [x] API cleaning and standardization system
+- [x] Dependency graph building and domain clustering
 - [x] Schema and tool generation
-- [x] Validation framework
+- [x] CodeAgent with ReAct-based validation
+- [x] Sandbox execution framework
+- [x] Multi-model support
 - [ ] Task construction system
 - [ ] Agent experience learning
 - [ ] Benchmark integration
+- [ ] Visualization interface
+
+## Example Output
+
+### File Operations Domain
+Generated environment contains 18 file operation tools: `cat`, `cd`, `cp`, `diff`, `du`, `echo`, `find`, `grep`, `ls`, `mkdir`, `mv`, `pwd`, `rm`, `rmdir`, `sort`, `tail`, `touch`, `wc`
+
+### Database Operations Domain  
+Generated environment contains basic database operation tools: `create_table`, `delete_record`, `drop_table`, etc.
 
 ## Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+Welcome to submit Issues and Pull Requests to improve the project.
 
 ## License
 

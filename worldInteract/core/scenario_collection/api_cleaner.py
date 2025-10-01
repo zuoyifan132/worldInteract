@@ -162,7 +162,7 @@ class APICleaner:
         
         # Step 1: Fix and standardize APIs
         fixed_apis = []
-        for api in raw_apis:
+        for api in tqdm(raw_apis, desc="Fixing APIs"):
             try:
                 fixed_api = self.standardize_and_fix_api_format(api)
                 if fixed_api:

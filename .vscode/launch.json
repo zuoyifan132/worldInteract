@@ -9,10 +9,8 @@
             "console": "integratedTerminal",
             "cwd": "${fileDirname}",
             "args": [
-                "--input-dir",
-                "data/raw_apis",
-                "--output-file",
-                "data/processed_apis/bfcl_collection_example/cleaned_apis.json"
+                "--api-collection",
+                "data/dependency_graphs/my_dependency_graphs/domains/database_operations.json"
             ]
         }
     ]

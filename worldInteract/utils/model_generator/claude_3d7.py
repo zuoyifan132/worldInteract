@@ -13,34 +13,34 @@ dotenv.load_dotenv("../../../.env")
 
 def react_generate(messages: list, **kwargs) -> tuple[ContentBlock, ContentBlock, List[ContentBlock]]:
     """
-    ReAct专用的Claude模型调用函数
+    Claude model calling function specifically for ReAct
     
     Args:
-        messages: ReAct对话历史（包含系统提示、测试结果、模型回复等）
-        **kwargs: 其他参数，包括api_key, max_tokens, temperature等
+        messages: ReAct conversation history (including system prompts, test results, model responses, etc.)
+        **kwargs: Other parameters, including api_key, max_tokens, temperature, etc.
     
     Returns:
         tuple: (thinking_content, answer_text, function_calls)
     """
-    # 获取API key
+    # Get API key
     api_key = kwargs.get("api_key") or os.getenv("CLAUDE_API_KEY")
     if not api_key:
-        raise ValueError("API key 未提供。请通过 api_key 参数或 CLAUDE_API_KEY 环境变量设置。")
+        raise ValueError("API key not provided. Please set it via api_key parameter or CLAUDE_API_KEY environment variable.")
 
-    # 创建Anthropic客户端
+    # Create Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
 
-    # 根据调用方式准备消息
+    # Prepare messages based on calling method
     if messages is not None:
-        # 方式2: 使用预组织的消息数组
+        # Method 2: Use pre-organized message array
         api_messages = messages
         system_prompt = None
-        # 从消息中提取系统提示（如果有）
+        # Extract system prompt from messages (if any)
         if messages and messages[0].get("role") == "system":
             system_prompt = messages[0]["content"]
-            api_messages = messages[1:]  # 去掉系统消息
+            api_messages = messages[1:]  # Remove system message
 
-    # 准备请求参数
+    # Prepare request parameters
     request_params = {
         "model": kwargs.get("model", "claude-sonnet-4-20250514"),
         "max_tokens": kwargs.get("max_tokens", 16384),
@@ -48,25 +48,25 @@ def react_generate(messages: list, **kwargs) -> tuple[ContentBlock, ContentBlock
         "messages": api_messages,
     }
 
-    # 只在有系统提示时才添加
+    # Only add system prompt if present
     if system_prompt:
         request_params["system"] = system_prompt
 
     try:
-        # 调用API
+        # Call API
         response = client.messages.create(**request_params)
 
-        # 解析响应数据
+        # Parse response data
         thinking_block = {}
         answer_block = {}
         function_blocks = []
         
-        # 处理thinking（如果模型支持）
-        # Claude标准API中thinking通常在response.thinking中
+        # Handle thinking (if model supports it)
+        # In Claude standard API, thinking is usually in response.thinking
         if hasattr(response, 'thinking') and response.thinking:
             thinking_content = response.thinking
         
-        # 处理文本内容和工具调用
+        # Handle text content and tool calls
         for content_block in response.content:
             if content_block.type == "text":
                 answer_block = content_block
@@ -78,80 +78,80 @@ def react_generate(messages: list, **kwargs) -> tuple[ContentBlock, ContentBlock
         return thinking_block, answer_block, function_blocks
         
     except anthropic.APIError as e:
-        logger.error(f"Anthropic API 调用失败: {e}")
-        raise Exception(f"模型推理失败: {e}")
+        logger.error(f"Anthropic API call failed: {e}")
+        raise Exception(f"Model inference failed: {e}")
     except Exception as e:
-        logger.error(f"模型推理异常: {e}")
-        raise Exception(f"模型推理异常: {e}")
+        logger.error(f"Model inference error: {e}")
+        raise Exception(f"Model inference error: {e}")
 
 
 def generate(system: str = None, user: str = None, messages: list = None, **kwargs) -> tuple:
     """
-    使用标准Anthropic API调用Claude模型（支持两种调用方式）
+    Call Claude model using standard Anthropic API (supports two calling methods)
     
     Args:
-        system: 系统提示（方式1）
-        user: 用户消息（方式1）
-        messages: 预组织的消息数组（方式2）
-        **kwargs: 其他参数，包括api_key, max_tokens, temperature, tools等
+        system: System prompt (method 1)
+        user: User message (method 1)
+        messages: Pre-organized message array (method 2)
+        **kwargs: Other parameters, including api_key, max_tokens, temperature, tools, etc.
     
     Returns:
         tuple: (thinking_content, answer_text, function_calls)
     """
-    # 获取API key
+    # Get API key
     api_key = kwargs.get("api_key") or os.getenv("CLAUDE_API_KEY")
     if not api_key:
-        raise ValueError("API key 未提供。请通过 api_key 参数或 CLAUDE_API_KEY 环境变量设置。")
+        raise ValueError("API key not provided. Please set it via api_key parameter or CLAUDE_API_KEY environment variable.")
     
-    # 创建Anthropic客户端
+    # Create Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
     
-    # 根据调用方式准备消息
+    # Prepare messages based on calling method
     if messages is not None:
-        # 方式2: 使用预组织的消息数组
+        # Method 2: Use pre-organized message array
         api_messages = messages
         system_prompt = None
-        # 从消息中提取系统提示（如果有）
+        # Extract system prompt from messages (if any)
         if messages and messages[0].get("role") == "system":
             system_prompt = messages[0]["content"]
-            api_messages = messages[1:]  # 去掉系统消息
+            api_messages = messages[1:]  # Remove system message
     else:
-        # 方式1: 使用 system 和 user 参数
+        # Method 1: Use system and user parameters
         api_messages = [{"role": "user", "content": user}]
         system_prompt = system
     
-    # 准备请求参数
+    # Prepare request parameters
     request_params = {
         "model": kwargs.get("model", "claude-sonnet-4-20250514"),
         "max_tokens": kwargs.get("max_tokens", 16384),
         "temperature": kwargs.get("temperature", 1.0),
         "messages": api_messages,
     }
-    
-    # 只在有系统提示时才添加
+
+    # Add system prompt only if present
     if system_prompt:
         request_params["system"] = system_prompt
     
-    # 添加tools参数（如果有）
+    # Add tools parameter (if any)
     tools = kwargs.get("tools", [])
     if tools:
         request_params["tools"] = tools
     
     try:
-        # 调用API
+        # Call API
         response = client.messages.create(**request_params)
         
-        # 解析响应数据
+        # Parse response data
         thinking_content = ""
         answer_text = ""
         function_calls = []
         
-        # 处理thinking（如果模型支持）
-        # Claude标准API中thinking通常在response.thinking中
+        # Handle thinking (if model supports it)
+        # In Claude standard API, thinking is usually in response.thinking
         if hasattr(response, 'thinking') and response.thinking:
             thinking_content = response.thinking
         
-        # 处理文本内容和工具调用
+        # Handle text content and tool calls
         for content_block in response.content:
             if content_block.type == "text":
                 answer_text += content_block.text
@@ -164,49 +164,48 @@ def generate(system: str = None, user: str = None, messages: list = None, **kwar
         return thinking_content, answer_text, function_calls
         
     except anthropic.APIError as e:
-        logger.error(f"Anthropic API 调用失败: {e}")
-        raise Exception(f"模型推理失败: {e}")
+        logger.error(f"Anthropic API call failed: {e}")
+        raise Exception(f"Model inference failed: {e}")
     except Exception as e:
-        logger.error(f"模型推理异常: {e}")
-        raise Exception(f"模型推理异常: {e}")
+        logger.error(f"Model inference error: {e}")
+        raise Exception(f"Model inference error: {e}")
 
 
 def stream_generate(system: str = None, user: str = None, messages: list = None, **kwargs) -> str:
     """
-    使用标准Anthropic API进行流式调用Claude模型（支持两种调用方式）
+    Stream call Claude model using standard Anthropic API (supports two calling methods)
     
     Args:
-        system: 系统提示（方式1）
-        user: 用户消息（方式1）
-        messages: 预组织的消息数组（方式2）
-        **kwargs: 其他参数，包括api_key, max_tokens, temperature, tools等
+        system: System prompt (method 1)
+        user: User message (method 1)
+        messages: Pre-organized message array (method 2)
+        **kwargs: Other parameters, including api_key, max_tokens, temperature, tools, etc.
     
     Returns:
-        str: 流式生成的完整文本内容
+        str: Complete text content generated by streaming
     """
-    # 获取API key
+    # Get API key
     api_key = kwargs.get("api_key") or os.getenv("CLAUDE_API_KEY")
     if not api_key:
-        raise ValueError("API key 未提供。请通过 api_key 参数或 CLAUDE_API_KEY 环境变量设置。")
+        raise ValueError("API key not provided. Please set it via api_key parameter or CLAUDE_API_KEY environment variable.")
     
-    # 创建Anthropic客户端
+    # Create Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
     
-    # 根据调用方式准备消息
     if messages is not None:
-        # 方式2: 使用预组织的消息数组
+        # Method 2: Use pre-organized message array
         api_messages = messages
         system_prompt = None
-        # 从消息中提取系统提示（如果有）
+        # Extract system prompt from messages (if any)
         if messages and messages[0].get("role") == "system":
             system_prompt = messages[0]["content"]
-            api_messages = messages[1:]  # 去掉系统消息
+            api_messages = messages[1:]  # Remove system message
     else:
-        # 方式1: 使用 system 和 user 参数
+        # Method 1: Use system and user parameters
         api_messages = [{"role": "user", "content": user}]
         system_prompt = system
     
-    # 准备请求参数
+    # Prepare request parameters
     request_params = {
         "model": kwargs.get("model", "claude-sonnet-4-20250514"),
         "max_tokens": kwargs.get("max_tokens", 8192),
@@ -215,17 +214,17 @@ def stream_generate(system: str = None, user: str = None, messages: list = None,
         "stream": True,
     }
     
-    # 只在有系统提示时才添加
+    # Add system prompt only if present
     if system_prompt:
         request_params["system"] = system_prompt
     
-    # 添加tools参数（如果有）
+    # Add tools parameter (if any)
     tools = kwargs.get("tools", [])
     if tools:
         request_params["tools"] = tools
     
     try:
-        # 流式调用API
+        # Stream API call
         answer_content = ""
         answer_flag = False
         
@@ -243,32 +242,32 @@ def stream_generate(system: str = None, user: str = None, messages: list = None,
         return answer_content
         
     except anthropic.APIError as e:
-        logger.error(f"Anthropic 流式API 调用失败: {e}")
-        raise Exception(f"流式请求失败: {e}")
+        logger.error(f"Anthropic streaming API call failed: {e}")
+        raise Exception(f"Streaming request failed: {e}")
     except Exception as e:
-        logger.error(f"流式处理异常: {e}")
-        raise Exception(f"流式处理异常: {e}")
+        logger.error(f"Streaming processing error: {e}")
+        raise Exception(f"Streaming processing error: {e}")
 
 
 if __name__ == "__main__":
-    # Function call调用示例
+    # Function call example
     
-    # 定义工具
+    # Define tools
     tools = [
         {
             "name": "get_weather",
-            "description": "获取指定城市的天气信息",
+            "description": "Get weather information for a specified city",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "location": {
                         "type": "string",
-                        "description": "城市名称，例如：北京、上海、纽约等"
+                        "description": "City name, e.g.: Beijing, Shanghai, New York, etc."
                     },
                     "unit": {
                         "type": "string",
                         "enum": ["celsius", "fahrenheit"],
-                        "description": "温度单位",
+                        "description": "Temperature unit",
                         "default": "celsius"
                     }
                 },
@@ -277,13 +276,13 @@ if __name__ == "__main__":
         },
         {
             "name": "calculate",
-            "description": "执行数学计算",
+            "description": "Perform mathematical calculations",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "expression": {
                         "type": "string",
-                        "description": "要计算的数学表达式，例如：2+3*4"
+                        "description": "Mathematical expression to calculate, e.g.: 2+3*4"
                     }
                 },
                 "required": ["expression"]
@@ -291,11 +290,11 @@ if __name__ == "__main__":
         }
     ]
 
-    # 示例1：天气查询
-    print("=== 示例1：天气查询 ===")
+    # Example 1: Weather query
+    print("=== Example 1: Weather Query ===")
     thinking, answer, func_calls = generate(
-        system="你是一个有用的助手",
-        user="什么事鄂尔多斯定理",
+        system="You are a helpful assistant",
+        user="What is Erdős theorem",
         # tools=tools,
         max_tokens=1024,
         temperature=0.7,
@@ -305,11 +304,11 @@ if __name__ == "__main__":
     print(f"Answer: {answer}")
     print(f"Function Calls: {func_calls}")
     
-    # 示例2：数学计算
-    print("\n=== 示例2：数学计算 ===")
+    # Example 2: Mathematical calculation
+    print("\n=== Example 2: Mathematical Calculation ===")
     thinking, answer, func_calls = generate(
-        system="你是一个有帮助的助手，可以查询天气和进行计算。当用户需要计算时，请使用calculate工具。",
-        user="请帮我计算 15 * 24 + 100 的结果",
+        system="You are a helpful assistant that can query weather and perform calculations. When users need calculations, please use the calculate tool.",
+        user="Please help me calculate the result of 15 * 24 + 100",
         tools=tools,
         max_tokens=1024,
         temperature=0.3,

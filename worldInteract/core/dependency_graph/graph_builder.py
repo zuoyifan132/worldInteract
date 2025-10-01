@@ -384,7 +384,7 @@ class DependencyGraphBuilder:
         api_dict = {api["name"]: api for api in apis}
         domains = []
         
-        for comm_id, tools in communities.items():
+        for comm_id, tools in tqdm(communities.items(), desc="Validating communities with LLM"):
             if len(tools) <= 1:
                 # Handle single tools separately
                 if tools and tools[0] in api_dict:

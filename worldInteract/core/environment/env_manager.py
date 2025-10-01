@@ -36,6 +36,7 @@ class EnvironmentManager:
         
         # Get state generation config
         self.state_config = self.config_manager.get_model_config("state_generation")
+        self.state_env_config = self.config_manager.get_environment_config("state_generation")
     
     def create_environment(
         self,
@@ -77,7 +78,7 @@ class EnvironmentManager:
             # Step 3: Generate and validate tool implementations
             if use_code_agent:
                 logger.info("Step 3: Generating and validating tool implementations with CodeAgent...")
-                tools, requirements, validation_results = self.code_agent.generate_and_validate_tools(
+                tools, requirements, validation_results, test_cases = self.code_agent.generate_and_validate_tools(
                     api_collection, schema, initial_state
                 )
             else:
@@ -89,7 +90,7 @@ class EnvironmentManager:
                 output_dir = project_root / "data" / "generated" / "domains" / domain
             
             self._save_environment(
-                domain, schema, initial_state, tools, validation_results, output_dir, requirements
+                domain, schema, initial_state, tools, validation_results, output_dir, requirements, test_cases
             )
             
             environment_info = {
@@ -99,6 +100,7 @@ class EnvironmentManager:
                 "tools": tools,
                 "requirements": requirements,
                 "validation_results": validation_results,
+                "test_cases": test_cases,
                 "output_dir": str(output_dir)
             }
             
@@ -227,10 +229,9 @@ Return ONLY a valid JSON object where each top-level key matches a table name fr
         """Create user prompt for initial state generation."""
         domain = api_collection.get("domain", "unknown")
         
-        # Get domain configuration for guidance
-        domain_config = self.config_manager.get_domain_config(domain)
-        min_records = domain_config.get("min_records_per_table", 5)
-        max_records = domain_config.get("max_records_per_table", 20)
+        # Get state generation configuration for guidance
+        min_records = self.state_env_config.get("min_records_per_table", 5)
+        max_records = self.state_env_config.get("max_records_per_table", 20)
 
         # generate random number of records per table
         records_per_table = random.randint(min_records, max_records)
@@ -303,7 +304,8 @@ Generate a complete initial database state that provides a solid foundation for 
         tools: Dict[str, str],
         validation_results: Dict[str, bool],
         output_dir: Path,
-        requirements: Optional[List[str]] = None
+        requirements: Optional[List[str]] = None,
+        test_cases: Optional[Dict[str, List[Dict[str, Any]]]] = None
     ) -> None:
         """Save all environment components to files."""
         output_path = Path(output_dir)
@@ -328,6 +330,13 @@ Generate a complete initial database state that provides a solid foundation for 
                     f.write(f"{req}\n")
             logger.info(f"Requirements saved to: {requirements_file}")
         
+        # Save test cases
+        if test_cases:
+            test_cases_file = output_path / "test_cases.json"
+            with open(test_cases_file, 'w', encoding='utf-8') as f:
+                json.dump(test_cases, f, indent=2, ensure_ascii=False)
+            logger.info(f"Test cases saved to: {test_cases_file}")
+        
         # Save validation report
         if validation_results:
             self.save_validation_report(validation_results, domain, output_path)
@@ -340,10 +349,12 @@ Generate a complete initial database state that provides a solid foundation for 
             "tools_dir": "tools/",
             "tools_file": "tools.py",
             "requirements_file": "requirements.txt" if requirements else None,
+            "test_cases_file": "test_cases.json" if test_cases else None,
             "validation_report": "validation_report.json",
             "created_at": str(__import__('datetime').datetime.now()),
             "tool_count": len(tools),
             "requirements_count": len(requirements) if requirements else 0,
+            "test_cases_count": len(test_cases) if test_cases else 0,
             "validation_passed": sum(1 for result in validation_results.values() if result) if validation_results else 0
         }
         
@@ -392,12 +403,20 @@ Generate a complete initial database state that provides a solid foundation for 
                 validation_data = json.load(f)
                 validation_results = validation_data.get("validation_results", {})
         
+        # Load test cases (if available)
+        test_cases = {}
+        test_cases_file = env_path / "test_cases.json"
+        if test_cases_file.exists():
+            with open(test_cases_file, 'r', encoding='utf-8') as f:
+                test_cases = json.load(f)
+        
         environment_info = {
             "domain": domain,
             "schema": schema,
             "initial_state": initial_state,
             "tools": tools,
             "validation_results": validation_results,
+            "test_cases": test_cases,
             "environment_dir": str(env_path)
         }
         

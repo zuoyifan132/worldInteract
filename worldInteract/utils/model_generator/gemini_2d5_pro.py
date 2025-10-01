@@ -7,13 +7,13 @@ from loguru import logger
 def generate(system: str, user: str, **kwargs) -> str:
     """
     """
-    # 配置URL
+    # Configure URL
     url = "http://10.10.178.25:12239/aigateway/google/chat/completions"
-    # 配置请求头
+    # Configure request headers
     headers = {
         "content-type": "application/json;charset=utf-8",
     }
-    # 配置请求数据
+    # Configure request data
     payload = {
         "body": {
             "model": "gemini-2.5-pro",
@@ -29,12 +29,12 @@ def generate(system: str, user: str, **kwargs) -> str:
         "PKey": "MDlGQTM0RUZFOUYxREY5Njk4MzQyQzcwNDQ1MkIxMDY=",
         "source": "Wind.AI.Insight",
     }
-    # 发起POST请求
+    # Send POST request
     response = requests.post(url=url, json=payload, headers=headers)
-    # 处理请求失败
+    # Handle request failure
     if response.status_code != 200:
-        raise Exception("模型推理失败!" f"HTTP状态码: {response.status_code}", f"响应数据: {response.text}")
-    # 解析响应数据
+        raise Exception("Model inference failed!" f"HTTP status code: {response.status_code}", f"Response data: {response.text}")
+    # Parse response data
     answer_content = ""
     response_data = response.json()
     try:
@@ -42,23 +42,23 @@ def generate(system: str, user: str, **kwargs) -> str:
         answer_content = content
         function_call = response_data["body"]["candidates"][0]["content"]["parts"][0]["functionCall"]
     except Exception as e:
-        if "调用Alice审计服务未通过！" in response_data.get("message", ""):
-            raise PermissionError("调用Alice审计服务未通过!", response_data) from e
-        logger.error(f"模型推理异常! 异常原因: {e}, 响应数据: {response_data}")
-        raise Exception("模型推理异常!", response_data)
+        if "Alice audit service call failed!" in response_data.get("message", ""):
+            raise PermissionError("Alice audit service call failed!", response_data) from e
+        logger.error(f"Model inference error! Error reason: {e}, Response data: {response_data}")
+        raise Exception("Model inference error!", response_data)
     return answer_content
 
 
 def stream_generate(system: str, user: str, **kwargs) -> str:
     """
     """
-    # 配置URL
+    # Configure URL
     url = "http://10.10.178.25:12239/aigateway/google/chat/completions"
-    # 配置请求头
+    # Configure request headers
     headers = {
         "content-type": "application/json;charset=utf-8",
     }
-    # 配置请求数据
+    # Configure request data
     payload = {
         "body": {
             "model": "gemini-2.5-pro",
@@ -73,12 +73,12 @@ def stream_generate(system: str, user: str, **kwargs) -> str:
         "PKey": "MDlGQTM0RUZFOUYxREY5Njk4MzQyQzcwNDQ1MkIxMDY=",
         "source": "Wind.AI.Insight",
     }
-    # 发起POST请求
+    # Send POST request
     response = requests.post(url=url, json=payload, headers=headers, stream=True)
-    # 处理请求失败
+    # Handle request failure
     if response.status_code != 200:
-        raise Exception("模型推理失败!" f"HTTP状态码: {response.status_code}", f"响应数据: {response.text}")
-    # 解析响应数据
+        raise Exception("Model inference failed!" f"HTTP status code: {response.status_code}", f"Response data: {response.text}")
+    # Parse response data
     answer_content = ""
     for line in response.iter_lines(decode_unicode=True):
         line: str
@@ -86,17 +86,17 @@ def stream_generate(system: str, user: str, **kwargs) -> str:
             continue
         elif line.startswith("data: "):
             line = line.lstrip("data: ")
-        elif "调用Alice审计服务未通过！" in line:
-            raise PermissionError("调用Alice审计服务未通过!", line)
+        elif "Alice audit service call failed!" in line:
+            raise PermissionError("Alice audit service call failed!", line)
         else:
-            raise Exception("模型推理异常!", line)
+            raise Exception("Model inference error!", line)
         try:
             data_blk = json.loads(line)
             content = data_blk["candidates"][0]["content"]["parts"][0]["text"]
             answer_content += content
             print(content, end="", flush=True)
         except Exception as e:
-            logger.error(f"模型推理异常! 异常原因: {e}, 响应数据: {line}")
+            logger.error(f"Model inference error! Error reason: {e}, Response data: {line}")
     if answer_content:
         print(flush=True)
     return answer_content

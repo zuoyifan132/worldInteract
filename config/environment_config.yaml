@@ -2,15 +2,6 @@
 # Pipeline Flow: Scenario Collection → Tool Dependency Graph Modeling → Function Schema Programmatic Materialization
 
 # =============================================================================
-# GENERAL FRAMEWORK SETTINGS
-# =============================================================================
-general:
-  max_retries: 3
-  timeout_seconds: 120
-  enable_logging: true
-  log_level: "INFO"
-
-# =============================================================================
 # PHASE 1: SCENARIO COLLECTION
 # Raw API processing, cleaning, and standardization
 # =============================================================================
@@ -43,65 +34,27 @@ dependency_graph:
 # Database schema generation, tool implementation, and state initialization
 # =============================================================================
 
-# Schema generation settings
-schema_generation:
-  max_schema_complexity: 10  # Maximum number of tables/collections
-  include_relationships: true
-  generate_indexes: false
-  default_data_types:
-    - "string"
-    - "integer"
-    - "float" 
-    - "boolean"
-    - "array"
-    - "object"
-
-# Tool generation settings
-tool_generation:
-  enforce_type_hints: true
-  include_error_handling: true
-  max_function_length: 100  # lines
-  validation_required: true
-
 # State generation settings
 state_generation:
-  min_records_per_table: 3
-  max_records_per_table: 5
-  data_diversity: true
-  realistic_relationships: true
-
-# Validation settings
-validation:
-  run_execution_tests: true
-  check_state_consistency: true
-  validate_return_types: true
-  max_test_cases: 5
-
-# Validation agent settings - REMOVED (functionality moved to code_agent)
+  min_records_per_table: 3  # Minimum number of records to generate per database table
+  max_records_per_table: 5  # Maximum number of records to generate per database table
 
 # Code agent settings (replaces tool generation + validation)
 code_agent:
-  test_case_num: 3
-  max_code_agent_rounds: 10
-  enable_sandbox: true
-  sandbox_timeout: 30
+  test_case_num: 3  # Number of test cases to generate for each tool
+  max_code_agent_rounds: 10  # Maximum number of code generation and validation rounds
+  enable_sandbox: true  # Whether to enable sandboxed code execution for safety
+  sandbox_timeout: 30  # Timeout in seconds for sandbox execution
 
 # Domain-specific settings
+# Suggested table names for each domain
 domains:
   file_operations:
-    min_records_per_table: 2
-    max_records_per_table: 5
-    schema_tables: ["files", "directories", "permissions", "metadata"]
-    max_file_size_mb: 100
-    supported_extensions: [".txt", ".json", ".csv", ".md", ".py"]
+    schema_tables: ["files", "directories", "permissions", "metadata"]  # Suggested table names for file operations domain
   
   web_browsing:
-    schema_tables: ["pages", "links", "cookies", "history", "bookmarks"]
-    max_page_size_kb: 500
-    supported_protocols: ["http", "https"]
+    schema_tables: ["pages", "links", "cookies", "history", "bookmarks"]  # Suggested table names for web browsing domain
   
   database_management:
-    schema_tables: ["databases", "tables", "indexes", "queries", "connections"]
-    max_connections: 10
-    supported_engines: ["sqlite", "mysql", "postgresql"]
+    schema_tables: ["databases", "tables", "indexes", "queries", "connections"]  # Suggested table names for database management domain
 

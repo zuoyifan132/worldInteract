@@ -14,9 +14,9 @@ def generate(system: str = None, user: str = None, messages: list = None, **kwar
     Generate response using OpenAI GPT model with thinking process and function calls support.
     
     Args:
-        system: System prompt (方式1)
-        user: User input (方式1)
-        messages: 预组织的消息数组 (方式2)
+        system: System prompt (method 1)
+        user: User input (method 1)
+        messages: Pre-organized message array (method 2)
         **kwargs: Additional parameters:
             - model_name: Model to use (default: o4-mini-2025-04-16)
             - temperature: Sampling temperature (default: 1.0)
@@ -45,12 +45,12 @@ def generate(system: str = None, user: str = None, messages: list = None, **kwar
     # Initialize client
     client = openai.OpenAI(api_key=api_key)
     
-    # 根据调用方式准备消息
+    # Prepare messages based on calling method
     if messages is not None:
-        # 方式2: 使用预组织的消息数组
+        # Method 2: Use pre-organized message array
         api_messages = messages
     else:
-        # 方式1: 使用 system 和 user 参数
+        # Method 1: Use system and user parameters
         api_messages = []
         if system:
             api_messages.append({"role": "system", "content": system})

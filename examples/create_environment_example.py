@@ -8,13 +8,21 @@ from an API collection.
 
 import sys
 import json
+import dotenv
 import logging
 import argparse
 from pathlib import Path
 
-sys.path.append("..")
+
+# Add project root directory to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 from worldInteract.core.environment import EnvironmentManager
+
+
+# Load environment variables
+dotenv.load_dotenv("../.env")
 
 
 def parse_arguments():
@@ -49,14 +57,7 @@ Example usage:
         "--use-code-agent",
         action="store_true",
         default=True,
-        help="Use code agent for validation (default: True)"
-    )
-    
-    parser.add_argument(
-        "--no-code-agent",
-        action="store_false",
-        dest="use_code_agent",
-        help="Disable code agent validation"
+        help="Use code agent for validation (always enabled, required for proper functionality)"
     )
     
     return parser.parse_args()
@@ -90,9 +91,10 @@ def main():
     if args.api_collection:
         api_collection_path = Path(args.api_collection)
         if not api_collection_path.is_absolute():
+            logger.info(f"API collection path is not absolute, using project root: {project_root}")
             api_collection_path = project_root / api_collection_path
     else:
-        api_collection_path = project_root / "data" / "apis_collections" / "api_collection_example.json"
+        raise ValueError("API collection path is required")
     
     # Log the paths being used
     logger.info(f"API collection file: {api_collection_path}")
@@ -102,11 +104,6 @@ def main():
     
     if not api_collection_path.exists():
         logger.error(f"API collection file not found: {api_collection_path}")
-        logger.info("Available API collections:")
-        collections_dir = project_root / "data" / "apis_collections"
-        if collections_dir.exists():
-            for collection_file in collections_dir.glob("*.json"):
-                logger.info(f"  - {collection_file.name}")
         return
     
     try:
@@ -154,6 +151,14 @@ def main():
         # Show generated tool names
         tool_names = list(environment["tools"].keys())
         logger.info(f"Generated tools: {tool_names}")
+        
+        # Display test cases overview
+        test_cases = environment.get("test_cases", {})
+        if test_cases:
+            logger.info("Test cases overview:")
+            for tool_name, cases in test_cases.items():
+                case_count = len(cases) if isinstance(cases, list) else 0
+                logger.info(f"  - {tool_name}: {case_count} test cases")
         
         # Show output directory
         output_dir = environment["output_dir"]

@@ -540,7 +540,7 @@ class CodeAgent:
         api_collection: Dict[str, Any],
         schema: Dict[str, Any],
         initial_state: Dict[str, Any]
-    ) -> Tuple[Dict[str, str], List[str], Dict[str, bool]]:
+    ) -> Tuple[Dict[str, str], List[str], Dict[str, bool], Dict[str, List[Dict[str, Any]]]]:
         """
         Generate and validate all tools in the API collection.
         
@@ -550,7 +550,7 @@ class CodeAgent:
             initial_state: Initial database state
             
         Returns:
-            Tuple of (successful_tools, all_requirements, validation_results)
+            Tuple of (successful_tools, all_requirements, validation_results, test_cases)
         """
         domain = api_collection.get("domain", "unknown")
         tools = api_collection.get("tools", [])
@@ -560,6 +560,7 @@ class CodeAgent:
         successful_tools = {}
         all_requirements = set()
         validation_results = {}
+        all_test_cases = {}
         
         for tool_desc in tools:
             tool_name = tool_desc["name"]
@@ -570,6 +571,9 @@ class CodeAgent:
                 code, requirements, test_cases = self.generate_code_and_tests(
                     tool_desc, schema, initial_state, domain
                 )
+                
+                # Store test cases regardless of validation success
+                all_test_cases[tool_name] = test_cases
                 
                 # Phase 2: Validate with ReAct
                 is_success, final_code, final_requirements, message = self.generate_and_validate_tool(
@@ -588,9 +592,11 @@ class CodeAgent:
             except Exception as e:
                 logger.error(f"Error processing tool {tool_name}: {e}")
                 validation_results[tool_name] = False
+                # Still try to store empty test cases for failed tools
+                all_test_cases[tool_name] = []
         
         passed = sum(1 for result in validation_results.values() if result)
         total = len(validation_results)
         logger.info(f"Code generation completed: {passed}/{total} tools successful")
         
-        return successful_tools, list(all_requirements), validation_results
+        return successful_tools, list(all_requirements), validation_results, all_test_cases
