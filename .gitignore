@@ -49,3 +49,7 @@ ENV/
 # Temporary files
 *.tmp
 *.temp
+
+# Data directory - ignore everything except raw_apis
+data/*
+!data/raw_apis/
