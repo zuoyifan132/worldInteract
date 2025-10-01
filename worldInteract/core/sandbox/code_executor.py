@@ -26,7 +26,7 @@ class CodeExecutor:
     
     def __init__(self):
         """Initialize code executor."""
-        self.config = config_manager.get_environment_config("validation_agent")
+        self.config = config_manager.get_environment_config("code_agent")
         self.timeout = self.config.get("sandbox_timeout", 30)
         self.enable_sandbox = self.config.get("enable_sandbox", True)
         

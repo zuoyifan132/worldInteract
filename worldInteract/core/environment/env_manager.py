@@ -10,7 +10,6 @@ from pathlib import Path
 
 from worldInteract.core.schema_generator import SchemaGenerator
 from worldInteract.core.tool_generator import ToolGenerator
-from worldInteract.core.validator import ToolValidator
 from worldInteract.core.validator.code_agent import CodeAgent
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.model_manager import generate
@@ -33,7 +32,6 @@ class EnvironmentManager:
         self.config_manager = config_manager
         self.schema_generator = SchemaGenerator(config_dir)
         self.tool_generator = ToolGenerator(config_dir)  # Keep for backward compatibility
-        self.validator = ToolValidator(config_dir)  # Keep for backward compatibility
         self.code_agent = CodeAgent()  # New integrated code generation and validation
         
         # Get state generation config
@@ -43,7 +41,6 @@ class EnvironmentManager:
         self,
         api_collection_path: str,
         output_dir: Optional[str] = None,
-        validate_tools: bool = True,
         use_code_agent: bool = True
     ) -> Dict[str, Any]:
         """
@@ -53,7 +50,6 @@ class EnvironmentManager:
             api_collection_path: Path to API collection JSON file
             output_dir: Output directory for generated files. If None, automatically 
                        determined from domain field: data/generated/domains/{domain}/
-            validate_tools: Whether to validate generated tools (only used if use_code_agent=False)
             use_code_agent: Whether to use CodeAgent for integrated generation+validation
             
         Returns:
@@ -85,17 +81,7 @@ class EnvironmentManager:
                     api_collection, schema, initial_state
                 )
             else:
-                # Fallback to original approach
-                logger.info("Step 3: Generating tool implementations...")
-                tools, requirements = self.tool_generator.generate_tools(api_collection, schema, initial_state)
-                
-                # Step 4: Validate tools (if requested)
-                validation_results = {}
-                if validate_tools:
-                    logger.info("Step 4: Validating generated tools...")
-                    validation_results = self.validator.validate_tools(
-                        tools, schema, initial_state, api_collection, requirements
-                    )
+                raise NotImplementedError("Please set use_code_agent to True to enable agent mode to generate code")
             
             # Step 5: Save all generated components
             if output_dir is None:
@@ -309,76 +295,6 @@ Generate a complete initial database state that provides a solid foundation for 
         
         logger.info("Initial state validation passed")
     
-    def _regenerate_failed_tools(
-        self,
-        failed_tools: list,
-        api_collection: Dict[str, Any],
-        schema: Dict[str, Any],
-        initial_state: Dict[str, Any],
-        tools: Dict[str, str],
-        validation_results: Dict[str, bool]
-    ) -> tuple:
-        """
-        Regenerate failed tools with up to 3 attempts each.
-        
-        Args:
-            failed_tools: List of tool names that failed validation
-            api_collection: Original API collection
-            schema: Database schema
-            initial_state: Initial database state
-            tools: Current tool implementations
-            validation_results: Current validation results
-            
-        Returns:
-            Tuple of (updated_tools, updated_validation_results)
-        """
-        max_attempts = 3
-        
-        for tool_name in failed_tools:
-            logger.info(f"Attempting to regenerate tool: {tool_name}")
-            
-            # Find the tool description
-            tool_desc = None
-            for tool in api_collection.get("tools", []):
-                if tool.get("name") == tool_name:
-                    tool_desc = tool
-                    break
-            
-            if not tool_desc:
-                logger.error(f"Tool description not found for: {tool_name}")
-                continue
-            
-            # Try regenerating up to max_attempts times
-            for attempt in range(max_attempts):
-                try:
-                    logger.info(f"Regeneration attempt {attempt + 1}/{max_attempts} for {tool_name}")
-                    
-                    # Generate new tool implementation
-                    new_tool_code = self.tool_generator._generate_tool_with_llm(
-                        tool_desc, schema, api_collection.get("domain", "unknown"), initial_state
-                    )
-                    
-                    # Test the new implementation
-                    is_valid = self.validator._validate_single_tool(
-                        tool_name, new_tool_code, tool_desc, schema, initial_state
-                    )
-                    
-                    if is_valid:
-                        tools[tool_name] = new_tool_code
-                        validation_results[tool_name] = True
-                        logger.info(f"Successfully regenerated tool: {tool_name}")
-                        break
-                    else:
-                        logger.warning(f"Regenerated tool {tool_name} still failed validation (attempt {attempt + 1})")
-                        
-                except Exception as e:
-                    logger.error(f"Error regenerating tool {tool_name} (attempt {attempt + 1}): {e}")
-            
-            if not validation_results.get(tool_name, False):
-                logger.error(f"Failed to regenerate tool {tool_name} after {max_attempts} attempts")
-        
-        return tools, validation_results
-    
     def _save_environment(
         self,
         domain: str,
@@ -414,7 +330,7 @@ Generate a complete initial database state that provides a solid foundation for 
         
         # Save validation report
         if validation_results:
-            self.validator.save_validation_report(validation_results, domain, output_path)
+            self.save_validation_report(validation_results, domain, output_path)
         
         # Save environment metadata
         metadata = {
@@ -487,4 +403,53 @@ Generate a complete initial database state that provides a solid foundation for 
         
         logger.info(f"Environment loaded for domain: {domain}")
         return environment_info
+    
+    def save_validation_report(
+        self,
+        validation_results: Dict[str, bool],
+        domain: str,
+        output_dir: Optional[Path] = None
+    ) -> None:
+        """
+        Save validation report to file.
+        
+        Args:
+            validation_results: Dictionary of tool validation results
+            domain: Domain name
+            output_dir: Output directory for the report
+        """
+        if output_dir is None:
+            project_root = Path(__file__).parent.parent.parent.parent
+            output_dir = project_root / "data" / "generated" / "domains" / domain
+        
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        # Calculate statistics
+        total_tools = len(validation_results)
+        passed_tools = sum(1 for result in validation_results.values() if result)
+        failed_tools = total_tools - passed_tools
+        success_rate = (passed_tools / total_tools) * 100 if total_tools > 0 else 0
+        
+        # Create report
+        report = {
+            "domain": domain,
+            "timestamp": str(__import__('datetime').datetime.now()),
+            "summary": {
+                "total_tools": total_tools,
+                "passed": passed_tools,
+                "failed": failed_tools,
+                "success_rate": round(success_rate, 2)
+            },
+            "validation_results": validation_results,
+            "failed_tools": [name for name, passed in validation_results.items() if not passed]
+        }
+        
+        # Save report
+        report_file = output_path / "validation_report.json"
+        with open(report_file, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Validation report saved to: {report_file}")
+        logger.info(f"Validation summary: {passed_tools}/{total_tools} tools passed ({success_rate:.1f}%)")
 

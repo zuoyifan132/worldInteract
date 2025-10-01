@@ -43,7 +43,7 @@ env_manager = EnvironmentManager()
 # Output directory is automatically determined from the "domain" field in the API collection
 environment = env_manager.create_environment(
     api_collection_path="data/apis_collections/file_operations.json",
-    validate_tools=True
+    use_code_agent=True
 )
 
 # Access generated components

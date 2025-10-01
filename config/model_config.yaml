@@ -66,12 +66,7 @@ test_generation:
   max_tokens: 8124
   retry_attempts: 3
 
-# Validation agent configuration
-validation_agent:
-  model: "claude_3d7"
-  temperature: 0.3
-  max_tokens: 8192
-  retry_attempts: 3
+# Validation agent configuration - REMOVED (functionality moved to code_agent)
 
 # Code agent configuration (replaces tool generation + validation)
 code_agent:

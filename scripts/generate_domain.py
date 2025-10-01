@@ -34,7 +34,6 @@ def setup_logging(verbose: bool = False):
 
 def generate_domain(
     api_collection_path: str,
-    validate: bool = True,
     verbose: bool = False
 ):
     """
@@ -42,12 +41,12 @@ def generate_domain(
     
     Args:
         api_collection_path: Path to API collection JSON file
-        validate: Whether to validate generated tools
         verbose: Enable verbose logging
         
     Note:
         Output directory is automatically determined from the domain field 
         in the API collection: data/generated/domains/{domain}/
+        Tools are always validated using the integrated CodeAgent.
     """
     setup_logging(verbose)
     logger = logging.getLogger(__name__)
@@ -76,14 +75,14 @@ def generate_domain(
         logger.info("Starting environment generation...")
         environment = env_manager.create_environment(
             api_collection_path=api_collection_path,
-            validate_tools=validate
+            use_code_agent=True
         )
         
         # Display results
         logger.info(f"Environment generation completed for domain: {domain}")
         logger.info(f"Generated {len(environment['tools'])} tools")
         
-        if validate and environment.get("validation_results"):
+        if environment.get("validation_results"):
             validation_results = environment["validation_results"]
             passed = sum(1 for result in validation_results.values() if result)
             total = len(validation_results)
@@ -114,11 +113,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Generate environment with validation
+  # Generate environment
   python scripts/generate_domain.py data/apis_collections/file_operations.json
-  
-  # Generate without validation
-  python scripts/generate_domain.py data/apis_collections/web_browsing.json --no-validate
   
   # Enable verbose logging
   python scripts/generate_domain.py api_collection.json --verbose
@@ -131,11 +127,6 @@ Examples:
     )
     
     
-    parser.add_argument(
-        "--no-validate",
-        action="store_true",
-        help="Skip tool validation (faster but less reliable)"
-    )
     
     parser.add_argument(
         "--verbose", "-v",
@@ -148,7 +139,6 @@ Examples:
     # Generate domain
     success = generate_domain(
         api_collection_path=args.api_collection,
-        validate=not args.no_validate,
         verbose=args.verbose
     )
     

@@ -35,26 +35,21 @@ Test Generation → Tool Execution → Result Validation → Report Generation
 ## Usage Example
 
 ```python
-from worldInteract.core.validator import ToolValidator
+from worldInteract.core.validator.code_agent import CodeAgent
 
-# Initialize validator
-validator = ToolValidator()
+# Initialize code agent (handles both generation and validation)
+code_agent = CodeAgent()
 
-# Validate all tools
-validation_results = validator.validate_tools(
-    tools=tools,
+# Generate and validate tools in one step
+tools, requirements, validation_results = code_agent.generate_and_validate_tools(
+    api_collection=api_collection,
     schema=schema,
-    initial_state=initial_state,
-    api_collection=api_collection
+    initial_state=initial_state
 )
 
 # Check results
 for tool_name, passed in validation_results.items():
     print(f"{tool_name}: {'PASSED' if passed else 'FAILED'}")
-
-# Save validation report
-validator.save_validation_report(validation_results, "file_operations")
-```
 
 ## Validation Process
 

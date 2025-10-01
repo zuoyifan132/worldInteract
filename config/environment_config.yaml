@@ -77,12 +77,7 @@ validation:
   validate_return_types: true
   max_test_cases: 5
 
-# Validation agent settings
-validation_agent:
-  test_case_num: 3
-  max_validation_agent_rounds: 10
-  enable_sandbox: true
-  sandbox_timeout: 30
+# Validation agent settings - REMOVED (functionality moved to code_agent)
 
 # Code agent settings (replaces tool generation + validation)
 code_agent:

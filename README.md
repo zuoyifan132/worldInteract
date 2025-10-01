@@ -106,7 +106,7 @@ WorldInteract/
 │   └── test_validator.py
 └── scripts/
     ├── generate_domain.py
-    └── validate_tools.py
+    └── scenario_pipeline.py
 ```
 
 ## Key Features
@@ -149,7 +149,7 @@ env_manager = EnvironmentManager()
 # Create complete environment from API collection
 environment = env_manager.create_environment(
     api_collection_path="data/apis_collections/api_collection_example.json",
-    validate_tools=True
+    use_code_agent=True
 )
 
 # Access generated components
@@ -162,13 +162,8 @@ validation_results = environment["validation_results"]
 ### Command Line Usage
 ```bash
 # Generate domain environment (output automatically goes to data/generated/domains/{domain}/)
+# Validation is always included with the integrated CodeAgent
 python scripts/generate_domain.py data/apis_collections/api_collection_example.json
-
-# Generate without validation (faster)
-python scripts/generate_domain.py data/apis_collections/api_collection_example.json --no-validate
-
-# Validate generated tools
-python scripts/validate_tools.py file_operations
 
 # Run examples
 python examples/create_env.py

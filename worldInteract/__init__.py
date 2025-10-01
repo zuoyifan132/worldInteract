@@ -9,12 +9,12 @@ __author__ = "WorldInteract Team"
 from .core.environment import EnvironmentManager
 from .core.schema_generator import SchemaGenerator  
 from .core.tool_generator import ToolGenerator
-from .core.validator import ToolValidator
+from .core.validator import CodeAgent
 
 __all__ = [
     "EnvironmentManager",
     "SchemaGenerator", 
     "ToolGenerator",
-    "ToolValidator"
+    "CodeAgent"
 ]
 

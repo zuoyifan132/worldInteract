@@ -2,7 +2,7 @@
 Tool validation and testing module.
 """
 
-from .tool_validator import ToolValidator
+from .code_agent import CodeAgent
 
-__all__ = ["ToolValidator"]
+__all__ = ["CodeAgent"]
 
