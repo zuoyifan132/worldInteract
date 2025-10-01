@@ -228,19 +228,5 @@ data/generated/domains/{domain}/
 - [ ] Benchmark integration
 - [ ] Visualization interface
 
-## Example Output
-
-### File Operations Domain
-Generated environment contains 18 file operation tools: `cat`, `cd`, `cp`, `diff`, `du`, `echo`, `find`, `grep`, `ls`, `mkdir`, `mv`, `pwd`, `rm`, `rmdir`, `sort`, `tail`, `touch`, `wc`
-
-### Database Operations Domain  
-Generated environment contains basic database operation tools: `create_table`, `delete_record`, `drop_table`, etc.
-
-## Contributing
-
-Welcome to submit Issues and Pull Requests to improve the project.
-
 ## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
