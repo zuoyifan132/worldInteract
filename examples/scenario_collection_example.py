@@ -29,9 +29,7 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-  python scenario_collection_example.py
-  python scenario_collection_example.py --input-dir /path/to/raw/apis --output-file /path/to/cleaned_apis.json
-  python scenario_collection_example.py -i data/raw_apis -o output/my_cleaned_apis.json
+  python scenario_collection_example.py --input-dir data/raw_apis --output-file data/processed_apis/my_cleaned_apis.json
         """
     )
     

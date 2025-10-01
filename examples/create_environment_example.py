@@ -32,10 +32,7 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-  python create_environment_example.py
-  python create_environment_example.py --api-collection /path/to/api_collection.json --output-dir /path/to/output
-  python create_environment_example.py -a data/apis_collections/ticket_api_example.json -o output/my_environment
-  python create_environment_example.py --no-code-agent
+  python create_environment_example.py --api-collection data/dependency_graphs/my_dependency_graphs/domains/<any-domain-json-file>.json
         """
     )
     

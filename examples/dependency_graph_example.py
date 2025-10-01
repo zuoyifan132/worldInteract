@@ -30,9 +30,7 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-  python dependency_graph_example.py
-  python dependency_graph_example.py --input-file /path/to/cleaned_apis.json --output-dir /path/to/output
-  python dependency_graph_example.py -i data/processed_apis/example_run/cleaned_apis.json -o output/my_dependency_graphs
+    python dependency_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/dependency_graphs/my_dependency_graphs
         """
     )
     
