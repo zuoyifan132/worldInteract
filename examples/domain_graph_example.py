@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Example: Tool Dependency Graph Modeling Pipeline
-This example demonstrates how to use the DependencyGraphBuilder to create
-tool dependency graphs from cleaned API scenarios.
+Example: Domain Graph Modeling Pipeline
+This example demonstrates how to use the DomainGraphBuilder to create
+domain graphs from cleaned API scenarios.
 """
 
 import os
@@ -17,7 +17,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from loguru import logger
-from worldInteract.core.dependency_graph import DependencyGraphBuilder
+from worldInteract.core.build_domain_graph import DomainGraphBuilder
 
 # Load environment variables
 dotenv.load_dotenv("../.env")
@@ -26,11 +26,11 @@ dotenv.load_dotenv("../.env")
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description="Run dependency graph example to create tool dependency graphs from cleaned API scenarios",
+        description="Run domain graph example to create domain graphs from cleaned API scenarios",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-    python dependency_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/dependency_graphs/my_dependency_graphs
+    python domain_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/domain_graphs/my_domain_graphs
         """
     )
     
@@ -45,19 +45,19 @@ Example usage:
         "--output-dir", "-o", 
         type=str,
         default=None,
-        help="Output directory path for dependency graphs (default: data/dependency_graphs/dependency_graph_example)"
+        help="Output directory path for domain graphs (default: data/dependency_graphs/domain_graph_example)"
     )
     
     return parser.parse_args()
 
 
 def main():
-    """Run the dependency graph modeling example"""
+    """Run the domain graph modeling example"""
     
     # Parse command line arguments
     args = parse_arguments()
     
-    logger.info("Starting Tool Dependency Graph Modeling Example")
+    logger.info("Starting Domain Graph Modeling Example")
     
     # Set up paths
     project_root = Path(__file__).parent.parent
@@ -98,8 +98,8 @@ def main():
         # Create output directory if it doesn't exist
         dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
     else:
-        # Create output directory for dependency graphs (default path)
-        dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "dependency_graph_example"
+        # Create output directory for domain graphs (default path)
+        dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "domain_graph_example"
         dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
     
     # Log the paths being used
@@ -137,11 +137,11 @@ def main():
     
     try:
         # Initialize the dependency graph builder
-        logger.info("=== Initializing DependencyGraphBuilder ===")
-        builder = DependencyGraphBuilder()
+        logger.info("=== Initializing DomainGraphBuilder ===")
+        builder = DomainGraphBuilder()
         
-        # Build tool dependency graphs
-        logger.info("=== Starting Tool Dependency Graph Modeling ===")
+        # Build domain graphs
+        logger.info("=== Starting Domain Graph Modeling ===")
         logger.info("This process will:")
         logger.info("1. Analyze API scenarios for tool dependencies")
         logger.info("2. Group related tools into domains")
@@ -154,7 +154,7 @@ def main():
         )
         
         # Display detailed results
-        logger.info("=== Tool Dependency Graph Modeling Completed ===")
+        logger.info("=== Domain Graph Modeling Completed ===")
         
         if isinstance(graph_result, dict):
             logger.info("Processing Results:")
@@ -225,7 +225,7 @@ def main():
                 file_size = file_path.stat().st_size
                 logger.info(f"  - {file_path.name} ({file_size:,} bytes)")
         
-        logger.info("\n=== Tool Dependency Graph Example Completed Successfully! ===")
+        logger.info("\n=== Domain Graph Example Completed Successfully! ===")
         logger.info("Next steps:")
         logger.info("1. Review the generated domain structures")
         logger.info("2. Examine the tool implementations in each domain")
@@ -233,7 +233,7 @@ def main():
         logger.info("4. Use the generated tools in your applications")
         
     except Exception as e:
-        logger.error(f"Tool Dependency Graph Modeling failed: {e}")
+        logger.error(f"Domain Graph Modeling failed: {e}")
         logger.error("Please check the error details above and ensure:")
         logger.error("1. Cleaned APIs data is properly formatted")
         logger.error("2. All required dependencies are installed")

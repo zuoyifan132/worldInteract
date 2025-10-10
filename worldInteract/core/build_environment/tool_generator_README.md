@@ -216,7 +216,7 @@ def create_file(data: Dict[str, Any], file_path: str, content: str, encoding: st
 Generated tools are saved in the following structure:
 
 ```
-data/generated/domains/{domain}/
+data/generated_env/domains/{domain}/
 ├── tools.py                    # Combined tools file
 └── tools/                      # Individual tool files
     ├── create_file.py

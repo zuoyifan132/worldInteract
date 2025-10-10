@@ -231,14 +231,14 @@ Generate a comprehensive schema that enables these tools to operate on realistic
         Args:
             schema: Generated schema
             domain: Domain name
-            output_dir: Output directory (defaults to data/generated/domains/)
+            output_dir: Output directory (defaults to data/generated_env/domains/)
             
         Returns:
             Path to saved schema file
         """
         if output_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            output_dir = project_root / "data" / "generated" / "domains" / domain
+            output_dir = project_root / "data" / "generated_env" / "domains" / domain
         
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -264,7 +264,7 @@ Generate a comprehensive schema that enables these tools to operate on realistic
         """
         if schema_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            schema_dir = project_root / "data" / "generated" / "domains" / domain
+            schema_dir = project_root / "data" / "generated_env" / "domains" / domain
         
         schema_file = Path(schema_dir) / "schema.json"
         

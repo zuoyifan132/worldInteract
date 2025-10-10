@@ -19,7 +19,7 @@ from worldInteract.utils.embedding import OpenAIEmbeddings
 from worldInteract.utils.parser_utils import extract_json_from_text
 
 
-class DependencyGraphBuilder:
+class DomainGraphBuilder:
     """Builds tool dependency graphs and performs domain clustering."""
     
     def __init__(self, config_dir: Optional[str] = None):
@@ -274,6 +274,7 @@ class DependencyGraphBuilder:
             # Calculate similarity with each domain using descriptions
             for domain_idx, domain in enumerate(domains):
                 try:
+                    #TODO: Using the keyword instead of similarity to identify the singleton
                     # Calculate similarity between tool description and domain description
                     tool_description = tool_api["description"]
                     domain_description = domain["description"]

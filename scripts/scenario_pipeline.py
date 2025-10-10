@@ -19,10 +19,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from worldInteract.core.scenario_collection import APICleaner
-from worldInteract.core.dependency_graph import DependencyGraphBuilder
-from worldInteract.core.tool_generator.generator import ToolGenerator
-from worldInteract.core.schema_generator.generator import SchemaGenerator
-from worldInteract.core.environment.env_manager import EnvironmentManager
+from worldInteract.core.build_domain_graph import DomainGraphBuilder
+from worldInteract.core.build_environment import ToolGenerator, SchemaGenerator, EnvironmentManager
 
 
 def setup_logging(verbose: bool = False):
@@ -73,7 +71,7 @@ def run_dependency_graph_modeling(cleaned_apis_path: str, output_dir: str) -> st
     """
     logger.info("=== Starting Tool Dependency Graph Modeling Phase ===")
     
-    builder = DependencyGraphBuilder()
+    builder = DomainGraphBuilder()
     result = builder.build_dependency_graph(cleaned_apis_path, output_dir)
     
     logger.info(f"Dependency Graph Modeling completed. Statistics:")

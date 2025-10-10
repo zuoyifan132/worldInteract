@@ -8,9 +8,9 @@ import random
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
-from worldInteract.core.schema_generator import SchemaGenerator
-from worldInteract.core.tool_generator import ToolGenerator
-from worldInteract.core.validator.code_agent import CodeAgent
+from .schema_generator import SchemaGenerator
+from .tool_generator import ToolGenerator
+from .code_agent import CodeAgent
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.model_manager import generate
 from worldInteract.utils.parser_utils import extract_json_from_text, normalize_api_collection
@@ -50,7 +50,7 @@ class EnvironmentManager:
         Args:
             api_collection_path: Path to API collection JSON file
             output_dir: Output directory for generated files. If None, automatically 
-                       determined from domain field: data/generated/domains/{domain}/
+                       determined from domain field: data/generated_env/domains/{domain}/
             use_code_agent: Whether to use CodeAgent for integrated generation+validation
             
         Returns:
@@ -87,7 +87,7 @@ class EnvironmentManager:
             # Step 5: Save all generated components
             if output_dir is None:
                 project_root = Path(__file__).parent.parent.parent.parent
-                output_dir = project_root / "data" / "generated" / "domains" / domain
+                output_dir = project_root / "data" / "generated_env" / "domains" / domain
             
             self._save_environment(
                 domain, schema, initial_state, tools, validation_results, output_dir, requirements, test_cases
@@ -377,7 +377,7 @@ Generate a complete initial database state that provides a solid foundation for 
         """
         if environment_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            environment_dir = project_root / "data" / "generated" / "domains" / domain
+            environment_dir = project_root / "data" / "generated_env" / "domains" / domain
         
         env_path = Path(environment_dir)
         
@@ -439,7 +439,7 @@ Generate a complete initial database state that provides a solid foundation for 
         """
         if output_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            output_dir = project_root / "data" / "generated" / "domains" / domain
+            output_dir = project_root / "data" / "generated_env" / "domains" / domain
         
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)

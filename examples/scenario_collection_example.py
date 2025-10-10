@@ -148,7 +148,7 @@ def main():
         logger.info("\n=== Scenario Collection Example Completed Successfully! ===")
         logger.info("Next steps:")
         logger.info("1. Review the cleaned APIs in the output file")
-        logger.info("2. Use dependency_graph_example.py to build tool dependency graphs")
+        logger.info("2. Use domain_graph_example.py to build domain graphs")
         logger.info("3. Or run the full pipeline with scenario_pipeline_example.py")
         
     except Exception as e:

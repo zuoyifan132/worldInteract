@@ -20,7 +20,7 @@ sys.path.insert(0, str(project_root))
 # load .env file
 dotenv.load_dotenv("../.env")
 
-from worldInteract.core.environment import EnvironmentManager
+from worldInteract.core.build_environment import EnvironmentManager
 
 
 def setup_logging(verbose: bool = False):
@@ -45,7 +45,7 @@ def generate_domain(
         
     Note:
         Output directory is automatically determined from the domain field 
-        in the API collection: data/generated/domains/{domain}/
+        in the API collection: data/generated_env/domains/{domain}/
         Tools are always validated using the integrated CodeAgent.
     """
     setup_logging(verbose)

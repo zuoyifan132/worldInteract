@@ -354,14 +354,14 @@ Generate ONLY the Python function implementation. Do not include imports or addi
         Args:
             tools: Dictionary of tool implementations
             domain: Domain name
-            output_dir: Output directory (defaults to data/generated/domains/)
+            output_dir: Output directory (defaults to data/generated_env/domains/)
             
         Returns:
             Path to saved tools file
         """
         if output_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            output_dir = project_root / "data" / "generated" / "domains" / domain
+            output_dir = project_root / "data" / "generated_env" / "domains" / domain
         
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -433,7 +433,7 @@ Generate ONLY the Python function implementation. Do not include imports or addi
         """
         if tools_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            tools_dir = project_root / "data" / "generated" / "domains" / domain / "tools"
+            tools_dir = project_root / "data" / "generated_env" / "domains" / domain / "tools"
         
         tools_path = Path(tools_dir)
         

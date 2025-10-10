@@ -87,9 +87,9 @@ result = cleaner.clean_apis(
 
 #### 使用方法
 ```python
-from worldInteract.core.dependency_graph import DependencyGraphBuilder
+from worldInteract.core.build_domain_graph import DomainGraphBuilder
 
-builder = DependencyGraphBuilder()
+builder = DomainGraphBuilder()
 result = builder.build_dependency_graph(
     cleaned_apis_path="data/processed_apis/cleaned_apis.json",
     output_dir="data/dependency_graphs"
@@ -282,7 +282,7 @@ python scripts/scenario_pipeline.py \
 在`APICleaner`中扩展`_fix_api_format`方法
 
 ### 自定义相似度算法
-在`DependencyGraphBuilder`中覆盖`_build_similarity_graph`方法
+在`DomainGraphBuilder`中覆盖`_build_similarity_graph`方法
 
 ### 新的社区检测算法
 替换`community_louvain`为其他算法如Leiden

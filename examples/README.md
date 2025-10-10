@@ -25,19 +25,19 @@ After running this example, the following output files will be generated:
   - Formatted API call examples and parameter descriptions
   - Deduplicated and standardized API collections
 
-### 2. Dependency Graph Example (dependency_graph_example.py)
+### 2. Domain Graph Example (domain_graph_example.py)
 
 Demonstrates how to create tool dependency graphs from cleaned API scenarios.
 
 **Basic Usage:**
 ```bash
 # Specify input file and output directory
-python dependency_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/dependency_graphs/my_dependency_graphs
+python domain_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/dependency_graphs/my_dependency_graphs
 ```
 
 **Parameters:**
 - `--input-file, -i`: Input file path for cleaned API data (default: auto-search for cleaned_apis.json in processed_apis directories)
-- `--output-dir, -o`: Output directory path for dependency graphs (default: data/dependency_graphs/dependency_graph_example)
+- `--output-dir, -o`: Output directory path for domain graphs (default: data/dependency_graphs/domain_graph_example)
 
 **Output File Structure:**
 After running this example, the following file structure will be generated in the output directory:
@@ -62,7 +62,7 @@ python create_environment_example.py --api-collection data/dependency_graphs/my_
 
 **Parameters:**
 - `--api-collection, -a`: API collection file path (default: data/apis_collections/api_collection_example.json)
-- `--output-dir, -o`: Output directory path (default: auto-generated based on domain, for this example the output will be in data/generated/domains/file_operations)
+- `--output-dir, -o`: Output directory path (default: auto-generated based on domain, for this example the output will be in data/generated_env/domains/file_operations)
 - `--use-code-agent`: Code agent validation (always enabled, required for proper functionality)
 
 **Output File Structure:**

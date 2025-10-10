@@ -119,7 +119,7 @@ WorldInteract/
 │   └── tasks/                      # Task construction (future)
 ├── examples/
 │   ├── create_environment_example.py
-│   └── dependency_graph_example.py
+│   └── domain_graph_example.py
 ├── scripts/
 │   ├── generate_domain.py          # Domain generation script
 │   └── scenario_pipeline.py        # Complete pipeline script

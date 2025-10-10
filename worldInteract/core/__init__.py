@@ -2,10 +2,7 @@
 Core modules for WorldInteract framework.
 """
 
-from .environment import EnvironmentManager
-from .schema_generator import SchemaGenerator
-from .tool_generator import ToolGenerator 
-from .validator import CodeAgent
+from .build_environment import EnvironmentManager, SchemaGenerator, ToolGenerator, CodeAgent
 
 __all__ = [
     "EnvironmentManager",
