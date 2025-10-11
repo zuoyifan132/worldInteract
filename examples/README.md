@@ -27,25 +27,25 @@ After running this example, the following output files will be generated:
 
 ### 2. Domain Graph Example (domain_graph_example.py)
 
-Demonstrates how to create tool dependency graphs from cleaned API scenarios.
+Demonstrates how to create tool domain graphs from cleaned API scenarios.
 
 **Basic Usage:**
 ```bash
 # Specify input file and output directory
-python domain_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/dependency_graphs/my_dependency_graphs
+python domain_graph_example.py --input-file data/processed_apis/my_cleaned_apis.json --output-dir data/domain_graphs/my_domain_graphs
 ```
 
 **Parameters:**
 - `--input-file, -i`: Input file path for cleaned API data (default: auto-search for cleaned_apis.json in processed_apis directories)
-- `--output-dir, -o`: Output directory path for domain graphs (default: data/dependency_graphs/domain_graph_example)
+- `--output-dir, -o`: Output directory path for domain graphs (default: data/domain_graphs/domain_graph_example)
 
 **Output File Structure:**
 After running this example, the following file structure will be generated in the output directory:
-- `dependency_graph.json`: Tool dependency graph data
+- `domain_graph.json`: Tool domain graph data
 - `communities.json`: Tool community clustering information
 - `domains.json`: Domain classification summary information
 - `embeddings.json`: Tool vector embedding data
-- `graph_visualization.png`: Dependency graph visualization image
+- `graph_visualization.png`: Domain graph visualization image
 - `domains/`: Domain classification directory containing JSON files for each domain
   - `{domain_name}.json`: Specific API tool collections for each domain
   - Examples: `file_management.json`, `database_management.json`, `user_management.json`, etc.
@@ -57,7 +57,7 @@ Demonstrates how to create a complete environment from an API collection.
 **Basic Usage:**
 ```bash
 # Specify API collection file
-python create_environment_example.py --api-collection data/dependency_graphs/my_dependency_graphs/domains/<any-domain-json-file>.json
+python create_environment_example.py --api-collection data/domain_graphs/my_domain_graphs/domains/<any-domain-json-file>.json
 ```
 
 **Parameters:**
@@ -83,5 +83,5 @@ After running this example, a complete environment file structure will be genera
 If you're using the WorldInteract framework for the first time, we recommend running the examples in the following order:
 
 1. **Scenario Collection Example** - First process raw API data
-2. **Dependency Graph Example** - Create dependency graphs based on 
+2. **Domain Graph Example** - Create domain graphs based on 
 3. **Environment Creation Example** - Create complete environment from 

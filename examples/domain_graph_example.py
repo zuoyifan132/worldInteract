@@ -45,7 +45,7 @@ Example usage:
         "--output-dir", "-o", 
         type=str,
         default=None,
-        help="Output directory path for domain graphs (default: data/dependency_graphs/domain_graph_example)"
+        help="Output directory path for domain graphs (default: data/domain_graphs/domain_graph_example)"
     )
     
     return parser.parse_args()
@@ -92,19 +92,19 @@ def main():
     
     # Use command line arguments or default paths for output
     if args.output_dir:
-        dependency_graphs_dir = Path(args.output_dir)
-        if not dependency_graphs_dir.is_absolute():
-            dependency_graphs_dir = project_root / dependency_graphs_dir
+        domain_graphs_dir = Path(args.output_dir)
+        if not domain_graphs_dir.is_absolute():
+            domain_graphs_dir = project_root / domain_graphs_dir
         # Create output directory if it doesn't exist
-        dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
+        domain_graphs_dir.mkdir(parents=True, exist_ok=True)
     else:
         # Create output directory for domain graphs (default path)
-        dependency_graphs_dir = project_root / "data" / "dependency_graphs" / "domain_graph_example"
-        dependency_graphs_dir.mkdir(parents=True, exist_ok=True)
+        domain_graphs_dir = project_root / "data" / "domain_graphs" / "domain_graph_example"
+        domain_graphs_dir.mkdir(parents=True, exist_ok=True)
     
     # Log the paths being used
     logger.info(f"Input file: {cleaned_apis_path}")
-    logger.info(f"Output directory: {dependency_graphs_dir}")
+    logger.info(f"Output directory: {domain_graphs_dir}")
     
     # Validate input file exists
     if not cleaned_apis_path.exists():
@@ -136,7 +136,7 @@ def main():
         return
     
     try:
-        # Initialize the dependency graph builder
+        # Initialize the domain graph builder
         logger.info("=== Initializing DomainGraphBuilder ===")
         builder = DomainGraphBuilder()
         
@@ -148,9 +148,9 @@ def main():
         logger.info("3. Generate tool implementations and schemas")
         logger.info("4. Create validation reports")
         
-        graph_result = builder.build_dependency_graph(
+        graph_result = builder.build_domain_graph(
             str(cleaned_apis_path), 
-            str(dependency_graphs_dir)
+            str(domain_graphs_dir)
         )
         
         # Display detailed results
@@ -175,7 +175,7 @@ def main():
         logger.info("\n=== Generated Outputs ===")
         
         # Check for domain directories
-        domains_dir = dependency_graphs_dir / "domains"
+        domains_dir = domain_graphs_dir / "domains"
         if domains_dir.exists():
             domain_folders = [d for d in domains_dir.iterdir() if d.is_dir()]
             logger.info(f"Generated {len(domain_folders)} domain(s):")
@@ -218,7 +218,7 @@ def main():
             logger.warning("No domains directory found in output")
         
         # Check for other output files
-        other_files = [f for f in dependency_graphs_dir.iterdir() if f.is_file()]
+        other_files = [f for f in domain_graphs_dir.iterdir() if f.is_file()]
         if other_files:
             logger.info(f"\nOther generated files:")
             for file_path in other_files:
