@@ -2,10 +2,11 @@
 """
 Scenario Collection and Dependency Graph Pipeline Script
 
-This script implements the complete pipeline from raw APIs to domain-specific tool environments:
+This script implements the pipeline from raw APIs to domain graphs:
 1. Scenario Collection (API cleaning and standardization)
-2. Tool Dependency Graph Modeling (similarity analysis and community detection)
-3. Integration with existing tool generation pipeline
+2. Domain Dependency Graph Modeling (similarity analysis and community detection)
+
+Note: Tool generation is handled separately by generate_domain.py script.
 """
 
 import os
@@ -20,7 +21,6 @@ sys.path.insert(0, str(project_root))
 
 from worldInteract.core.scenario_collection import APICleaner
 from worldInteract.core.build_domain_graph import DomainGraphBuilder
-from worldInteract.core.build_environment import ToolGenerator, SchemaGenerator, EnvironmentManager
 
 
 def setup_logging(verbose: bool = False):
@@ -84,133 +84,37 @@ def run_dependency_graph_modeling(cleaned_apis_path: str, output_dir: str) -> st
     return os.path.join(output_dir, "domains")
 
 
-def run_tool_generation(domains_dir: str, output_dir: str):
-    """
-    Run tool generation for each domain.
-    
-    Args:
-        domains_dir: Directory containing domain JSON files
-        output_dir: Directory to save generated tools
-        
-    Returns:
-        List of generated domain paths
-    """
-    logger.info("=== Starting Tool Generation Phase ===")
-    
-    domains_path = Path(domains_dir)
-    if not domains_path.exists():
-        raise FileNotFoundError(f"Domains directory not found: {domains_dir}")
-    
-    # Get all domain JSON files
-    domain_files = list(domains_path.glob("*.json"))
-    if not domain_files:
-        raise FileNotFoundError(f"No domain files found in {domains_dir}")
-    
-    logger.info(f"Found {len(domain_files)} domains to process")
-    
-    # Initialize generators
-    schema_generator = SchemaGenerator()
-    tool_generator = ToolGenerator()
-    env_manager = EnvironmentManager()
-    
-    generated_domains = []
-    
-    for domain_file in domain_files:
-        try:
-            logger.info(f"Processing domain: {domain_file.stem}")
-            
-            # Load domain data
-            import json
-            with open(domain_file, 'r', encoding='utf-8') as f:
-                domain_data = json.load(f)
-            
-            domain_name = domain_data["domain"]
-            tools = domain_data["tools"]
-            
-            # Create output directory for this domain
-            domain_output_dir = Path(output_dir) / domain_name
-            domain_output_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Convert to API collection format expected by existing generators
-            api_collection = {
-                "domain": domain_name,
-                "description": domain_data["description"],
-                "tools": tools
-            }
-            
-            # Generate schema
-            logger.info(f"Generating schema for domain: {domain_name}")
-            schema = schema_generator.generate_schema(api_collection)
-            
-            # Save schema
-            schema_path = domain_output_dir / "schema.json"
-            with open(schema_path, 'w', encoding='utf-8') as f:
-                json.dump(schema, f, indent=2, ensure_ascii=False)
-            
-            # Generate initial state
-            logger.info(f"Generating initial state for domain: {domain_name}")
-            initial_state = env_manager.generate_initial_state(api_collection, schema)
-            
-            # Save initial state
-            state_path = domain_output_dir / "initial_state.json"
-            with open(state_path, 'w', encoding='utf-8') as f:
-                json.dump(initial_state, f, indent=2, ensure_ascii=False)
-            
-            # Generate tools
-            logger.info(f"Generating tools for domain: {domain_name}")
-            generated_tools = tool_generator.generate_tools(api_collection, schema, initial_state)
-            
-            # Save tools
-            tools_dir = domain_output_dir / "tools"
-            tools_dir.mkdir(exist_ok=True)
-            
-            # Save individual tool files
-            for tool_name, tool_code in generated_tools.items():
-                tool_file = tools_dir / f"{tool_name}.py"
-                with open(tool_file, 'w', encoding='utf-8') as f:
-                    f.write(tool_code)
-            
-            # Save combined tools file
-            combined_tools_path = domain_output_dir / "tools.py"
-            tool_generator.save_combined_tools(generated_tools, combined_tools_path)
-            
-            # Copy API collection for reference
-            api_collection_path = domain_output_dir / "api_collection.json"
-            with open(api_collection_path, 'w', encoding='utf-8') as f:
-                json.dump(api_collection, f, indent=2, ensure_ascii=False)
-            
-            generated_domains.append(str(domain_output_dir))
-            logger.info(f"Successfully generated domain: {domain_name}")
-            
-        except Exception as e:
-            logger.error(f"Failed to process domain {domain_file.stem}: {e}")
-            continue
-    
-    logger.info(f"Tool generation completed. Generated {len(generated_domains)} domains.")
-    return generated_domains
 
 
 def run_complete_pipeline(
     raw_apis_path: str,
     output_base_dir: str,
     skip_scenario_collection: bool = False,
-    skip_dependency_graph: bool = False,
-    skip_tool_generation: bool = False
+    skip_dependency_graph: bool = False
 ):
     """
-    Run the complete pipeline from raw APIs to generated tools.
+    Run the complete pipeline from raw APIs to domain graphs.
+    
+    This pipeline performs:
+    1. Scenario Collection (API cleaning and standardization)
+    2. Dependency Graph Modeling (domain analysis and graph building)
+    
+    Note: Tool generation is handled separately by generate_domain.py script.
     
     Args:
-        raw_apis_path: Path to raw APIs JSON file
+        raw_apis_path: Path to raw APIs JSON file or directory
         output_base_dir: Base directory for all outputs
         skip_scenario_collection: Skip scenario collection phase
         skip_dependency_graph: Skip dependency graph modeling phase
-        skip_tool_generation: Skip tool generation phase
         
     Returns:
         Dictionary with paths to all generated outputs
     """
-    logger.info("=== Starting Complete Scenario Pipeline ===")
+    logger.info("=== Starting Scenario Pipeline ===")
+    logger.info("This pipeline will:")
+    logger.info("  1. Clean and standardize raw APIs")
+    logger.info("  2. Build domain dependency graphs")
+    logger.info("  Note: Use generate_domain.py to generate tools from domain graphs")
     
     # Create output directories
     output_base = Path(output_base_dir)
@@ -218,11 +122,9 @@ def run_complete_pipeline(
     
     processed_apis_dir = output_base / "processed_apis"
     dependency_graphs_dir = output_base / "dependency_graphs"
-    generated_domains_dir = output_base / "generated_domains"
     
     processed_apis_dir.mkdir(exist_ok=True)
     dependency_graphs_dir.mkdir(exist_ok=True)
-    generated_domains_dir.mkdir(exist_ok=True)
     
     results = {
         "raw_apis_path": raw_apis_path,
@@ -242,7 +144,7 @@ def run_complete_pipeline(
     
     # Phase 2: Dependency Graph Modeling
     if not skip_dependency_graph:
-        results["dependency_graphs_dir"] = run_dependency_graph_modeling(
+        results["domains_dir"] = run_dependency_graph_modeling(
             results["cleaned_apis_path"], 
             str(dependency_graphs_dir)
         )
@@ -251,22 +153,22 @@ def run_complete_pipeline(
         domains_dir = dependency_graphs_dir / "domains"
         if not domains_dir.exists():
             raise FileNotFoundError(f"Domains directory not found: {domains_dir}")
-        results["dependency_graphs_dir"] = str(domains_dir)
+        results["domains_dir"] = str(domains_dir)
     
-    # Phase 3: Tool Generation
-    if not skip_tool_generation:
-        results["generated_domains"] = run_tool_generation(
-            results["dependency_graphs_dir"],
-            str(generated_domains_dir)
-        )
-    else:
-        logger.info("Skipping tool generation phase")
-        results["generated_domains"] = []
-    
-    logger.info("=== Complete Pipeline Finished ===")
+    logger.info("=== Pipeline Finished ===")
     logger.info(f"Results summary:")
     for key, value in results.items():
         logger.info(f"  {key}: {value}")
+    
+    logger.info("\n=== Next Steps ===")
+    logger.info(f"To generate tools for domains, run:")
+    domains_dir = Path(results["domains_dir"])
+    if domains_dir.exists():
+        domain_files = list(domains_dir.glob("*.json"))
+        for domain_file in domain_files[:3]:  # Show first 3 examples
+            logger.info(f"  python scripts/generate_domain.py {domain_file}")
+        if len(domain_files) > 3:
+            logger.info(f"  ... and {len(domain_files) - 3} more domains")
     
     return results
 
@@ -294,11 +196,6 @@ def main():
         help="Skip dependency graph modeling phase"
     )
     parser.add_argument(
-        "--skip-tool-generation",
-        action="store_true",
-        help="Skip tool generation phase"
-    )
-    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Enable verbose logging"
@@ -320,8 +217,7 @@ def main():
             raw_apis_path=args.raw_apis_path,
             output_base_dir=args.output,
             skip_scenario_collection=args.skip_scenario_collection,
-            skip_dependency_graph=args.skip_dependency_graph,
-            skip_tool_generation=args.skip_tool_generation
+            skip_dependency_graph=args.skip_dependency_graph
         )
         
         logger.info("Pipeline completed successfully!")
