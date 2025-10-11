@@ -126,8 +126,6 @@ Examples:
         help="Path to API collection JSON file"
     )
     
-    
-    
     parser.add_argument(
         "--verbose", "-v",
         action="store_true",

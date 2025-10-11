@@ -12,7 +12,7 @@ WorldInteract implements a systematic pipeline for building diverse, fully-simul
 graph TB
     subgraph "Input Processing"
         A[Raw API Collections] --> B[API Cleaning & Standardization]
-        B --> C[Dependency Graph Building]
+        B --> C[Domain Graph Building]
     end
     
     subgraph "Environment Construction"
@@ -77,9 +77,9 @@ WorldInteract/
 │   ├── apis_collections/           # Domain-classified API collections
 │   │   ├── api_collection_example.json
 │   │   └── ticket_api_example.json
-│   ├── dependency_graphs/          # Dependency graph analysis results
-│   │   └── my_dependency_graphs/
-│   │       ├── dependency_graph.json
+│   ├── domain_graphs/          # Domain graph analysis results
+│   │   └── my_domain_graphs/
+│   │       ├── domain_graph.json
 │   │       ├── communities.json
 │   │       └── domains/
 │   └── generated/                  # Generated environments
@@ -95,7 +95,7 @@ WorldInteract/
 │   │   ├── scenario_collection/    # Scenario collection and API cleaning
 │   │   │   ├── api_cleaner.py
 │   │   │   └── similarity_method.py
-│   │   ├── dependency_graph/       # Dependency graph building
+│   │   ├── build_domain_graph/       # Domain graph building
 │   │   │   └── graph_builder.py
 │   │   ├── schema_generator/       # Database schema generation
 │   │   │   └── generator.py
@@ -132,7 +132,7 @@ WorldInteract/
 
 ### 🔄 **Complete Data Processing Pipeline**
 - **API Cleaning & Standardization**: Automatically clean and standardize raw API descriptions, supporting multiple formats
-- **Dependency Graph Building**: Tool similarity analysis and community detection based on embedding vectors
+- **Domain Graph Building**: Tool similarity analysis and community detection based on embedding vectors
 - **Automatic Domain Classification**: Intelligently identify and group related tools into specific domains
 
 ### 🏗️ **Automated Environment Construction**
@@ -143,7 +143,7 @@ WorldInteract/
 ### 🤖 **CodeAgent - Intelligent Generation & Validation**
 - **ReAct Pattern**: Uses reasoning and acting pattern for iterative code improvement
 - **Integrated Workflow**: Combines tool code generation, test case creation, and validation
-- **Sandbox Execution**: Safe code execution environment with dependency installation support
+- **Sandbox Execution**: Safe code execution environment with package installation support
 - **Auto-debugging**: Up to 10 rounds of ReAct-based debugging for failed validations
 - **Comprehensive Testing**: LLM-generated test cases validate tool correctness
 
@@ -173,7 +173,7 @@ For detailed usage examples and step-by-step tutorials, please see **[examples/R
 The examples directory contains three main examples that demonstrate the complete WorldInteract workflow:
 
 1. **Scenario Collection Example** - Process raw API data into cleaned scenarios
-2. **Dependency Graph Example** - Create tool relationships and domain clustering  
+2. **Domain Graph Example** - Create tool relationships and domain clustering  
 3. **Environment Creation Example** - Generate complete environments with CodeAgent
 4. **Task Trajectories Generation Example(Future)**
 
@@ -181,7 +181,7 @@ The examples directory contains three main examples that demonstrate the complet
 
 WorldInteract uses two main configuration files with detailed comments to guide your setup:
 
-- **[config/model_config.yaml](config/model_config.yaml)** - Configure different models for different tasks (scenario collection, dependency graph, schema generation, CodeAgent, etc.)
+- **[config/model_config.yaml](config/model_config.yaml)** - Configure different models for different tasks (scenario collection, domain graph, schema generation, CodeAgent, etc.)
 - **[config/environment_config.yaml](config/environment_config.yaml)** - Configure environment parameters (thresholds, timeouts, sandbox settings, etc.)
 
 Both files contain comprehensive comments explaining each configuration option. Simply edit these files to customize WorldInteract for your specific needs.
@@ -190,7 +190,7 @@ Both files contain comprehensive comments explaining each configuration option. 
 
 - **[Environment Manager](worldInteract/core/environment/README.md)**: Orchestrates the entire environment construction pipeline
 - **[Scenario Collection](worldInteract/core/scenario_collection/)**: API cleaning, standardization and similarity analysis
-- **[Dependency Graph Builder](worldInteract/core/dependency_graph/)**: Tool dependency modeling and domain clustering
+- **[Domain Graph Builder](worldInteract/core/build_domain_graph/)**: Tool domain modeling and domain clustering
 - **[Schema Generator](worldInteract/core/schema_generator/README.md)**: Generates database schemas from API collections
 - **[Tool Generator](worldInteract/core/tool_generator/README.md)**: Creates executable tool implementations (legacy)
 - **[CodeAgent](worldInteract/core/validator/README.md)**: Integrated tool generation and validation using ReAct pattern
@@ -200,7 +200,7 @@ Both files contain comprehensive comments explaining each configuration option. 
 
 - [x] Core environment construction pipeline
 - [x] API cleaning and standardization system
-- [x] Dependency graph building and domain clustering
+- [x] Domain graph building and domain clustering
 - [x] Schema and tool generation
 - [x] CodeAgent with ReAct-based validation
 - [x] Sandbox execution framework

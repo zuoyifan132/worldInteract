@@ -1,5 +1,5 @@
 """
-Dependency Graph Builder for modeling tool relationships and domain clustering.
+Domain Graph Builder for modeling tool relationships and domain clustering.
 """
 
 import json
@@ -20,18 +20,18 @@ from worldInteract.utils.parser_utils import extract_json_from_text
 
 
 class DomainGraphBuilder:
-    """Builds tool dependency graphs and performs domain clustering."""
+    """Builds tool domain graphs and performs domain clustering."""
     
     def __init__(self, config_dir: Optional[str] = None):
         """
-        Initialize dependency graph builder.
+        Initialize domain graph builder.
         
         Args:
             config_dir: Directory containing configuration files
         """
         self.config_manager = config_manager
-        self.model_config = self.config_manager.get_model_config("dependency_graph")
-        self.env_config = self.config_manager.get_environment_config("dependency_graph")
+        self.model_config = self.config_manager.get_model_config("domain_graph")
+        self.env_config = self.config_manager.get_environment_config("domain_graph")
         
         # Initialize embeddings
         self.embeddings = OpenAIEmbeddings()
@@ -45,16 +45,16 @@ class DomainGraphBuilder:
         self.handle_singleton = self.env_config.get("handle_singleton", False)
         self.singleton_tool_similarity_threshold = self.env_config.get("singleton_tool_similarity_threshold", 0.6)
         
-        logger.info(f"Initialized Dependency Graph Builder with threshold: {self.similarity_threshold}")
+        logger.info(f"Initialized Domain Graph Builder with threshold: {self.similarity_threshold}")
         logger.info(f"Singleton handling: {'enabled' if self.handle_singleton else 'disabled'}")
     
-    def build_dependency_graph(
+    def build_domain_graph(
         self, 
         cleaned_apis_path: str, 
         output_dir: str
     ) -> Dict[str, Any]:
         """
-        Build tool dependency graph and perform domain clustering.
+        Build tool domain graph and perform domain clustering.
         
         Args:
             cleaned_apis_path: Path to cleaned APIs JSON file
@@ -63,7 +63,7 @@ class DomainGraphBuilder:
         Returns:
             Dictionary with graph statistics and domain assignments
         """
-        logger.info(f"Building dependency graph from {cleaned_apis_path}")
+        logger.info(f"Building domain graph from {cleaned_apis_path}")
         
         # Load cleaned APIs
         with open(cleaned_apis_path, 'r', encoding='utf-8') as f:
@@ -548,7 +548,7 @@ class DomainGraphBuilder:
             }
         }
         
-        with open(output_path / "dependency_graph.json", 'w', encoding='utf-8') as f:
+        with open(output_path / "domain_graph.json", 'w', encoding='utf-8') as f:
             json.dump(graph_data, f, indent=2, ensure_ascii=False)
         
         # Save communities
@@ -648,7 +648,7 @@ class DomainGraphBuilder:
             with_labels=True
         )
         
-        plt.title(f"Tool Dependency Graph\n{graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges, {len(communities)} communities")
+        plt.title(f"Tool Domain Graph\n{graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges, {len(communities)} communities")
         plt.tight_layout()
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()

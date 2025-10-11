@@ -1,5 +1,5 @@
 # Model Configuration for WorldInteract Framework
-# Pipeline Flow: Scenario Collection → Tool Dependency Graph Modeling → Function Schema Programmatic Materialization
+# Pipeline Flow: Scenario Collection → Tool Domain Graph Modeling → Function Schema Programmatic Materialization
 
 # =============================================================================
 # PHASE 1: SCENARIO COLLECTION
@@ -12,10 +12,10 @@ scenario_collection:
   retry_attempts: 3
 
 # =============================================================================
-# PHASE 2: TOOL DEPENDENCY GRAPH MODELING
-# Domain clustering and dependency analysis
+# PHASE 2: TOOL DOMAIN GRAPH MODELING
+# Domain clustering and domain analysis
 # =============================================================================
-dependency_graph:
+domain_graph:
   model: "claude_3d7"
   temperature: 0.1
   max_tokens: 4096

@@ -15,7 +15,7 @@
 graph TB
     subgraph "第一阶段：环境构建和扩展"
         A1[API收集] --> A6[工具清洗]
-        A6 --> A2[工具依赖图构建]
+        A6 --> A2[工具领域图构建]
         A2 --> A3[社区检测与工具集分类]
         A3 --> A4[工具描述转可执行代码]
         A4 --> A5[数据库环境构建]
@@ -87,18 +87,18 @@ graph LR
 - 添加并行处理机制，加快工具清洗以及增强流程
 - 收集更多的工具描述template，尽可能的覆盖所有工具描述模版
 
-### 2.2 依赖图构建模块 (Dependency Graph)
+### 2.2 领域图构建模块 (Domain Graph)
 
 #### 模块功能介绍
-本模块实现了基于工具参数语义关系的依赖图构建和智能分域功能，是实现工具自动组织和环境构建的关键组件。主要功能包括：
+本模块实现了基于工具参数语义关系的领域图构建和智能分域功能，是实现工具自动组织和环境构建的关键组件。主要功能包括：
 - **参数语义分析**：对工具参数描述进行向量化嵌入，计算参数间的语义相似度
-- **工具关系图构建**：基于参数相似度阈值自动构建工具间的依赖关系图
+- **工具关系图构建**：基于参数相似度阈值自动构建工具间的领域关系图
 - **社区检测分析**：使用Louvain算法对工具图进行社区发现，识别功能相关的工具集群
 - **智能域划分**：结合LLM验证，将工具集群组织成逻辑一致的功能域
 - **规模优化控制**：自动调整社区大小，确保每个域包含合适数量的工具以便管理和使用
 
 #### 设计思路
-实现论文中的**工具依赖图建模**，通过参数相似度构建工具关系图，并使用Louvain社区检测算法进行域分割。
+实现论文中的**工具领域图建模**，通过参数相似度构建工具关系图，并使用Louvain社区检测算法进行域分割。
 
 > *"We construct a tool graph in which nodes are tools and edges encode compositional compatibility induced by function parameters... Domain partitioning then reduces to a graph clustering problem."*
 
@@ -247,7 +247,7 @@ graph TB
 > *"We construct trajectories via forward simulated agent–human interplay, which allows us to fully simulate the environment, the user, and the agent. The critical step is to synthesize agentic tasks that elicit human tool usage while ensuring that the resulting trajectories remain verifiable."*
 
 本模块将采用四阶段流程：
-- 首先从工具依赖图中进行有向随机游走生成逻辑工具序列
+- 首先从工具领域图中进行有向随机游走生成逻辑工具序列
 - 然后基于工具序列和初始环境状态生成用户任务意图
 - 最后通过模拟用户与智能体的多轮交互生成完整的轨迹数据
 - 并对生成的轨迹进行质量过滤和格式转换

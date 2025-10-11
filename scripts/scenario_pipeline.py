@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Scenario Collection and Dependency Graph Pipeline Script
+Scenario Collection and Domain Graph Pipeline Script
 
 This script implements the pipeline from raw APIs to domain graphs:
 1. Scenario Collection (API cleaning and standardization)
-2. Domain Dependency Graph Modeling (similarity analysis and community detection)
+2. Domain Graph Modeling (similarity analysis and community detection)
 
 Note: Tool generation is handled separately by generate_domain.py script.
 """
@@ -58,9 +58,9 @@ def run_scenario_collection(raw_apis_path: str, output_path: str) -> str:
     return output_path
 
 
-def run_dependency_graph_modeling(cleaned_apis_path: str, output_dir: str) -> str:
+def run_domain_graph_modeling(cleaned_apis_path: str, output_dir: str) -> str:
     """
-    Run dependency graph modeling phase.
+    Run domain graph modeling phase.
     
     Args:
         cleaned_apis_path: Path to cleaned APIs JSON file
@@ -69,12 +69,12 @@ def run_dependency_graph_modeling(cleaned_apis_path: str, output_dir: str) -> st
     Returns:
         Path to domains directory
     """
-    logger.info("=== Starting Tool Dependency Graph Modeling Phase ===")
+    logger.info("=== Starting Tool Domain Graph Modeling Phase ===")
     
     builder = DomainGraphBuilder()
-    result = builder.build_dependency_graph(cleaned_apis_path, output_dir)
+    result = builder.build_domain_graph(cleaned_apis_path, output_dir)
     
-    logger.info(f"Dependency Graph Modeling completed. Statistics:")
+    logger.info(f"Domain Graph Modeling completed. Statistics:")
     for phase, stats in result.items():
         if isinstance(stats, dict):
             logger.info(f"  {phase}:")
@@ -90,14 +90,14 @@ def run_complete_pipeline(
     raw_apis_path: str,
     output_base_dir: str,
     skip_scenario_collection: bool = False,
-    skip_dependency_graph: bool = False
+    skip_domain_graph: bool = False
 ):
     """
     Run the complete pipeline from raw APIs to domain graphs.
     
     This pipeline performs:
     1. Scenario Collection (API cleaning and standardization)
-    2. Dependency Graph Modeling (domain analysis and graph building)
+    2. Domain Graph Modeling (domain analysis and graph building)
     
     Note: Tool generation is handled separately by generate_domain.py script.
     
@@ -105,7 +105,7 @@ def run_complete_pipeline(
         raw_apis_path: Path to raw APIs JSON file or directory
         output_base_dir: Base directory for all outputs
         skip_scenario_collection: Skip scenario collection phase
-        skip_dependency_graph: Skip dependency graph modeling phase
+        skip_domain_graph: Skip domain graph modeling phase
         
     Returns:
         Dictionary with paths to all generated outputs
@@ -113,7 +113,7 @@ def run_complete_pipeline(
     logger.info("=== Starting Scenario Pipeline ===")
     logger.info("This pipeline will:")
     logger.info("  1. Clean and standardize raw APIs")
-    logger.info("  2. Build domain dependency graphs")
+    logger.info("  2. Build domain graphs")
     logger.info("  Note: Use generate_domain.py to generate tools from domain graphs")
     
     # Create output directories
@@ -121,10 +121,10 @@ def run_complete_pipeline(
     output_base.mkdir(parents=True, exist_ok=True)
     
     processed_apis_dir = output_base / "processed_apis"
-    dependency_graphs_dir = output_base / "dependency_graphs"
+    domain_graphs_dir = output_base / "domain_graphs"
     
     processed_apis_dir.mkdir(exist_ok=True)
-    dependency_graphs_dir.mkdir(exist_ok=True)
+    domain_graphs_dir.mkdir(exist_ok=True)
     
     results = {
         "raw_apis_path": raw_apis_path,
@@ -142,15 +142,15 @@ def run_complete_pipeline(
             raise FileNotFoundError(f"Cleaned APIs not found: {cleaned_apis_path}")
         results["cleaned_apis_path"] = str(cleaned_apis_path)
     
-    # Phase 2: Dependency Graph Modeling
-    if not skip_dependency_graph:
-        results["domains_dir"] = run_dependency_graph_modeling(
+    # Phase 2: Domain Graph Modeling
+    if not skip_domain_graph:
+        results["domains_dir"] = run_domain_graph_modeling(
             results["cleaned_apis_path"], 
-            str(dependency_graphs_dir)
+            str(domain_graphs_dir)
         )
     else:
-        # Assume dependency graphs already exist
-        domains_dir = dependency_graphs_dir / "domains"
+        # Assume domain graphs already exist
+        domains_dir = domain_graphs_dir / "domains"
         if not domains_dir.exists():
             raise FileNotFoundError(f"Domains directory not found: {domains_dir}")
         results["domains_dir"] = str(domains_dir)
@@ -175,7 +175,7 @@ def run_complete_pipeline(
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Scenario Collection and Dependency Graph Pipeline")
+    parser = argparse.ArgumentParser(description="Scenario Collection and Domain Graph Pipeline")
     parser.add_argument(
         "raw_apis_path",
         help="Path to raw APIs JSON file or directory containing JSON files"
@@ -191,9 +191,9 @@ def main():
         help="Skip scenario collection phase"
     )
     parser.add_argument(
-        "--skip-dependency-graph",
+        "--skip-domain-graph",
         action="store_true", 
-        help="Skip dependency graph modeling phase"
+        help="Skip domain graph modeling phase"
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -217,7 +217,7 @@ def main():
             raw_apis_path=args.raw_apis_path,
             output_base_dir=args.output,
             skip_scenario_collection=args.skip_scenario_collection,
-            skip_dependency_graph=args.skip_dependency_graph
+            skip_domain_graph=args.skip_domain_graph
         )
         
         logger.info("Pipeline completed successfully!")

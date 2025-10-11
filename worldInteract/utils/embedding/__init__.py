@@ -1,5 +1,5 @@
 """
-Embedding utilities for tool dependency analysis.
+Embedding utilities for tool domain analysis.
 """
 
 from .openai_embeddings import OpenAIEmbeddings

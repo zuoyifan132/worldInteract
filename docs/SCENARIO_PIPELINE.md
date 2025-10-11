@@ -1,13 +1,13 @@
-# Scenario Pipeline: API集合与工具依赖图建模
+# Scenario Pipeline: API集合与工具领域图建模
 
-本文档介绍WorldInteract框架中新增的Scenario Collection和Tool Dependency Graph Modeling功能。
+本文档介绍WorldInteract框架中新增的Scenario Collection和Tool Domain Graph Modeling功能。
 
 ## 概述
 
 基于论文《Towards General Agentic Intelligence via Environment Scaling》的方法，我们实现了从原始API数据到结构化工具环境的完整流水线：
 
 1. **Scenario Collection**: API清洗和标准化
-2. **Tool Dependency Graph Modeling**: 工具依赖关系分析和领域聚类
+2. **Tool Domain Graph Modeling**: 工具领域关系分析和领域聚类
 3. **Function Schema Programmatic Materialization**: 与现有工具生成器集成
 
 ## 架构设计
@@ -19,9 +19,9 @@ Raw APIs (脏数据)
     ↓ 
 Cleaned APIs (标准格式)
     ↓
-📍 Tool Dependency Graph Modeling  
-    ↓
-Domain-grouped APIs + Dependency Graph
+📍 Tool Domain Graph Modeling  
+↓  
+Domain-grouped APIs + Domain Graph
     ↓
 📍 Function Schema Programmatic Materialization (现有)
     ↓
@@ -76,11 +76,11 @@ result = cleaner.clean_apis(
 }
 ```
 
-### 2. Tool Dependency Graph Modeling (`worldInteract.core.dependency_graph`)
+### 2. Tool Domain Graph Modeling (`worldInteract.core.build_domain_graph`)
 
 #### 功能
 - 基于工具参数描述的向量化分析
-- 计算工具间相似度并构建依赖图
+- 计算工具间相似度并构建领域图
 - 使用Louvain算法进行社区检测
 - LLM验证工具依赖关系（可选）
 - 生成领域分组和描述
@@ -90,9 +90,9 @@ result = cleaner.clean_apis(
 from worldInteract.core.build_domain_graph import DomainGraphBuilder
 
 builder = DomainGraphBuilder()
-result = builder.build_dependency_graph(
+result = builder.build_domain_graph(
     cleaned_apis_path="data/processed_apis/cleaned_apis.json",
-    output_dir="data/dependency_graphs"
+    output_dir="data/domain_graphs"
 )
 ```
 
@@ -123,8 +123,8 @@ scenario_collection:
   max_tokens: 8124
   retry_attempts: 3
 
-# Dependency Graph配置
-dependency_graph:
+# Domain Graph配置
+domain_graph:
   model: "claude_3d7"
   temperature: 0.1
   max_tokens: 4096
@@ -148,8 +148,8 @@ scenario_collection:
   duplicate_threshold: 0.8
   description_min_length: 10
   
-# Dependency Graph设置  
-dependency_graph:
+# Domain Graph设置  
+domain_graph:
   similarity_threshold: 0.75  # 相似度阈值
   min_community_size: 2       # 最小社区大小
   max_community_size: 20      # 最大社区大小
@@ -208,8 +208,8 @@ output/
 └── scenario_pipeline/
     ├── processed_apis/
     │   └── cleaned_apis.json          # 清洗后的API
-    ├── dependency_graphs/
-    │   ├── dependency_graph.json      # 完整依赖图
+    ├── domain_graphs/
+    │   ├── domain_graph.json      # 完整领域图
     │   ├── communities.json           # 社区检测结果
     │   ├── domains.json              # 域分组汇总
     │   ├── embeddings.json           # 工具嵌入向量

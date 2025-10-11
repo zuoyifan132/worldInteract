@@ -1,5 +1,5 @@
 # Environment Configuration for WorldInteract Framework
-# Pipeline Flow: Scenario Collection → Tool Dependency Graph Modeling → Function Schema Programmatic Materialization
+# Pipeline Flow: Scenario Collection → Tool Domain Graph Modeling → Function Schema Programmatic Materialization
 
 # =============================================================================
 # PHASE 1: SCENARIO COLLECTION
@@ -17,15 +17,15 @@ scenario_collection:
                                          # - "none": Only remove exact function name duplicates (fastest)
 
 # =============================================================================
-# PHASE 2: TOOL DEPENDENCY GRAPH MODELING
-# Domain clustering and dependency analysis
+# PHASE 2: TOOL DOMAIN GRAPH MODELING
+# Domain clustering and domain analysis
 # =============================================================================
-dependency_graph:
+domain_graph:
   similarity_threshold: 0.5  # Cosine similarity threshold for creating edges
   min_community_size: 2      # Minimum tools per domain
   max_community_size: 20     # Maximum tools per domain
   louvain_resolution: 1.0    # Louvain algorithm resolution parameter
-  enable_llm_validation: true # Whether to use LLM for dependency validation
+  enable_llm_validation: true # Whether to use LLM for domain validation
   handle_singleton: false    # Whether to handle singleton tools by assigning them to existing domains
   singleton_tool_similarity_threshold: 0.6  # Similarity threshold for singleton tools to join domains
 

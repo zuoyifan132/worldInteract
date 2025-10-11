@@ -1,5 +1,5 @@
 """
-OpenAI Embeddings API wrapper for tool dependency analysis.
+OpenAI Embeddings API wrapper for tool domain analysis.
 """
 import dotenv
 import os
