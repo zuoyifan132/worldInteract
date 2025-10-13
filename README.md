@@ -96,7 +96,7 @@ WorldInteract/
 │   │   │   ├── api_cleaner.py
 │   │   │   └── similarity_method.py
 │   │   ├── build_domain_graph/       # Domain graph building
-│   │   │   └── graph_builder.py
+│   │   │   └── domain_graph_builder.py
 │   │   ├── schema_generator/       # Database schema generation
 │   │   │   └── generator.py
 │   │   ├── tool_generator/         # Tool code generation (legacy)

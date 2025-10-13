@@ -162,6 +162,7 @@ class CodeAgent:
                         temperature=self.model_config.get("temperature", 0.3),
                         max_tokens=self.model_config.get("max_tokens", 12288)
                     )
+                    logger.info(f"ReAct model response: {answer_block.text}")
                 except RetryError as e:
                     logger.error(f"Error in code generation round {rounds}: {e}")
                     return False, current_code, current_requirements, f"Code generation failed after maximum model retry"

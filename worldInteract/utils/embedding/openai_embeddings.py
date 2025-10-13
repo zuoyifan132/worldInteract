@@ -48,6 +48,38 @@ class OpenAIEmbeddings:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         stop=stop_after_attempt(3)
     )
+    def embed_text(self, text: str) -> List[float]:
+        """
+        Generate embedding for a single text.
+        
+        Args:
+            text: Text to embed
+            
+        Returns:
+            Embedding vector
+        """
+        if not text:
+            return []
+            
+        try:
+            response = self.client.embeddings.create(
+                model=self.model,
+                input=[text],
+                dimensions=self.dimensions
+            )
+            
+            embedding = response.data[0].embedding
+            logger.debug(f"Generated embedding for text: {text[:50]}...")
+            return embedding
+            
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            raise
+    
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(3)
+    )
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings for a list of texts.

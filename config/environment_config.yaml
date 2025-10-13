@@ -58,3 +58,40 @@ domains:
   database_management:
     schema_tables: ["databases", "tables", "indexes", "queries", "connections"]  # Suggested table names for database management domain
 
+# =============================================================================
+# PHASE 4: TASK GRAPH GENERATION AND TRAJECTORY SYNTHESIS
+# Build task graphs from generated environments and synthesize agent trajectories
+# =============================================================================
+task_generation:
+  # Task Graph Building - Build dependency graphs based on parameter similarity
+  parameter_similarity_threshold: 0.6  # Cosine similarity threshold for matching input/output parameters
+  
+  # Subgraph Sampling - Sample subgraphs from task graph with different topologies
+  min_subgraph_nodes: 5                # Minimum number of nodes in a subgraph
+  max_subgraph_nodes: 20               # Maximum number of nodes in a subgraph
+  num_subgraphs_per_graph: 10          # Number of subgraphs to sample per task graph
+  subgraph_diversity_threshold: 0.3    # Diversity threshold for subgraph sampling (lower = more diverse)
+  sampling_strategies:                 # Subgraph sampling strategies to use
+    random: 0.15                       # Random node selection
+    bfs: 0.2                           # Breadth-first search
+    dfs: 0.2                           # Depth-first search
+    community: 0.15                    # Community detection
+    star: 0.1                          # Star topology (hub and spokes)
+    chain: 0.1                         # Linear chain
+    tree: 0.1                          # Tree structure
+  
+  # Random Walk - Generate random walks on subgraphs
+  min_walk_length: 5                   # Minimum number of nodes in a walk
+  max_walk_length: 10                  # Maximum number of nodes in a walk
+  num_walks_per_subgraph: 2            # Number of random walks to generate per subgraph
+  walk_types: ["dag", "chain"]         # Types of walks: "dag" (allows parallel branches), "chain" (linear path)
+  dag_branch_probability: 0.3          # Probability of creating a branch in DAG walk
+  max_parallel_branches: 3             # Maximum number of parallel branches in DAG walk
+  
+  # Task Generation with LLM - Filter walks and generate agent tasks
+  enable_llm_filter: true              # Whether to use LLM to filter invalid walks
+  enable_llm_task_generation: true     # Whether to use LLM to generate tasks from walks
+  min_task_complexity: 3               # Minimum number of function calls in a task
+  max_task_complexity: 10              # Maximum number of function calls in a task
+  llm_filter_batch_size: 5             # Number of walks to process in each LLM batch
+
