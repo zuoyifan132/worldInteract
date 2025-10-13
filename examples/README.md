@@ -78,10 +78,144 @@ After running this example, a complete environment file structure will be genera
   - Examples: `create_table.py`, `delete_record.py`, `ls.py`, `mkdir.py`, etc.
   - Each tool file contains complete function implementations and documentation
 
+### 4. Task Graph Creation Example (create_task_graph_example.py)
+
+Demonstrates how to build task dependency graphs from generated environments.
+
+**Basic Usage:**
+```bash
+# Build task graph from environment
+python create_task_graph_example.py --env-dirs ../data/generated_env/domains/file_operations --domain-graph ../data/domain_graphs/my_domain_graphs --output ../data/task_graphs/file_operations_task_graph
+```
+
+**Parameters:**
+- `--env-dirs`: One or more generated environment directories (required)
+- `--domain-graph`: Domain graph directory path (required)
+- `--output`: Output directory for task graph (required)
+
+**Output File Structure:**
+After running this example, the following files will be generated:
+- `task_graph.json`: Task dependency graph with parameter relationships
+- `embeddings.json`: Parameter embeddings for similarity computation
+- `task_graph_visualization.png`: Graph visualization image
+
+### 5. Subtask Graph Sampling Example (sample_subtask_graph_example.py)
+
+Demonstrates how to sample diverse subgraphs from a task graph using multiple strategies.
+
+**Basic Usage:**
+```bash
+# Sample subgraphs from task graph
+python sample_subtask_graph_example.py --task-graph ../data/task_graphs/file_operations_task_graph/task_graph.json --output ../data/subtask_graphs/file_operations_subtask_graphs --num-samples 10
+```
+
+**Parameters:**
+- `--task-graph`: Task graph JSON file path (required)
+- `--output`: Output directory for sampled subgraphs (required)
+- `--num-samples`: Number of subgraphs to sample (default: 10)
+
+**Output File Structure:**
+After running this example, multiple subgraph JSON files will be generated:
+- `subgraph_0.json`: Sampled subgraph with nodes and edges
+- `subgraph_1.json`: Another sampled subgraph
+- `...`: Additional subgraphs based on num-samples
+
+**Sampling Strategies:**
+- Random: Random node selection
+- BFS: Breadth-first traversal
+- DFS: Depth-first traversal
+- Community: Community detection
+- Star: Hub-and-spoke structure
+- Chain: Linear path
+- Tree: Tree structure
+
+### 6. Random Walk Generation Example (random_walk_example.py)
+
+Demonstrates how to generate random walks (Chain and DAG) from subtask graphs.
+
+**Basic Usage:**
+```bash
+# Generate random walks from subtask graphs
+python random_walk_example.py --subtask-graphs ../data/subtask_graphs/file_operations_subtask_graphs --output ../data/random_walks/file_operations_random_walks --num-walks 2
+```
+
+**Parameters:**
+- `--subtask-graphs`: Directory containing subtask graph JSON files (required)
+- `--output`: Output directory for random walks (required)
+- `--num-walks`: Number of walks to generate per subgraph (default: 2)
+
+**Output File Structure:**
+After running this example, random walk JSON files will be generated:
+- `walk_chain_0.json`: Chain walk (linear sequence)
+- `walk_dag_0.json`: DAG walk (directed acyclic graph)
+- `...`: Additional walks based on num-walks
+
+**Walk Types:**
+- **Chain Walk**: Linear sequence representing serial execution (A → B → C → D → E)
+- **DAG Walk**: Directed acyclic graph supporting parallel execution
+
+### 7. Complete Task Generation Pipeline (build_task_example.py)
+
+Demonstrates the complete pipeline from environment to agent tasks.
+
+**Basic Usage:**
+```bash
+# Run complete pipeline
+python build_task_example.py --env-dirs ../data/generated_env/domains/file_operations --domain-graph ../data/domain_graphs/my_domain_graphs --output ../data/agent_tasks/file_operations_tasks
+```
+
+**Parameters:**
+- `--env-dirs`: One or more generated environment directories (required)
+- `--domain-graph`: Domain graph directory path (required)
+- `--output`: Output directory for generated tasks (required)
+- `--num-subgraphs`: Number of subgraphs to sample (default: 10)
+- `--num-walks`: Number of walks per subgraph (default: 2)
+- `--skip-filter`: Skip LLM filtering for faster processing (optional)
+
+**Output File Structure:**
+After running this example, a complete task generation structure will be created:
+- `task_graph/`: Task dependency graph and embeddings
+  - `task_graph.json`: Dependency graph
+  - `embeddings.json`: Parameter embeddings
+  - `task_graph_visualization.png`: Graph visualization
+- `subtask_graphs/`: Sampled subgraph JSON files
+  - `subgraph_*.json`: Various sampled subgraphs
+- `random_walks/`: Generated walk sequences
+  - `walk_*.json`: Chain and DAG walks
+- `tasks/`: Final agent tasks
+  - `tasks_summary.json`: Summary statistics
+  - `task_*.json`: Individual agent tasks with descriptions and steps
+
+**Pipeline Steps:**
+1. Build task graph with parameter dependencies
+2. Sample diverse subgraphs using multiple strategies
+3. Generate random walks (Chain and DAG)
+4. Create agent tasks with LLM assistance
+
 ## Recommended Execution Order
 
 If you're using the WorldInteract framework for the first time, we recommend running the examples in the following order:
 
 1. **Scenario Collection Example** - First process raw API data
-2. **Domain Graph Example** - Create domain graphs based on 
-3. **Environment Creation Example** - Create complete environment from 
+2. **Domain Graph Example** - Create domain graphs based on cleaned APIs
+3. **Environment Creation Example** - Create complete environment from domain APIs
+4. **Task Graph Creation Example** - Build task dependency graphs from environments
+5. **Subtask Graph Sampling Example** - Sample diverse subgraphs for task generation
+6. **Random Walk Generation Example** - Generate function call sequences
+7. **Complete Task Generation Pipeline** - Generate agent tasks (or run this directly to execute steps 4-7)
+
+## Configuration
+
+All parameters can be configured in `config/environment_config.yaml`. Key sections include:
+- `scenario_collection`: API cleaning and normalization settings
+- `domain_graph`: Domain clustering and graph building settings
+- `environment_generation`: Schema and tool generation settings
+- `task_generation`: Task graph building and walk generation settings
+
+## Additional Resources
+
+For detailed documentation, see:
+- [Main README](../README.md)
+- [Task Generation Guide](../docs/TASK_GENERATION.md)
+- [Scenario Pipeline Guide](../docs/SCENARIO_PIPELINE.md)
+- [Configuration Reference](../config/environment_config.yaml)
