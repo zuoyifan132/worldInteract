@@ -11,7 +11,7 @@ Generated Environments
     ↓
 1. Task Graph Building
     ↓
-2. Subtask Graph Sampling
+2. Task Subgraph Sampling
     ↓
 3. Random Walk Generation
     ↓
@@ -111,9 +111,9 @@ python examples/create_task_graph_example.py \
 #### Step 2: Sample Subgraphs
 
 ```bash
-python examples/sample_subtask_graph_example.py \
+python examples/sample_task_subgraph_example.py \
     --task-graph data/task_graphs/file_operations_task_graph/task_graph.json \
-    --output data/subtask_graphs/file_operations_subtask_graphs \
+    --output data/task_subgraphs/file_operations_task_subgraphs \
     --num-samples 10
 ```
 
@@ -124,7 +124,7 @@ python examples/sample_subtask_graph_example.py \
 
 ```bash
 python examples/random_walk_example.py \
-    --subtask-graphs data/subtask_graphs/file_operations_subtask_graphs \
+    --task-subgraphs data/task_subgraphs/file_operations_task_subgraphs \
     --output data/random_walks/file_operations_random_walks \
     --num-walks 2
 ```
@@ -177,7 +177,7 @@ tasks = task_generator.generate_tasks(
 
 Edge creation rule: If any output parameter of function A has semantic similarity exceeding the threshold (default 0.7) with any input parameter of function B, create a directed edge from A to B.
 
-### 2. Subtask Graph
+### 2. Task Subgraph
 
 Small subgraphs sampled from the complete task graph, supporting multiple sampling strategies:
 
@@ -255,7 +255,7 @@ data/agent_tasks/file_operations_tasks/
 │   ├── task_graph.json              # Task dependency graph
 │   ├── embeddings.json              # Parameter embeddings
 │   └── task_graph_visualization.png # Graph visualization
-├── subtask_graphs/
+├── task_subgraphs/
 │   ├── <uuid1>.json                 # Subgraph 1
 │   ├── <uuid2>.json                 # Subgraph 2
 │   └── ...
@@ -334,9 +334,9 @@ You can check intermediate step outputs at any time:
 
 ```python
 # Check subgraphs
-from worldInteract.core.build_task_graph import SubtaskGraphSampler
-sampler = SubtaskGraphSampler()
-subgraphs = sampler.load_all_subgraphs("data/subtask_graphs/xxx")
+from worldInteract.core.build_task_graph import TaskSubgraphSampler
+sampler = TaskSubgraphSampler()
+subgraphs = sampler.load_all_subgraphs("data/task_subgraphs/xxx")
 for sg in subgraphs:
     print(f"Subgraph {sg.id}: {sg.nodes}")
 

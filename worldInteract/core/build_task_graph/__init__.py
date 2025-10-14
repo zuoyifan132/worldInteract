@@ -6,9 +6,9 @@ and sampling subgraphs for task generation.
 """
 
 from worldInteract.core.build_task_graph.task_graph_builder import TaskGraphBuilder
-from worldInteract.core.build_task_graph.subtask_graph_sampler import (
-    SubtaskGraphSampler,
-    SubtaskGraphData,
+from worldInteract.core.build_task_graph.task_subgraph_sampler import (
+    TaskSubgraphSampler,
+    TaskSubgraphData,
     SamplingStrategy
 )
 from worldInteract.core.build_task_graph.random_walker import (
@@ -19,8 +19,8 @@ from worldInteract.core.build_task_graph.random_walker import (
 
 __all__ = [
     'TaskGraphBuilder',
-    'SubtaskGraphSampler',
-    'SubtaskGraphData',
+    'TaskSubgraphSampler',
+    'TaskSubgraphData',
     'SamplingStrategy',
     'RandomWalker',
     'RandomWalk',

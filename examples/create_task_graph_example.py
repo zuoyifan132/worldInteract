@@ -196,7 +196,7 @@ def main():
         logger.info("Next steps:")
         logger.info("1. Review the task graph visualization")
         logger.info("2. Examine the edge relationships between functions")
-        logger.info("3. Use sample_subtask_graph_example.py to sample subgraphs")
+        logger.info("3. Use sample_task_subgraph_example.py to sample subgraphs")
         
     except Exception as e:
         logger.error(f"Task graph building failed: {e}")

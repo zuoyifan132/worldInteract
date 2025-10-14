@@ -99,14 +99,14 @@ After running this example, the following files will be generated:
 - `embeddings.json`: Parameter embeddings for similarity computation
 - `task_graph_visualization.png`: Graph visualization image
 
-### 5. Subtask Graph Sampling Example (sample_subtask_graph_example.py)
+### 5. Task Subgraph Sampling Example (sample_task_subgraph_example.py)
 
 Demonstrates how to sample diverse subgraphs from a task graph using multiple strategies.
 
 **Basic Usage:**
 ```bash
 # Sample subgraphs from task graph
-python sample_subtask_graph_example.py --task-graph ../data/task_graphs/file_operations_task_graph/task_graph.json --output ../data/subtask_graphs/file_operations_subtask_graphs --num-samples 10
+python sample_task_subgraph_example.py --task-graph ../data/task_graphs/file_operations_task_graph/task_graph.json --output ../data/task_subgraphs/file_operations_task_subgraphs --num-samples 10
 ```
 
 **Parameters:**
@@ -131,16 +131,16 @@ After running this example, multiple subgraph JSON files will be generated:
 
 ### 6. Random Walk Generation Example (random_walk_example.py)
 
-Demonstrates how to generate random walks (Chain and DAG) from subtask graphs.
+Demonstrates how to generate random walks (Chain and DAG) from task subgraphs.
 
 **Basic Usage:**
 ```bash
-# Generate random walks from subtask graphs
-python random_walk_example.py --subtask-graphs ../data/subtask_graphs/file_operations_subtask_graphs --output ../data/random_walks/file_operations_random_walks --num-walks 2
+# Generate random walks from task subgraphs
+python random_walk_example.py --task-subgraphs ../data/task_subgraphs/file_operations_task_subgraphs --output ../data/random_walks/file_operations_random_walks --num-walks 2
 ```
 
 **Parameters:**
-- `--subtask-graphs`: Directory containing subtask graph JSON files (required)
+- `--task-subgraphs`: Directory containing task subgraph JSON files (required)
 - `--output`: Output directory for random walks (required)
 - `--num-walks`: Number of walks to generate per subgraph (default: 2)
 
@@ -178,7 +178,7 @@ After running this example, a complete task generation structure will be created
   - `task_graph.json`: Dependency graph
   - `embeddings.json`: Parameter embeddings
   - `task_graph_visualization.png`: Graph visualization
-- `subtask_graphs/`: Sampled subgraph JSON files
+- `task_subgraphs/`: Sampled subgraph JSON files
   - `subgraph_*.json`: Various sampled subgraphs
 - `random_walks/`: Generated walk sequences
   - `walk_*.json`: Chain and DAG walks
@@ -200,7 +200,7 @@ If you're using the WorldInteract framework for the first time, we recommend run
 2. **Domain Graph Example** - Create domain graphs based on cleaned APIs
 3. **Environment Creation Example** - Create complete environment from domain APIs
 4. **Task Graph Creation Example** - Build task dependency graphs from environments
-5. **Subtask Graph Sampling Example** - Sample diverse subgraphs for task generation
+5. **Task Subgraph Sampling Example** - Sample diverse subgraphs for task generation
 6. **Random Walk Generation Example** - Generate function call sequences
 7. **Complete Task Generation Pipeline** - Generate agent tasks (or run this directly to execute steps 4-7)
 

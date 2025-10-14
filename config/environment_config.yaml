@@ -69,8 +69,9 @@ task_generation:
   # Subgraph Sampling - Sample subgraphs from task graph with different topologies
   min_subgraph_nodes: 5                # Minimum number of nodes in a subgraph
   max_subgraph_nodes: 20               # Maximum number of nodes in a subgraph
-  num_subgraphs_per_graph: 10          # Number of subgraphs to sample per task graph
+  num_subgraphs_per_graph: 3          # Number of subgraphs to sample per task graph
   subgraph_diversity_threshold: 0.3    # Diversity threshold for subgraph sampling (lower = more diverse)
+  save_original_subgraph: false        # If true, save the original task graph as-is without sampling subgraphs
   sampling_strategies:                 # Subgraph sampling strategies to use
     random: 0.15                       # Random node selection
     bfs: 0.2                           # Breadth-first search

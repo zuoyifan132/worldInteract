@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Example: Random Walk Generation
-This example demonstrates how to generate random walks from subtask graphs.
+This example demonstrates how to generate random walks from task subgraphs.
 """
 
 import os
@@ -16,7 +16,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from loguru import logger
-from worldInteract.core.build_task_graph import RandomWalker, SubtaskGraphSampler
+from worldInteract.core.build_task_graph import RandomWalker, TaskSubgraphSampler
 
 # Load environment variables
 dotenv.load_dotenv("../.env")
@@ -25,23 +25,23 @@ dotenv.load_dotenv("../.env")
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description="Generate random walks from subtask graphs",
+        description="Generate random walks from task subgraphs",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-    # Generate random walks from subtask graphs
+    # Generate random walks from task subgraphs
     python random_walk_example.py \\
-        --subtask-graphs data/subtask_graphs/file_operations_subtask_graphs \\
+        --task-subgraphs data/task_subgraphs/file_operations_task_subgraphs \\
         --output data/random_walks/file_operations_random_walks \\
         --num-walks 2
         """
     )
     
     parser.add_argument(
-        "--subtask-graphs", "-s",
+        "--task-subgraphs", "-s",
         type=str,
         required=True,
-        help="Path to directory containing subtask graph JSON files"
+        help="Path to directory containing task subgraph JSON files"
     )
     
     parser.add_argument(
@@ -71,16 +71,16 @@ def main():
     logger.info("Random Walk Generation Example")
     logger.info("=" * 80)
     
-    # Validate subtask graphs directory
-    subtask_graphs_dir = Path(args.subtask_graphs)
-    if not subtask_graphs_dir.is_absolute():
-        subtask_graphs_dir = project_root / subtask_graphs_dir
+    # Validate task subgraphs directory
+    task_subgraphs_dir = Path(args.task_subgraphs)
+    if not task_subgraphs_dir.is_absolute():
+        task_subgraphs_dir = project_root / task_subgraphs_dir
     
-    if not subtask_graphs_dir.exists():
-        logger.error(f"Subtask graphs directory does not exist: {subtask_graphs_dir}")
+    if not task_subgraphs_dir.exists():
+        logger.error(f"Task subgraphs directory does not exist: {task_subgraphs_dir}")
         return
     
-    logger.info(f"Input subtask graphs: {subtask_graphs_dir}")
+    logger.info(f"Input task subgraphs: {task_subgraphs_dir}")
     
     # Set output directory
     if args.output:
@@ -89,26 +89,26 @@ def main():
             output_dir = project_root / output_dir
     else:
         # Auto-generate output directory name
-        graph_name = subtask_graphs_dir.name.replace("_subtask_graphs", "")
+        graph_name = task_subgraphs_dir.name.replace("_task_subgraphs", "")
         output_dir = project_root / "data" / "random_walks" / f"{graph_name}_random_walks"
     
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
     
     try:
-        # Load subtask graphs
+        # Load task subgraphs
         logger.info("\n" + "=" * 80)
-        logger.info("Loading Subtask Graphs")
+        logger.info("Loading Task Subgraphs")
         logger.info("=" * 80)
         
-        sampler = SubtaskGraphSampler()
-        subgraphs = sampler.load_all_subgraphs(str(subtask_graphs_dir))
+        sampler = TaskSubgraphSampler()
+        subgraphs = sampler.load_all_subgraphs(str(task_subgraphs_dir))
         
         if not subgraphs:
-            logger.error("No subtask graphs found")
+            logger.error("No task subgraphs found")
             return
         
-        logger.info(f"✅ Loaded {len(subgraphs)} subtask graphs")
+        logger.info(f"✅ Loaded {len(subgraphs)} task subgraphs")
         
         # Initialize random walker
         logger.info("\n" + "=" * 80)

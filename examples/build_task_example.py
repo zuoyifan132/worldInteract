@@ -19,7 +19,7 @@ sys.path.insert(0, str(project_root))
 from loguru import logger
 from worldInteract.core.build_task_graph import (
     TaskGraphBuilder,
-    SubtaskGraphSampler,
+    TaskSubgraphSampler,
     RandomWalker
 )
 from worldInteract.trajectories import TaskGenerator
@@ -31,7 +31,7 @@ dotenv.load_dotenv("../.env")
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description="Complete task generation pipeline: task graph → subgraphs → walks → tasks",
+        description="Complete task generation pipeline: task graph → task subgraphs → walks → tasks",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
@@ -188,7 +188,7 @@ def main():
     base_output_dir.mkdir(parents=True, exist_ok=True)
     
     task_graph_dir = base_output_dir / "task_graph"
-    subtask_graphs_dir = base_output_dir / "subtask_graphs"
+    task_subgraphs_dir = base_output_dir / "task_subgraphs"
     random_walks_dir = base_output_dir / "random_walks"
     tasks_dir = base_output_dir / "tasks"
     
@@ -216,19 +216,19 @@ def main():
         task_graph = load_task_graph_from_file(task_graph_file)
         tool_definitions = extract_tool_definitions(task_graph_file)
         
-        # ========== STEP 2: Sample Subtask Graphs ==========
+        # ========== STEP 2: Sample Task Subgraphs ==========
         logger.info("\n" + "=" * 80)
-        logger.info("STEP 2: Sampling Subtask Graphs")
+        logger.info("STEP 2: Sampling Task Subgraphs")
         logger.info("=" * 80)
         
-        subtask_graph_sampler = SubtaskGraphSampler()
-        subgraphs = subtask_graph_sampler.sample_subgraphs(
+        task_subgraph_sampler = TaskSubgraphSampler()
+        subgraphs = task_subgraph_sampler.sample_subgraphs(
             task_graph=task_graph,
             num_samples=args.num_subgraphs,
-            output_dir=str(subtask_graphs_dir)
+            output_dir=str(task_subgraphs_dir)
         )
         
-        logger.info(f"✅ Sampled {len(subgraphs)} subtask graphs")
+        logger.info(f"✅ Sampled {len(subgraphs)} task subgraphs")
         
         # ========== STEP 3: Generate Random Walks ==========
         logger.info("\n" + "=" * 80)
@@ -274,11 +274,11 @@ def main():
         logger.info("=" * 80)
         
         logger.info("\nPipeline Summary:")
-        logger.info(f"  1. Task Graph:     {task_graph_result.get('statistics', {}).get('node_count', 0)} nodes, "
+        logger.info(f"  1. Task Graph:      {task_graph_result.get('statistics', {}).get('node_count', 0)} nodes, "
                    f"{task_graph_result.get('statistics', {}).get('edge_count', 0)} edges")
-        logger.info(f"  2. Subtask Graphs: {len(subgraphs)} sampled")
-        logger.info(f"  3. Random Walks:   {len(all_walks)} generated")
-        logger.info(f"  4. Agent Tasks:    {len(tasks)} created")
+        logger.info(f"  2. Task Subgraphs:  {len(subgraphs)} sampled")
+        logger.info(f"  3. Random Walks:    {len(all_walks)} generated")
+        logger.info(f"  4. Agent Tasks:     {len(tasks)} created")
         
         if tasks:
             # Task statistics
@@ -314,7 +314,7 @@ def main():
         logger.info(f"  │    ├── task_graph.json")
         logger.info(f"  │    ├── embeddings.json")
         logger.info(f"  │    └── task_graph_visualization.png")
-        logger.info(f"  ├── 📁 subtask_graphs/")
+        logger.info(f"  ├── 📁 task_subgraphs/")
         logger.info(f"  │    └── {len(subgraphs)} subgraph JSON files")
         logger.info(f"  ├── 📁 random_walks/")
         logger.info(f"  │    └── {len(all_walks)} walk JSON files")
