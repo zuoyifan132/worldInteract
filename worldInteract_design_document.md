@@ -33,7 +33,7 @@ graph TB
     style A5 fill:#e8f5e8
 ```
 
-## 2. 项目已实现模块
+## 2. 项目模块
 
 ### 2.1 API收集模块 (Scenario Collection)
 
@@ -236,9 +236,9 @@ graph TB
 #### 可改进点
 - 工具的验证可以使用ReAct Agent的进行，根据失败的报错信息或者不符合预期的原因修改工具的实现
 
-## 3. 待实现模块
+## 3. 数据生成模块
 
-### 3.1 轨迹生成模块 (Tasks Module) - 待实现
+### 3.1 轨迹生成模块 (Tasks Module)
 
 #### 模块功能介绍
 本模块是论文第二阶段`Agentic Task Construction`的核心实现，负责基于构建好的环境自动生成高质量的智能体交互轨迹数据。

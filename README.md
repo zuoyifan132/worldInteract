@@ -20,14 +20,17 @@ graph TB
         D --> E[Database Schema]
         E --> F[State Generator]
         F --> G[Initial State]
+        E --> CG[Code Generator]
+        CG --> IC[Initial Code]
         E --> H[CodeAgent]
         G --> H
+        IC --> H
     end
     
     subgraph "CodeAgent (Integrated Generation & Validation)"
-        H --> I[Tool Code Generation]
-        I --> J[Test Case Generation]
-        J --> K[Sandbox Execution]
+        H --> I1[Test Case Generation]
+        I1 --> I[Tool Code Generation]
+        I --> K[Sandbox Execution]
         K --> L{Validation Pass?}
         L -->|No| M[ReAct Debugging<br/>Max n rounds]
         M --> I
@@ -42,12 +45,10 @@ graph TB
     end
     
     subgraph "Task Graph Construction"
-        O --> S[Task Graph Builder]
-        S --> T[Parameter Embedding]
-        T --> U1[Dependency Analysis]
-        U1 --> V[Task Graph]
+        O --> S[Task Graph Builder（Dependency Graph Builder）]
+        S --> V[Task Graph（Dependency Graph）]
         V --> W[Task Subgraph Sampling]
-        W --> X[Random Walk Generation]
+        W --> X[Random Walk Generation（DAG）]
     end
     
     subgraph "Task Construction (Future)"
@@ -55,15 +56,9 @@ graph TB
         Y --> Z[Agentic Tasks]
     end
     
-    subgraph "Model Support"
-        M1[Model Manager] --> D
-        M1 --> F
-        M1 --> H
-        M1 --> S
-    end
-    
     style E fill:#e1f5fe
     style G fill:#fff3e0
+    style IC fill:#ffe0f0
     style H fill:#f3e5f5
     style N fill:#e8f5e8
     style O fill:#f0f4ff

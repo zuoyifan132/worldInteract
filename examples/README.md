@@ -4,15 +4,15 @@ This directory contains various usage examples for the WorldInteract framework. 
 
 ## Module-Example Mapping Table
 
-| Core Module | Example Script | Description | Output |
-|------------|----------------|-------------|--------|
-| **scenario_collection** | `scenario_collection_example.py` | API cleaning and standardization | Cleaned API JSON files |
-| **build_domain_graph** | `domain_graph_example.py` | Domain graph and community detection | Domain graph, communities, embeddings, visualizations |
-| **build_environment** | `create_environment_example.py` | Environment construction with CodeAgent | Schema, tools, initial state, validation reports |
-| **build_task_graph** | `create_task_graph_example.py` | Task dependency graph construction | Task graph JSON, embeddings, visualization |
-| **build_task_graph** | `sample_task_subgraph_example.py` | Task subgraph sampling | Sampled subgraph JSON files |
-| **build_task_graph** | `random_walk_example.py` | Random walk generation | Chain and DAG walk JSON files |
-| **Complete Pipeline** | `build_task_example.py` | End-to-end task generation | Task graphs, subgraphs, walks, agent tasks |
+| Example Script | Core Module | Sub-Module | Description | Output |
+|----------------|-------------|------------|-------------|--------|
+| `scenario_collection_example.py` | **Input Processing** | API Cleaning & Standardization | Process raw API data and create cleaned, standardized scenarios | Cleaned API JSON files with metadata |
+| `domain_graph_example.py` | **Input Processing** | Domain Graph Building | Create tool relationship graphs and domain clustering based on embeddings | Domain graph, communities, embeddings, visualizations |
+| `create_environment_example.py` | **Environment Construction** | Schema Generator → State Generator → Code Generator → CodeAgent | Generate complete environments with schema, initial state, initial code and validated tools | Schema, initial state, tools, validation reports |
+| `create_task_graph_example.py` | **Task Graph Construction** | Task Graph (Dependency Graph) | Build task dependency graphs from generated environments based on parameter similarity | Task graph JSON, embeddings, visualization |
+| `sample_task_subgraph_example.py` | **Task Graph Construction** | Task Subgraph Sampling | Sample diverse subgraphs using multiple strategies (Random, BFS, DFS, Community, Star, Chain, Tree) | Sampled subgraph JSON files |
+| `random_walk_example.py` | **Task Graph Construction** | Random Walk Generation (Chain & DAG) | Generate Chain and DAG execution sequences from task subgraphs | Chain walk JSON files, DAG walk JSON files |
+| `build_task_example.py` | **Complete Pipeline** | Task Graph → Subgraph Sampling → Random Walk → Task Generation | End-to-end pipeline from environment to agent tasks | Task graphs, subgraphs, walks, agent tasks |
 
 ## Example List
 
