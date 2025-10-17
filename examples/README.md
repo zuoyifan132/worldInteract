@@ -12,7 +12,6 @@ This directory contains various usage examples for the WorldInteract framework. 
 | `create_task_graph_example.py` | **Task Graph Construction** | Task Graph (Dependency Graph) | Build task dependency graphs from generated environments based on parameter similarity | Task graph JSON, embeddings, visualization |
 | `sample_task_subgraph_example.py` | **Task Graph Construction** | Task Subgraph Sampling | Sample diverse subgraphs using multiple strategies (Random, BFS, DFS, Community, Star, Chain, Tree) | Sampled subgraph JSON files |
 | `random_walk_example.py` | **Task Graph Construction** | Random Walk Generation (Chain & DAG) | Generate Chain and DAG execution sequences from task subgraphs | Chain walk JSON files, DAG walk JSON files |
-| `build_task_example.py` | **Complete Pipeline** | Task Graph → Subgraph Sampling → Random Walk → Task Generation | End-to-end pipeline from environment to agent tasks | Task graphs, subgraphs, walks, agent tasks |
 
 ## Example List
 
@@ -166,44 +165,6 @@ After running this example, random walk JSON files will be generated:
 - **Chain Walk**: Linear sequence representing serial execution (A → B → C → D → E)
 - **DAG Walk**: Directed acyclic graph supporting parallel execution
 
-### 7. Complete Task Generation Pipeline (build_task_example.py)
-
-Demonstrates the complete pipeline from environment to agent tasks.
-
-**Basic Usage:**
-```bash
-# Run complete pipeline
-python build_task_example.py --env-dirs ../data/generated_env/domains/file_operations --domain-graph ../data/domain_graphs/my_domain_graphs --output ../data/agent_tasks/file_operations_tasks
-```
-
-**Parameters:**
-- `--env-dirs`: One or more generated environment directories (required)
-- `--domain-graph`: Domain graph directory path (required)
-- `--output`: Output directory for generated tasks (required)
-- `--num-subgraphs`: Number of subgraphs to sample (default: 10)
-- `--num-walks`: Number of walks per subgraph (default: 2)
-- `--skip-filter`: Skip LLM filtering for faster processing (optional)
-
-**Output File Structure:**
-After running this example, a complete task generation structure will be created:
-- `task_graph/`: Task dependency graph and embeddings
-  - `task_graph.json`: Dependency graph
-  - `embeddings.json`: Parameter embeddings
-  - `task_graph_visualization.png`: Graph visualization
-- `task_subgraphs/`: Sampled subgraph JSON files
-  - `subgraph_*.json`: Various sampled subgraphs
-- `random_walks/`: Generated walk sequences
-  - `walk_*.json`: Chain and DAG walks
-- `tasks/`: Final agent tasks
-  - `tasks_summary.json`: Summary statistics
-  - `task_*.json`: Individual agent tasks with descriptions and steps
-
-**Pipeline Steps:**
-1. Build task graph with parameter dependencies
-2. Sample diverse subgraphs using multiple strategies
-3. Generate random walks (Chain and DAG)
-4. Create agent tasks with LLM assistance
-
 ## Recommended Execution Order
 
 If you're using the WorldInteract framework for the first time, we recommend running the examples in the following order:
@@ -214,7 +175,6 @@ If you're using the WorldInteract framework for the first time, we recommend run
 4. **Task Graph Creation Example** - Build task dependency graphs from environments
 5. **Task Subgraph Sampling Example** - Sample diverse subgraphs for task generation
 6. **Random Walk Generation Example** - Generate function call sequences
-7. **Complete Task Generation Pipeline** - Generate agent tasks (or run this directly to execute steps 4-7)
 
 ## Configuration
 
