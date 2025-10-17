@@ -41,15 +41,25 @@ graph TB
         O --> R[Validation Reports]
     end
     
+    subgraph "Task Graph Construction"
+        O --> S[Task Graph Builder]
+        S --> T[Parameter Embedding]
+        T --> U1[Dependency Analysis]
+        U1 --> V[Task Graph]
+        V --> W[Task Subgraph Sampling]
+        W --> X[Random Walk Generation]
+    end
+    
     subgraph "Task Construction (Future)"
-        O --> S[Task Generator]
-        S --> T[Agentic Tasks]
+        X --> Y[Task Generator]
+        Y --> Z[Agentic Tasks]
     end
     
     subgraph "Model Support"
-        U[Model Manager] --> D
-        U --> F
-        U --> H
+        M1[Model Manager] --> D
+        M1 --> F
+        M1 --> H
+        M1 --> S
     end
     
     style E fill:#e1f5fe
@@ -57,6 +67,8 @@ graph TB
     style H fill:#f3e5f5
     style N fill:#e8f5e8
     style O fill:#f0f4ff
+    style V fill:#e8f5e8
+    style X fill:#fff3e0
 ```
 
 ## Project Structure
@@ -103,8 +115,12 @@ WorldInteract/
 │   │   │   └── generator.py
 │   │   ├── validator/              # CodeAgent - integrated generation & validation
 │   │   │   └── code_agent.py
-│   │   └── sandbox/                # Sandbox execution environment
-│   │       └── code_executor.py
+│   │   ├── sandbox/                # Sandbox execution environment
+│   │   │   └── code_executor.py
+│   │   └── build_task_graph/       # Task graph construction
+│   │       ├── task_graph_builder.py
+│   │       ├── task_subgraph_sampler.py
+│   │       └── random_walker.py
 │   ├── utils/                      # Utility modules
 │   │   ├── model_manager.py        # Model management
 │   │   ├── config_manager.py       # Configuration management
@@ -152,6 +168,12 @@ WorldInteract/
 - **Multi-vendor Support**: OpenAI GPT, Claude, Gemini, Qwen, etc.
 - **Configurable Pipeline**: YAML-based model assignment configuration
 
+### 🔗 **Task Graph Construction**
+- **Parameter Dependency Analysis**: Automatically identify tool dependencies based on parameter similarity
+- **Cross-domain Support**: Build task graphs spanning multiple domains
+- **Graph Sampling**: Multiple strategies for sampling diverse task subgraphs
+- **Random Walk Generation**: Generate Chain and DAG execution sequences for agentic tasks
+
 ### 📊 **Lightweight Design**
 - **JSON Storage**: Simple storage solution following τ-bench BFCL in-memory database principles
 - **In-memory Operations**: Fast operations without traditional database management systems
@@ -170,12 +192,15 @@ pip install -r requirements.txt
 
 For detailed usage examples and step-by-step tutorials, please see **[examples/README.md](examples/README.md)**.
 
-The examples directory contains three main examples that demonstrate the complete WorldInteract workflow:
+The examples directory contains comprehensive examples that demonstrate the complete WorldInteract workflow:
 
 1. **Scenario Collection Example** - Process raw API data into cleaned scenarios
 2. **Domain Graph Example** - Create tool relationships and domain clustering  
 3. **Environment Creation Example** - Generate complete environments with CodeAgent
-4. **Task Trajectories Generation Example(Future)**
+4. **Task Graph Creation Example** - Build task dependency graphs from environments
+5. **Task Subgraph Sampling Example** - Sample diverse subgraphs for task generation
+6. **Random Walk Generation Example** - Generate execution sequences from subgraphs
+7. **Complete Task Generation Pipeline** - End-to-end task generation workflow
 
 ## Configuration
 
@@ -195,6 +220,10 @@ Both files contain comprehensive comments explaining each configuration option. 
 - **[Tool Generator](worldInteract/core/tool_generator/README.md)**: Creates executable tool implementations (legacy)
 - **[CodeAgent](worldInteract/core/validator/README.md)**: Integrated tool generation and validation using ReAct pattern
 - **[Sandbox Executor](worldInteract/core/sandbox/)**: Safe code execution environment
+- **[Task Graph Builder](worldInteract/core/build_task_graph/)**: Constructs task dependency graphs based on parameter similarity
+  - `task_graph_builder.py`: Builds task graphs from generated environments
+  - `task_subgraph_sampler.py`: Samples diverse subgraphs using multiple strategies
+  - `random_walker.py`: Generates Chain and DAG execution sequences
 
 ## Roadmap
 
@@ -205,7 +234,10 @@ Both files contain comprehensive comments explaining each configuration option. 
 - [x] CodeAgent with ReAct-based validation
 - [x] Sandbox execution framework
 - [x] Multi-model support
-- [ ] Task construction system
+- [x] Task graph construction with parameter dependency analysis
+- [x] Task subgraph sampling strategies
+- [x] Random walk generation (Chain and DAG)
+- [ ] Task description generation with LLM
 - [ ] Agent experience learning
 - [ ] Benchmark integration
 - [ ] Visualization interface

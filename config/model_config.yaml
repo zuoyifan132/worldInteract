@@ -76,6 +76,19 @@ code_agent:
   retry_attempts: 3
 
 # =============================================================================
+# PHASE 4: TASK GRAPH GENERATION AND TRAJECTORY SYNTHESIS
+# Random walk generation and edge validation
+# =============================================================================
+
+# Edge validation configuration
+# Validates matching_pairs between function outputs and inputs using LLM
+edge_validation:
+  model: "claude_3d7"
+  temperature: 0.1
+  max_tokens: 2048
+  retry_attempts: 3
+
+# =============================================================================
 # EMBEDDING AND SIMILARITY MODELS
 # Semantic analysis and similarity computation
 # =============================================================================

@@ -82,12 +82,17 @@ task_generation:
     tree: 0.1                          # Tree structure
   
   # Random Walk - Generate random walks on subgraphs
-  min_walk_length: 5                   # Minimum number of nodes in a walk
+  min_walk_length: 2                   # Minimum number of nodes in a walk
   max_walk_length: 10                  # Maximum number of nodes in a walk
   num_walks_per_subgraph: 2            # Number of random walks to generate per subgraph
   walk_types: ["dag", "chain"]         # Types of walks: "dag" (allows parallel branches), "chain" (linear path)
   dag_branch_probability: 0.3          # Probability of creating a branch in DAG walk
+  dag_merge_probability: 0.25          # Probability of merging to existing node in DAG walk
   max_parallel_branches: 3             # Maximum number of parallel branches in DAG walk
+  
+  # Edge Validation - Validate matching_pairs in walks using LLM
+  enable_edge_validation: true         # Whether to use LLM to validate edge matching_pairs (model config in model_config.yaml)
+  min_matching_score: 0.5              # Minimum confidence score for a matching_pair to be valid
   
   # Task Generation with LLM - Filter walks and generate agent tasks
   enable_llm_filter: true              # Whether to use LLM to filter invalid walks

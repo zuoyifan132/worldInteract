@@ -9,6 +9,7 @@ import sys
 import json
 import dotenv
 import argparse
+import networkx as nx
 from pathlib import Path
 
 # Add project root directory to Python path
@@ -16,10 +17,44 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from loguru import logger
-from worldInteract.core.build_task_graph import RandomWalker, TaskSubgraphSampler
+from worldInteract.core.build_task_graph import RandomWalker
 
 # Load environment variables
 dotenv.load_dotenv("../.env")
+
+
+def load_subgraph_from_json(subgraph_file: str) -> nx.DiGraph:
+    """
+    Load a task subgraph from JSON file and convert to NetworkX DiGraph
+    
+    Args:
+        subgraph_file: Path to subgraph JSON file
+        
+    Returns:
+        NetworkX DiGraph representing the task subgraph
+    """
+    with open(subgraph_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    # Create directed graph
+    graph = nx.DiGraph()
+    
+    # Add nodes with all their attributes
+    for node in data.get('nodes', []):
+        node_id = node['id']
+        # Add node with all attributes except 'id'
+        node_attrs = {k: v for k, v in node.items() if k != 'id'}
+        graph.add_node(node_id, **node_attrs)
+    
+    # Add edges with their attributes
+    for edge in data.get('edges', []):
+        source = edge['source']
+        target = edge['target']
+        # Add edge with all attributes except 'source' and 'target'
+        edge_attrs = {k: v for k, v in edge.items() if k not in ['source', 'target']}
+        graph.add_edge(source, target, **edge_attrs)
+    
+    return graph
 
 
 def parse_arguments():
@@ -96,19 +131,38 @@ def main():
     logger.info(f"Output directory: {output_dir}")
     
     try:
-        # Load task subgraphs
+        # Load task subgraphs from JSON files
         logger.info("\n" + "=" * 80)
         logger.info("Loading Task Subgraphs")
         logger.info("=" * 80)
         
-        sampler = TaskSubgraphSampler()
-        subgraphs = sampler.load_all_subgraphs(str(task_subgraphs_dir))
+        subgraph_files = list(task_subgraphs_dir.glob("*.json"))
         
-        if not subgraphs:
-            logger.error("No task subgraphs found")
+        if not subgraph_files:
+            logger.error(f"No task subgraph JSON files found in {task_subgraphs_dir}")
             return
         
-        logger.info(f"✅ Loaded {len(subgraphs)} task subgraphs")
+        logger.info(f"Found {len(subgraph_files)} subgraph files")
+        
+        subgraphs = []
+        for subgraph_file in subgraph_files:
+            try:
+                graph = load_subgraph_from_json(str(subgraph_file))
+                subgraphs.append({
+                    'file': subgraph_file.name,
+                    'graph': graph,
+                    'nodes': graph.number_of_nodes(),
+                    'edges': graph.number_of_edges()
+                })
+                logger.debug(f"Loaded {subgraph_file.name}: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
+            except Exception as e:
+                logger.warning(f"Failed to load {subgraph_file.name}: {e}")
+        
+        if not subgraphs:
+            logger.error("No valid task subgraphs loaded")
+            return
+        
+        logger.info(f"✅ Successfully loaded {len(subgraphs)} task subgraphs")
         
         # Initialize random walker
         logger.info("\n" + "=" * 80)
@@ -128,10 +182,11 @@ def main():
         
         all_walks = []
         for i, subgraph_data in enumerate(subgraphs):
-            logger.info(f"\nProcessing subgraph {i+1}/{len(subgraphs)} ({subgraph_data.strategy.value})...")
+            logger.info(f"\nProcessing subgraph {i+1}/{len(subgraphs)} ({subgraph_data['file']})...")
+            logger.info(f"  Nodes: {subgraph_data['nodes']}, Edges: {subgraph_data['edges']}")
             
             walks = walker.generate_walks(
-                subgraph=subgraph_data.graph,
+                subgraph=subgraph_data['graph'],
                 num_walks=args.num_walks,
                 output_dir=str(output_dir)
             )
@@ -189,8 +244,10 @@ def main():
         logger.info("Generated Files")
         logger.info("=" * 80)
         
-        walk_files = list(output_dir.glob("*.json"))
-        logger.info(f"📁 {len(walk_files)} walk files saved")
+        walk_json_files = list(output_dir.glob("*.json"))
+        walk_png_files = list(output_dir.glob("*.png"))
+        logger.info(f"📁 {len(walk_json_files)} walk JSON files saved")
+        logger.info(f"🖼️  {len(walk_png_files)} walk PNG visualizations saved")
         
         logger.info("\n" + "=" * 80)
         logger.info("Example Completed Successfully!")

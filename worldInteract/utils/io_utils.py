@@ -1,9 +1,53 @@
 import os
 import json
+import re
 import pandas as pd
 import numpy as np
 from loguru import logger
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
+
+
+def extract_json(text: str) -> Optional[str]:
+    """
+    Extract JSON content from markdown code blocks.
+    
+    Handles various formats:
+    - ```json\n{...}\n```
+    - ```\n{...}\n```
+    - Plain JSON text
+    
+    Args:
+        text: Input text that may contain markdown code blocks
+        
+    Returns:
+        Extracted JSON string, or original text if no code blocks found
+        Returns None if text is empty
+    """
+    if not text:
+        return None
+    
+    text = text.strip()
+    
+    # Pattern 1: Match ```json ... ``` blocks
+    json_pattern = r'```json\s*\n(.*?)\n```'
+    match = re.search(json_pattern, text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    
+    # Pattern 2: Match generic ``` ... ``` blocks
+    generic_pattern = r'```\s*\n(.*?)\n```'
+    match = re.search(generic_pattern, text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    
+    # Pattern 3: Match ``` ... ``` without newlines (inline)
+    inline_pattern = r'```(.+?)```'
+    match = re.search(inline_pattern, text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    
+    # No code blocks found, return original text
+    return text
 
 
 def save_jsonl(data: Union[Dict[str, Any], List[Dict[str, Any]]], output_path: str, mode="w") -> bool:
