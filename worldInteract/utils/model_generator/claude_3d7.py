@@ -52,6 +52,11 @@ def react_generate(messages: list, **kwargs) -> tuple[ContentBlock, ContentBlock
     if system_prompt:
         request_params["system"] = system_prompt
 
+    # Add tools parameter (if any)
+    tools = kwargs.get("tools", [])
+    if tools:
+        request_params["tools"] = tools
+
     try:
         # Call API
         response = client.messages.create(**request_params)

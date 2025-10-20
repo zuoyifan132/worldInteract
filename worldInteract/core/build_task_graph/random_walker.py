@@ -37,6 +37,8 @@ class RandomWalk:
     id: str
     walk_type: WalkType
     sequence: List[str]  # Linear sequence for chain walks
+    nodes: List[Dict[str, Any]] = field(default_factory=list)  # Full node information
+    edges: List[Dict[str, Any]] = field(default_factory=list)  # Full edge information
     dag_structure: Optional[Dict[str, Any]] = None  # DAG structure for dag walks
     length: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -47,6 +49,8 @@ class RandomWalk:
             'id': self.id,
             'walk_type': self.walk_type.value,
             'sequence': self.sequence,
+            'nodes': self.nodes,
+            'edges': self.edges,
             'dag_structure': self.dag_structure,
             'length': self.length,
             'metadata': self.metadata
@@ -59,6 +63,8 @@ class RandomWalk:
             id=data['id'],
             walk_type=WalkType(data['walk_type']),
             sequence=data['sequence'],
+            nodes=data.get('nodes', []),
+            edges=data.get('edges', []),
             dag_structure=data.get('dag_structure'),
             length=data.get('length', len(data['sequence'])),
             metadata=data.get('metadata', {})
@@ -205,6 +211,55 @@ class RandomWalker:
         
         return all_walks
     
+    def _extract_nodes_and_edges(
+        self,
+        subgraph: nx.DiGraph,
+        node_names: List[str]
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        Extract full node and edge information from subgraph for given nodes
+        
+        Args:
+            subgraph: Directed subgraph with node/edge attributes
+            node_names: List of node names in the walk
+            
+        Returns:
+            Tuple of (nodes, edges) with full information
+        """
+        # Extract node information
+        nodes = []
+        node_set = set(node_names)
+        for node_name in node_names:
+            node_data = subgraph.nodes.get(node_name, {})
+            node_info = {
+                'id': node_name,
+                'domain': node_data.get('domain', ''),
+                'domain_description': node_data.get('domain_description', ''),
+                'description': node_data.get('description', ''),
+                'parameters': node_data.get('parameters', {}),
+                'returns': node_data.get('returns', {})
+            }
+            nodes.append(node_info)
+        
+        # Extract edge information for edges between walk nodes
+        edges = []
+        for source in node_names:
+            for target in node_names:
+                if source != target and subgraph.has_edge(source, target):
+                    edge_data = subgraph.edges.get((source, target), {})
+                    edge_info = {
+                        'source': source,
+                        'target': target,
+                        'weight': edge_data.get('weight', 1),
+                        'matching_pairs': edge_data.get('matching_pairs', [])
+                    }
+                    # Add example_usage if available
+                    if 'example_usage' in edge_data:
+                        edge_info['example_usage'] = edge_data['example_usage']
+                    edges.append(edge_info)
+        
+        return nodes, edges
+    
     def _generate_walk(
         self,
         subgraph: nx.DiGraph,
@@ -281,23 +336,34 @@ class RandomWalker:
                 else:
                     break
             else:
-                # Prefer successors with more outgoing edges (longer chains)
-                successor_scores = [(s, subgraph.out_degree(s)) for s in successors]
-                successor_scores.sort(key=lambda x: x[1], reverse=True)
+                # Weighted random selection based on edge weight
+                successor_weights = []
+                for successor in successors:
+                    edge_data = subgraph.edges.get((current, successor), {})
+                    weight = edge_data.get('weight', 1.0)  # Default to 1.0 if no weight
+                    successor_weights.append(weight)
                 
-                # Randomly select from top successors
-                top_successors = [s for s, _ in successor_scores[:max(2, len(successors) // 2)]]
-                next_node = random.choice(top_successors)
+                # Select next node using weighted random choice
+                next_node = random.choices(
+                    successors,
+                    weights=successor_weights,
+                    k=1
+                )[0]
                 
                 sequence.append(next_node)
                 visited.add(next_node)
                 current = next_node
         
         if len(sequence) >= self.min_walk_length:
+            # Extract full node and edge information
+            nodes, edges = self._extract_nodes_and_edges(subgraph, sequence)
+            
             return RandomWalk(
                 id=str(uuid.uuid4()),
                 walk_type=WalkType.CHAIN,
                 sequence=sequence,
+                nodes=nodes,
+                edges=edges,
                 length=len(sequence),
                 metadata={
                     'start_node': start_node,
@@ -324,17 +390,12 @@ class RandomWalker:
         """
         nodes = list(subgraph.nodes())
         
-        # Find a good starting node (prefer nodes with high out-degree and low in-degree)
-        node_scores = []
-        for node in nodes:
-            in_degree = subgraph.in_degree(node)
-            out_degree = subgraph.out_degree(node)
-            score = out_degree - in_degree
-            node_scores.append((node, score))
-        
-        node_scores.sort(key=lambda x: x[1], reverse=True)
-        top_candidates = [node for node, _ in node_scores[:max(3, len(nodes) // 3)]]
-        start_node = random.choice(top_candidates)
+        # Find nodes with outgoing edges and randomly select one
+        nodes_with_out_edges = [node for node in nodes if subgraph.out_degree(node) > 0]
+        if not nodes_with_out_edges:
+            logger.debug("No nodes with outgoing edges found")
+            return None
+        start_node = random.choice(nodes_with_out_edges)
         
         # Initialize active frontier and tracking
         frontier = {start_node}  # Nodes that can be expanded
@@ -407,14 +468,29 @@ class RandomWalker:
                 logger.debug(f"Merge: {current} -> {target} (existing)")
             
             elif expansion_type == 'branch':
-                # Branch: connect to multiple new nodes
+                # Branch: connect to multiple new nodes (weighted by edge weight)
                 num_branches = min(
                     random.randint(2, 3),
                     len(available_successors),
                     self.max_parallel_branches,
                     target_length - len(visited)
                 )
-                selected_targets = random.sample(available_successors, num_branches)
+                
+                # Get edge weights for weighted random selection
+                successor_weights = []
+                for successor in available_successors:
+                    edge_data = subgraph.edges.get((current, successor), {})
+                    weight = edge_data.get('weight', 0)  # Default to 0.0 if no weight
+                    successor_weights.append(weight)
+                
+                # Weighted random selection without replacement
+                selected_targets = random.choices(
+                    available_successors, 
+                    weights=successor_weights, 
+                    k=num_branches
+                )
+                # Remove duplicates while preserving order
+                selected_targets = list(dict.fromkeys(selected_targets))
                 
                 for target in selected_targets:
                     edges.append((current, target))
@@ -426,8 +502,21 @@ class RandomWalker:
                 logger.debug(f"Branch: {current} -> {selected_targets}")
             
             elif expansion_type == 'extend':
-                # Extend: connect to single new node
-                target = random.choice(available_successors)
+                # Extend: connect to single new node (weighted by edge weight)
+                # Get edge weights for weighted random selection
+                successor_weights = []
+                for successor in available_successors:
+                    edge_data = subgraph.edges.get((current, successor), {})
+                    weight = edge_data.get('weight', 0.0)  # Default to 0.0 if no weight
+                    successor_weights.append(weight)
+                
+                # Weighted random selection
+                target = random.choices(
+                    available_successors, 
+                    weights=successor_weights, 
+                    k=1
+                )[0]
+                
                 edges.append((current, target))
                 visited.add(target)
                 frontier.add(target)
@@ -475,10 +564,15 @@ class RandomWalker:
         max_parallelism = max([len(layer['nodes']) for layer in layers] or [1])
         num_merges = len([e for e in edges if any(e[1] == other_e[1] and e != other_e for other_e in edges)])
         
+        # Extract full node and edge information
+        nodes, edges_info = self._extract_nodes_and_edges(subgraph, sequence)
+        
         return RandomWalk(
             id=str(uuid.uuid4()),
             walk_type=WalkType.DAG,
             sequence=sequence,
+            nodes=nodes,
+            edges=edges_info,
             dag_structure=dag_structure,
             length=len(sequence),
             metadata={
@@ -799,7 +893,7 @@ class RandomWalker:
         target_node: str,
         matching_pair: List[Any],
         subgraph: nx.DiGraph
-    ) -> bool:
+    ) -> Tuple[bool, str]:
         """
         Use LLM to validate if a matching_pair is semantically valid
         
@@ -810,7 +904,9 @@ class RandomWalker:
             subgraph: The subgraph containing node information
             
         Returns:
-            True if matching is valid, False otherwise
+            Tuple of (is_valid, example_usage):
+            - is_valid: True if matching is valid, False otherwise
+            - example_usage: Concrete usage example if valid, empty string otherwise
         """
         try:
             # Extract matching pair information
@@ -846,13 +942,41 @@ You should consider:
 1. Semantic meaning: Do the parameter descriptions indicate they represent the same or compatible data?
 2. Data type compatibility: Can the output type be used as the input type?
 3. Logical flow: Does it make sense to pass this data from one function to another?
+4. **Derivation (IMPORTANT)**: The target function's input parameter can be:
+   - DIRECTLY used from the source function's output parameter (exact match)
+   - DERIVED/COMPUTED from the source function's output parameter (e.g., output is a directory path, input needs a file path within that directory, or parent directory, or relative path)
+
+CRITICAL: If the target function's input parameter can be derived, computed, or obtained from the source function's output parameter in ANY reasonable way, consider it VALID.
+
+Examples of VALID matches:
+- Source: pwd() returns "current_working_directory": "/home/user"
+  Target: find() needs "path": "/home/user/../" or "/home/user/subfolder"
+  → VALID: path can be derived from current_working_directory (parent directory "../" or subdirectory)
+
+- Source: list_files() returns "file_paths": ["/home/user/file1.txt", "/home/user/file2.txt"]
+  Target: read_file() needs "file_path": "/home/user/file1.txt"
+  → VALID: a single file_path can be extracted from the file_paths list
+
+- Source: get_user() returns "user_id": "12345"
+  Target: get_orders() needs "customer_id": "12345"
+  → VALID: user_id and customer_id refer to the same entity
 
 Respond with ONLY a JSON object in this exact format:
 {
-    "reasoning": "brief explanation",
+    "reasoning": "Detailed explanation of why this match is valid or invalid, including how the derivation works if applicable",
     "confidence": 0.0-1.0,
     "is_valid": true/false,
-}"""
+    "example_usage": "If valid, provide a concrete and specific usage scenario showing how the output can be used/derived as input. If invalid, return empty string."
+}
+
+For example_usage (ONLY if is_valid=true):
+- Be specific and concrete with example values
+- Show the data flow clearly
+- Explain the derivation if needed
+Example: "After pwd() returns current_working_directory='/home/user', use '../' relative to it to call find(path='/home/user/../') to search all files in the parent directory"
+
+If is_valid=false, set example_usage to empty string: ""
+"""
             
             user_prompt = f"""Analyze this parameter matching:
 
@@ -868,7 +992,10 @@ Input Description: {target_param_desc if target_param_desc else 'N/A'}
 
 Original Similarity Score: {similarity_score}
 
-Is this a valid parameter match? Can the output from source function be used as input to target function?"""
+Question: Is this a valid parameter match? Can the output from source function be used (directly or derived) as input to target function? 
+
+If VALID: Provide a concrete example_usage scenario with specific example values showing the data flow.
+If INVALID: Set example_usage to empty string ""."""
             
             # Call LLM
             thinking_content, answer_text, function_calls = generate(
@@ -886,17 +1013,21 @@ Is this a valid parameter match? Can the output from source function be used as 
             is_valid = result.get('is_valid', False)
             confidence = result.get('confidence', 0.0)
             reasoning = result.get('reasoning', '')
+            example_usage = result.get('example_usage', '')
             
             logger.debug(f"Edge validation: {source_node}[{source_param}] -> {target_node}[{target_param}]")
             logger.debug(f"  Valid: {is_valid}, Confidence: {confidence}, Reason: {reasoning}")
+            if example_usage:
+                logger.debug(f"  Example usage: {example_usage}")
             
             # Consider valid if LLM says valid and confidence meets threshold
-            return is_valid and confidence >= self.min_matching_score
+            final_is_valid = is_valid and confidence >= self.min_matching_score
+            return final_is_valid, example_usage if final_is_valid else ""
             
         except Exception as e:
             logger.warning(f"Edge validation failed for {source_node} -> {target_node}: {e}")
             # On error, conservatively keep the edge
-            return True
+            return True, ""
     
     def _validate_walk(
         self,
@@ -939,8 +1070,10 @@ Is this a valid parameter match? Can the output from source function be used as 
                 if subgraph.has_edge(source, target):
                     edges_in_walk.append((source, target))
         
-        # Step 2: Validate each edge and collect invalid ones
+        # Step 2: Validate each edge and collect invalid ones, save all example_usages for valid edges
         invalid_edges = []
+        edge_example_usages = {}  # Store list of all valid example_usages for each edge
+        
         for source, target in edges_in_walk:
             edge_data = subgraph.edges[source, target]
             matching_pairs = edge_data.get('matching_pairs', [])
@@ -952,17 +1085,40 @@ Is this a valid parameter match? Can the output from source function be used as 
             
             # Validate all matching pairs for this edge
             all_pairs_invalid = True
+            valid_example_usages = []
+            
             for matching_pair in matching_pairs:
-                if self._validate_matching_pair_with_llm(source, target, matching_pair, subgraph):
+                is_valid, example_usage = self._validate_matching_pair_with_llm(source, target, matching_pair, subgraph)
+                if is_valid:
                     all_pairs_invalid = False
-                    break  # At least one valid pair means edge is valid
+                    # Collect all valid example_usages
+                    if example_usage:
+                        valid_example_usages.append(example_usage)
             
             if all_pairs_invalid:
                 invalid_edges.append((source, target))
+            else:
+                # Edge is valid, store all example_usages if available
+                if valid_example_usages:
+                    edge_example_usages[(source, target)] = valid_example_usages
         
-        # Step 3: If no invalid edges, return original walk and graph
+        # Step 3: If no invalid edges, save example_usages to graph and walk, then return
         if not invalid_edges:
             logger.debug(f"All edges in walk {walk.id} are valid")
+            
+            # Save list of all valid example_usages to graph edges
+            for (source, target), example_usages in edge_example_usages.items():
+                if subgraph.has_edge(source, target):
+                    subgraph.edges[source, target]['example_usage'] = example_usages
+                    logger.debug(f"Saved {len(example_usages)} example_usage(s) for edge {source} -> {target}")
+            
+            # Update walk.edges to include example_usage information
+            for edge in walk.edges:
+                source = edge['source']
+                target = edge['target']
+                if (source, target) in edge_example_usages and not edge.get('example_usage'):
+                    edge['example_usage'] = edge_example_usages[(source, target)]
+            
             return walk, subgraph
         
         # Step 4: Walk contains invalid edges, discard it
@@ -976,19 +1132,23 @@ Is this a valid parameter match? Can the output from source function be used as 
                 cleaned_graph.remove_edge(source, target)
                 logger.debug(f"Removed invalid edge: {source} -> {target}")
         
-        # Step 6: Find weakly connected components and keep only the largest
+        # Step 6: Remove isolated nodes (components with only 1 node)
+        # Keep all components with multiple nodes as they can still generate valid walks
         components = list(nx.weakly_connected_components(cleaned_graph))
         
         if len(components) > 1:
-            largest_component = max(components, key=len)
-            nodes_to_remove = []
+            isolated_nodes = []
             for component in components:
-                if component != largest_component:
-                    nodes_to_remove.extend(component)
+                if len(component) == 1:
+                    isolated_nodes.extend(component)
             
-            cleaned_graph.remove_nodes_from(nodes_to_remove)
-            logger.debug(f"Removed {len(nodes_to_remove)} nodes from smaller components")
-            logger.debug(f"Kept largest component with {len(largest_component)} nodes")
+            if isolated_nodes:
+                cleaned_graph.remove_nodes_from(isolated_nodes)
+                logger.debug(f"Removed {len(isolated_nodes)} isolated node(s)")
+            
+            remaining_components = len(components) - len(isolated_nodes)
+            if remaining_components > 1:
+                logger.debug(f"Graph now has {remaining_components} component(s) with multiple nodes")
         
         # Step 7: Check if cleaned graph meets minimum requirements
         if cleaned_graph.number_of_nodes() < self.min_walk_length:

@@ -317,10 +317,9 @@ class TaskGraphBuilder:
                         param_embeddings.get(tool1_name, {}).get("outputs", {}),
                         param_embeddings.get(tool2_name, {}).get("inputs", {})
                     )
-                    
+
                     if matching_pairs:
-                        # TODO: edge weight should be similarity sum
-                        weight = len(matching_pairs)
+                        weight =  sum(matching_pair[2] for matching_pair in matching_pairs) / len(matching_pairs)                
                         graph.add_edge(
                             tool1_name,
                             tool2_name,
