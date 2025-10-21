@@ -7,10 +7,9 @@ import re
 import logging
 from textwrap import dedent
 from typing import Dict, Any, List, Optional, Tuple
-from anthropic.types import ContentBlock
-from tenacity import RetryError
 
-from worldInteract.utils.model_manager import generate, react_generate
+from worldInteract.agents import ReactAgent
+from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.parser_utils import extract_python_code_from_text, extract_json_from_text
 from worldInteract.core.sandbox import CodeExecutor
@@ -31,7 +30,9 @@ class CodeAgent:
         self.test_case_num = self.config.get("test_case_num", 3)
         
         self.code_executor = CodeExecutor()
-        self.history = []
+        
+        # Note: ReactAgent will be created per validation session
+        # to ensure clean state for each tool
         
     def generate_code_and_tests(
         self,
@@ -79,10 +80,6 @@ class CodeAgent:
         logger.info(f"Successfully pre-generated code and {len(test_cases)} test cases for {tool_name}")
         return code, requirements or [], test_cases
 
-    def extract_text_from_answer_block(self, answer_block: ContentBlock) -> str:
-        """Extract text from answer block."""
-        return answer_block.text
-
     def generate_and_validate_tool(
         self,
         code: str,
@@ -94,7 +91,7 @@ class CodeAgent:
         tool_desc: Dict[str, Any]
     ) -> Tuple[bool, str, List[str], str]:
         """
-        Validate pre-generated tool code using ReAct pattern.
+        Validate pre-generated tool code using ReAct pattern with ReactAgent.
         
         Args:
             code: Pre-generated tool code
@@ -111,20 +108,18 @@ class CodeAgent:
         tool_name = tool_desc["name"]
         logger.info(f"Starting code validation for tool: {tool_name}")
         
-        # Reset agent state
-        self.history = []
+        # Create ReactAgent for this validation session
+        agent = ReactAgent(config_key="code_agent")
         
-        # Initialize conversation with validation focus
+        # Set up system prompt for validation
         system_prompt = self._create_validation_system_prompt()
+        agent.set_system_prompt(system_prompt)
+        
+        # Add initial validation request
         initial_user_prompt = self._create_validation_user_prompt(
             code, requirements, test_cases, schema, initial_state, domain, tool_desc
         )
-        
-        # Add initial messages
-        self.history.extend([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": initial_user_prompt}
-        ])
+        agent.add_user_message(initial_user_prompt)
         
         current_code = code
         current_requirements = requirements
@@ -145,40 +140,30 @@ class CodeAgent:
                 # 2. Format observation for agent
                 observation = self._format_execution_results(success, message, test_results)
                 
-                # 3. Add test results to history
+                # 3. Add test results as observation (automatically added to history by ReactAgent)
                 observation_title = "Initial Test Execution Results" if rounds == 1 else f"Round {rounds-1} Test Execution Results"
-                self.history.append({
-                    "role": "user",
-                    "content": f"{observation_title}:\n{observation}"
-                })
+                agent.add_observation(f"{observation_title}:\n{observation}")
                 
                 logger.info(f"{round_description} - Success: {success}, Message: {message}")
                 
-                # 4. Get ReAct model response for failed tests
+                # 4. Get ReAct model response (automatically added to history by ReactAgent)
                 try:
-                    thinking_block, answer_block, function_blocks = react_generate(
-                        model_key=self.model_config["model"],
-                        messages=self.history,
-                        temperature=self.model_config.get("temperature", 0.3),
-                        max_tokens=self.model_config.get("max_tokens", 12288)
+                    thinking, answer_text, function_calls = agent.step(
+                        # temperature=self.model_config.get("temperature", 0.3),
+                        # max_tokens=self.model_config.get("max_tokens", 12288)
                     )
-                    logger.info(f"ReAct model response: {answer_block.text}")
-                except RetryError as e:
+                    
+                    logger.info(f"ReAct model response length: {len(answer_text)} chars")
+                    if thinking:
+                        logger.debug(f"Agent thinking: {thinking[:100]}...")
+                        
+                except Exception as e:
                     logger.error(f"Error in code generation round {rounds}: {e}")
-                    return False, current_code, current_requirements, f"Code generation failed after maximum model retry"
+                    return False, current_code, current_requirements, f"Code generation failed: {str(e)}"
                 
-                # Add assistant message to history
-                self.history.append({
-                    "role": "assistant", 
-                    "content": [item for item in [thinking_block, answer_block, *function_blocks] if item]
-                })
-
-                # Extract content from answer block
-                answer_text = self.extract_text_from_answer_block(answer_block)
-                
-                # Check if agent declares success (though tests failed)
-                if "ALL TEST CASES PASSED" in answer_text:
-                    logger.warning("All test cases passed")
+                # Check if agent declares success
+                if "ALL TEST CASES PASSED" in answer_text.upper():
+                    logger.info("All test cases passed")
                     return True, current_code, current_requirements, "All test cases passed"
                 
                 # 5. Extract code and requirements from agent response
@@ -197,11 +182,8 @@ class CodeAgent:
                     
             except Exception as e:
                 logger.error(f"Error in code generation round {rounds}: {e}")
-                # Add error to history and continue
-                self.history.append({
-                    "role": "user",
-                    "content": f"Error occurred: {str(e)}. Please try again."
-                })
+                # Add error as observation and continue
+                agent.add_observation(f"Error occurred: {str(e)}. Please try again.")
         
         # Max rounds reached without success
         logger.warning(f"Code generation failed after {self.max_rounds} rounds")

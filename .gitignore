@@ -46,6 +46,11 @@ ENV/
 # Logs
 *.log
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Temporary files
 *.tmp
 *.temp
