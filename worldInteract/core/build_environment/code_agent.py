@@ -30,6 +30,11 @@ class CodeAgent:
         
         # Note: ReactAgent will be created per validation session
         # to ensure clean state for each tool
+        self.agent = ReactAgent(config_key="code_agent")
+
+        # Set up system prompt for validation
+        validation_system_prompt = self._create_validation_system_prompt()
+        self.agent.set_system_prompt(validation_system_prompt)
         
     def generate_code_and_tests(
         self,
@@ -105,18 +110,11 @@ class CodeAgent:
         tool_name = tool_desc["name"]
         logger.info(f"Starting code validation for tool: {tool_name}")
         
-        # Create ReactAgent for this validation session
-        agent = ReactAgent(config_key="code_agent")
-        
-        # Set up system prompt for validation
-        system_prompt = self._create_validation_system_prompt()
-        agent.set_system_prompt(system_prompt)
-        
         # Add initial validation request
         initial_user_prompt = self._create_validation_user_prompt(
             code, requirements, test_cases, schema, initial_state, domain, tool_desc
         )
-        agent.add_user_message(initial_user_prompt)
+        self.agent.add_user_message(initial_user_prompt)
         
         current_code = code
         current_requirements = requirements
@@ -139,16 +137,13 @@ class CodeAgent:
                 
                 # 3. Add test results as observation (automatically added to history by ReactAgent)
                 observation_title = "Initial Test Execution Results" if rounds == 1 else f"Round {rounds-1} Test Execution Results"
-                agent.add_observation(f"{observation_title}:\n{observation}")
+                self.agent.add_observation(f"{observation_title}:\n{observation}")
                 
                 logger.info(f"{round_description} - Success: {success}, Message: {message}")
                 
                 # 4. Get ReAct model response (automatically added to history by ReactAgent)
                 try:
-                    thinking, answer_text, function_calls = agent.step(
-                        # temperature=self.model_config.get("temperature", 0.3),
-                        # max_tokens=self.model_config.get("max_tokens", 12288)
-                    )
+                    thinking, answer_text, function_calls = self.agent.step()
                     
                     logger.info(f"ReAct model response length: {len(answer_text)} chars")
                     if thinking:
@@ -156,11 +151,13 @@ class CodeAgent:
                         
                 except Exception as e:
                     logger.error(f"Error in code generation round {rounds}: {e}")
+                    self.agent.reset()
                     return False, current_code, current_requirements, f"Code generation failed: {str(e)}"
                 
                 # Check if agent declares success
                 if "ALL TEST CASES PASSED" in answer_text.upper():
                     logger.info("All test cases passed")
+                    self.agent.reset()
                     return True, current_code, current_requirements, "All test cases passed"
                 
                 # 5. Extract code and requirements from agent response
@@ -180,10 +177,11 @@ class CodeAgent:
             except Exception as e:
                 logger.error(f"Error in code generation round {rounds}: {e}")
                 # Add error as observation and continue
-                agent.add_observation(f"Error occurred: {str(e)}. Please try again.")
+                self.agent.add_observation(f"Error occurred: {str(e)}. Please try again.")
         
         # Max rounds reached without success
         logger.warning(f"Code generation failed after {self.max_rounds} rounds")
+        self.agent.reset()
         return False, current_code or "", current_requirements, f"Code generation failed after {self.max_rounds} rounds"
     
     def _create_generation_system_prompt(self) -> str:

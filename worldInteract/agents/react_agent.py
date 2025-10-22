@@ -97,7 +97,20 @@ class ReactAgent:
         # System message storage
         self.system_message: Optional[BaseMessage] = None
         
+        # Timestamp counter to ensure proper message ordering
+        self.timestamp_counter = 0.0
+        
         logger.info(f"ReactAgent initialized with config_key='{config_key}', token_limit={token_limit}")
+    
+    def _get_next_timestamp(self) -> float:
+        """
+        Get next timestamp for maintaining message order.
+        
+        Returns:
+            Next timestamp value
+        """
+        self.timestamp_counter += 1.0
+        return self.timestamp_counter
     
     def set_system_prompt(self, prompt: str):
         """
@@ -120,13 +133,16 @@ class ReactAgent:
             content=prompt
         )
         
-        # Clear memory and add system message
+        # Clear memory and reset timestamp counter
         self.memory.clear()
+        self.timestamp_counter = 0.0
+        
+        # Add system message with first timestamp
         self.memory.write_record(
             MemoryRecord(
                 message=self.system_message,
                 role_at_backend=OpenAIBackendRole.SYSTEM,
-                timestamp=0.0,
+                timestamp=self._get_next_timestamp(),
                 agent_id="react_agent"
             )
         )
@@ -154,7 +170,7 @@ class ReactAgent:
             MemoryRecord(
                 message=message,
                 role_at_backend=OpenAIBackendRole.USER,
-                timestamp=0.0,
+                timestamp=self._get_next_timestamp(),
                 agent_id="react_agent"
             )
         )
@@ -252,7 +268,7 @@ class ReactAgent:
             MemoryRecord(
                 message=assistant_message,
                 role_at_backend=OpenAIBackendRole.ASSISTANT,
-                timestamp=0.0,
+                timestamp=self._get_next_timestamp(),
                 agent_id="react_agent"
             )
         )
@@ -348,51 +364,6 @@ class ReactAgent:
         messages, _ = self.memory.get_context()
         return messages
     
-    def get_last_response_details(self) -> Dict[str, Any]:
-        """
-        Get detailed information from the last assistant response.
-        
-        This extracts thinking and function_calls from the meta_dict
-        of the last assistant message, following CAMEL's metadata storage pattern.
-        
-        Returns:
-            Dictionary with keys:
-                - thinking: str - Thinking/reasoning content
-                - content: str - Main response content
-                - function_calls: List[Dict] - Function calls if any
-                - has_metadata: bool - Whether metadata was found
-                
-        Example:
-            >>> thinking, content, functions = agent.step()
-            >>> details = agent.get_last_response_details()
-            >>> print(f"Thinking: {details['thinking']}")
-            >>> print(f"Content: {details['content']}")
-        """
-        messages, _ = self.memory.get_context()
-        
-        # Find the last assistant message
-        for message in reversed(messages):
-            if message.get("role") == "assistant":
-                content = message.get("content", "")
-                
-                # Try to get metadata if available
-                # Note: meta_dict might not be in the OpenAI format
-                # We need to check the actual BaseMessage object
-                # For now, return basic info
-                return {
-                    "thinking": "",
-                    "content": content,
-                    "function_calls": [],
-                    "has_metadata": False
-                }
-        
-        return {
-            "thinking": "",
-            "content": "",
-            "function_calls": [],
-            "has_metadata": False
-        }
-    
     def clear_history(self):
         """
         Clear conversation history.
@@ -402,6 +373,7 @@ class ReactAgent:
         """
         self.memory.clear()
         self.system_message = None
+        self.timestamp_counter = 0.0
         logger.debug("History cleared")
     
     def reset(self):
@@ -415,6 +387,7 @@ class ReactAgent:
             system_prompt = self.system_message.content
         
         self.clear_history()
+        self.timestamp_counter = 0.0
         
         if system_prompt:
             self.set_system_prompt(system_prompt)
