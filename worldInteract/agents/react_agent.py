@@ -6,7 +6,7 @@ history management using CAMEL's memory system. It provides a simple interface
 for iterative refinement workflows.
 """
 
-import logging
+from loguru import logger
 from typing import Optional, Dict, Any, List, Tuple
 from anthropic.types import ContentBlock
 
@@ -18,9 +18,6 @@ from camel.utils import OpenAITokenCounter
 
 from worldInteract.utils.camel_model_manager import camel_model_manager
 from worldInteract.utils.config_manager import config_manager
-
-
-logger = logging.getLogger(__name__)
 
 
 class ReactAgent:

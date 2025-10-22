@@ -4,7 +4,7 @@ CodeAgent for tool code generation and validation using ReAct pattern.
 
 import json
 import re
-import logging
+from loguru import logger
 from textwrap import dedent
 from typing import Dict, Any, List, Optional, Tuple
 
@@ -13,9 +13,6 @@ from worldInteract.utils.model_manager import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.parser_utils import extract_python_code_from_text, extract_json_from_text
 from worldInteract.core.sandbox import CodeExecutor
-
-
-logger = logging.getLogger(__name__)
 
 
 class CodeAgent:

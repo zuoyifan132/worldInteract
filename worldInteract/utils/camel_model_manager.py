@@ -7,7 +7,7 @@ making it easy to switch between different models and providers.
 """
 
 import os
-import logging
+from loguru import logger
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
@@ -23,8 +23,6 @@ from camel.types import ModelPlatformType
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.model_mapping import get_model_info, get_api_key_env_name
 
-
-logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
