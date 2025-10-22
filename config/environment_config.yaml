@@ -21,6 +21,7 @@ scenario_collection:
 # Domain clustering and domain analysis
 # =============================================================================
 domain_graph:
+  save_original_domain: true # Save the original tool set without building similarity graph and community detection
   similarity_threshold: 0.5  # Cosine similarity threshold for creating edges
   min_community_size: 2      # Minimum tools per domain
   max_community_size: 20     # Maximum tools per domain

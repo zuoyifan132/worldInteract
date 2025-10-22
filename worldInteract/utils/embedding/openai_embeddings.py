@@ -5,6 +5,7 @@ import dotenv
 import os
 import numpy as np
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 import openai
 from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -12,7 +13,9 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from worldInteract.utils.config_manager import config_manager
 
 
-dotenv.load_dotenv("../../../.env")
+# Load .env file from project root
+project_root = Path(__file__).parent.parent.parent
+dotenv.load_dotenv(project_root / ".env")
 
 
 class OpenAIEmbeddings:

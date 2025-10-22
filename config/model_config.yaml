@@ -16,7 +16,7 @@ scenario_collection:
 # Domain clustering and domain analysis
 # =============================================================================
 domain_graph:
-  model: "claude_3d7"
+  model: "openai_gpt"
   temperature: 0.1
   max_tokens: 4096
   retry_attempts: 3

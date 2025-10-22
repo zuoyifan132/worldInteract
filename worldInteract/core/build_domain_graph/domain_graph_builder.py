@@ -44,9 +44,11 @@ class DomainGraphBuilder:
         self.enable_llm_validation = self.env_config.get("enable_llm_validation", True)
         self.handle_singleton = self.env_config.get("handle_singleton", False)
         self.singleton_tool_similarity_threshold = self.env_config.get("singleton_tool_similarity_threshold", 0.6)
+        self.save_original_domain = self.env_config.get("save_original_domain", False)
         
         logger.info(f"Initialized Domain Graph Builder with threshold: {self.similarity_threshold}")
         logger.info(f"Singleton handling: {'enabled' if self.handle_singleton else 'disabled'}")
+        logger.info(f"Save original domain mode: {'enabled' if self.save_original_domain else 'disabled'}")
     
     def build_domain_graph(
         self, 
@@ -71,6 +73,11 @@ class DomainGraphBuilder:
         
         apis = data.get("apis", [])
         logger.info(f"Loaded {len(apis)} cleaned APIs")
+        
+        # Check if we should skip graph building and use original domain
+        if self.save_original_domain:
+            logger.info("Save original domain mode enabled - skipping graph building and community detection")
+            return self._build_original_domain(apis, output_dir)
         
         # Step 1: Generate parameter embeddings for all tools
         logger.info("Generating parameter embeddings...")
@@ -105,6 +112,47 @@ class DomainGraphBuilder:
         )
         
         logger.info(f"Created {len(domains)} domains with {len(apis)} total tools")
+        return output_data
+    
+    def _build_original_domain(self, apis: List[Dict[str, Any]], output_dir: str) -> Dict[str, Any]:
+        """
+        Build a single domain from all APIs without graph building or community detection.
+        Used when save_original_domain is enabled.
+        
+        Args:
+            apis: List of API objects
+            output_dir: Directory to save outputs
+            
+        Returns:
+            Dictionary with domain statistics
+        """
+        logger.info(f"Building original domain with {len(apis)} tools")
+        
+        # Create a single community with all tools
+        tool_names = [api["name"] for api in apis]
+        communities = {0: tool_names}
+        
+        # Create empty graph (no edges)
+        graph = nx.Graph()
+        for api in apis:
+            graph.add_node(api["name"], **api)
+        
+        # Use LLM to generate domain name and description for all tools
+        if self.enable_llm_validation:
+            logger.info("Generating domain name and description with LLM...")
+            domains = self._validate_communities_with_llm(apis, communities, is_original_domain=True)
+        else:
+            raise ValueError("LLM validation is not enabled, but it's required for original domain mode")
+        
+        # Empty embeddings
+        tool_embeddings = {}
+        
+        # Save outputs with empty embeddings
+        output_data = self._save_outputs(
+            apis, graph, communities, domains, tool_embeddings, output_dir
+        )
+        
+        logger.info(f"Created original domain with {len(apis)} total tools")
         return output_data
     
     def _generate_tool_embeddings(self, apis: List[Dict[str, Any]]) -> Dict[str, Dict[str, List[float]]]:
@@ -379,9 +427,19 @@ class DomainGraphBuilder:
     def _validate_communities_with_llm(
         self, 
         apis: List[Dict[str, Any]], 
-        communities: Dict[int, List[str]]
+        communities: Dict[int, List[str]],
+        is_original_domain: bool = False
     ) -> List[Dict[str, Any]]:
-        """Validate communities and create domains using LLM analysis."""
+        """Validate communities and create domains using LLM analysis.
+        
+        Args:
+            apis: List of API objects
+            communities: Dictionary mapping community IDs to tool names
+            is_original_domain: If True, treat all tools as a single domain without filtering
+            
+        Returns:
+            List of domain objects
+        """
         api_dict = {api["name"]: api for api in apis}
         domains = []
         
@@ -407,7 +465,11 @@ class DomainGraphBuilder:
                         tool_descriptions.append(f"- {tool}: {api_dict[tool]['description']}")
                 
                 # Ask LLM to analyze and reorganize tools into proper domains
-                llm_domains = self._llm_analyze_and_create_domains(tool_descriptions, api_dict)
+                llm_domains = self._llm_analyze_and_create_domains(
+                    tool_descriptions, 
+                    api_dict,
+                    is_original_domain=is_original_domain
+                )
                 
                 if llm_domains:
                     domains.extend(llm_domains)
@@ -426,53 +488,107 @@ class DomainGraphBuilder:
     def _llm_analyze_and_create_domains(
         self, 
         tool_descriptions: List[str], 
-        api_dict: Dict[str, Dict[str, Any]]
+        api_dict: Dict[str, Dict[str, Any]],
+        is_original_domain: bool = False
     ) -> List[Dict[str, Any]]:
-        """Use LLM to analyze tools and create proper domain groupings."""
+        """Use LLM to analyze tools and create proper domain groupings.
         
-        system_prompt = textwrap.dedent("""
-            You are an API analysis expert. Please analyze the given tools and create coherent functional domains.
+        Args:
+            tool_descriptions: List of tool descriptions
+            api_dict: Dictionary mapping tool names to API objects
+            is_original_domain: If True, treat all tools as a single domain without filtering
             
-            Your task:
-            1. Identify one or more functional domains that best represent the core functionalities
-            2. Group tools by their functional relationships - tools that work together or belong to the same business area
-            3. Include only tools that clearly belong to each functional domain
-            4. Remove tools that don't fit well with any identified domain (outliers)
-            5. Generate meaningful domain names and descriptions for each identified domain
-            6. Remove functionally duplicate tools within the same domain
-            
-            Please respond with a JSON structure like this:
-            ```json
-            {
-                "domains": [
-                    {
-                        "domain_name": "file_operations",
-                        "description": "Tools for file system operations and management",
-                        "tools": ["create_file", "read_file", "delete_file"]
-                    },
-                    {
-                        "domain_name": "user_management", 
-                        "description": "Tools for managing user accounts and authentication",
-                        "tools": ["create_user", "authenticate_user", "delete_user"]
-                    }
-                ]
-            }
-            ```
-            
-            Guidelines:
-            - Each domain should have at least 2 tools (unless there's only 1 tool total)
-            - Tools within a domain should have clear functional relationships
-            - It's better to exclude outliers than force them into inappropriate domains
-        """).strip()
+        Returns:
+            List of domain objects
+        """
+        
+        if is_original_domain:
+            # System prompt for original domain mode - keep all tools as one domain
+            system_prompt = textwrap.dedent("""
+                You are an API analysis expert. Please analyze the given tools and generate a coherent domain name and description.
+                
+                Your task:
+                1. Analyze all the provided tools to understand their collective functionality
+                2. Generate a meaningful domain name that represents the overall purpose of these tools
+                3. Write a comprehensive description that captures what this domain of tools does
+                4. Keep ALL tools in the domain - do not remove or filter any tools
+                
+                Please respond with a JSON structure like this:
+                ```json
+                {
+                    "domains": [
+                        {
+                            "domain_name": "file_operations",
+                            "description": "Tools for file system operations and management, including creating, reading, updating, and deleting files and directories",
+                            "tools": ["create_file", "read_file", "delete_file", "update_file", "list_directory"]
+                        }
+                    ]
+                }
+                ```
+                
+                Guidelines:
+                - Create only ONE domain containing ALL the provided tools
+                - The domain name should be concise and descriptive
+                - The description should comprehensively explain the domain's functionality
+                - Include ALL tool names exactly as provided in the tools array
+            """).strip()
+        else:
+            # Original system prompt for graph-based mode - filter and group tools
+            system_prompt = textwrap.dedent("""
+                You are an API analysis expert. Please analyze the given tools and create coherent functional domains.
+                
+                Your task:
+                1. Identify one or more functional domains that best represent the core functionalities
+                2. Group tools by their functional relationships - tools that work together or belong to the same business area
+                3. Include only tools that clearly belong to each functional domain
+                4. Remove tools that don't fit well with any identified domain (outliers)
+                5. Generate meaningful domain names and descriptions for each identified domain
+                6. Remove functionally duplicate tools within the same domain
+                
+                Please respond with a JSON structure like this:
+                ```json
+                {
+                    "domains": [
+                        {
+                            "domain_name": "file_operations",
+                            "description": "Tools for file system operations and management",
+                            "tools": ["create_file", "read_file", "delete_file"]
+                        },
+                        {
+                            "domain_name": "user_management", 
+                            "description": "Tools for managing user accounts and authentication",
+                            "tools": ["create_user", "authenticate_user", "delete_user"]
+                        }
+                    ]
+                }
+                ```
+                
+                Guidelines:
+                - Each domain should have at least 2 tools (unless there's only 1 tool total)
+                - Tools within a domain should have clear functional relationships
+                - It's better to exclude outliers than force them into inappropriate domains
+            """).strip()
 
         tools_text = "\n".join(tool_descriptions)
-        user_prompt = textwrap.dedent(f"""
-            Please analyze the following tools and identify the most appropriate functional domains:
-            
-            {tools_text}
-            
-            Group these tools into coherent functional domains based on their relationships and functionalities. Include only tools that clearly belong to each domain, and exclude any outliers that don't fit well.
-        """).strip()
+        
+        if is_original_domain:
+            # User prompt for original domain mode
+            user_prompt = textwrap.dedent(f"""
+                Please analyze the following tools and generate a comprehensive domain name and description:
+                
+                {tools_text}
+                
+                Create a single domain that includes ALL the above tools. The domain name and description should capture the collective functionality and purpose of all these tools.
+            """).strip()
+        else:
+            # User prompt for graph-based mode
+            user_prompt = textwrap.dedent(f"""
+                Please analyze the following tools and identify the most appropriate functional domains:
+                
+                {tools_text}
+                
+                Group these tools into coherent functional domains based on their relationships and functionalities. Include only tools that clearly belong to each domain, and exclude any outliers that don't fit well.
+            """).strip()
 
         try:
             thinking_content, answer_text, function_calls = generate(
@@ -480,7 +596,7 @@ class DomainGraphBuilder:
                 system_prompt,
                 user_prompt,
                 temperature=self.model_config.get("temperature", 0.1),
-                max_tokens=1000
+                max_tokens=12384
             )
             
             extracted_json = extract_json_from_text(answer_text.strip())
