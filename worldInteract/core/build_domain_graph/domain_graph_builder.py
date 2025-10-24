@@ -13,7 +13,7 @@ from community import community_louvain
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.embedding import OpenAIEmbeddings
 from worldInteract.utils.parser_utils import extract_json_from_text
@@ -410,7 +410,7 @@ class DomainGraphBuilder:
                 system_prompt,
                 user_prompt,
                 temperature=self.model_config.get("temperature", 0.1),
-                max_tokens=300
+                max_tokens=self.model_config.get("max_tokens", 4096)
             )
             
             # Parse response
@@ -596,7 +596,7 @@ class DomainGraphBuilder:
                 system_prompt,
                 user_prompt,
                 temperature=self.model_config.get("temperature", 0.1),
-                max_tokens=12384
+                max_tokens=self.model_config.get("max_tokens", 4096)
             )
             
             extracted_json = extract_json_from_text(answer_text.strip())

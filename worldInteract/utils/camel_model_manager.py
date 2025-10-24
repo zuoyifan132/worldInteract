@@ -139,19 +139,14 @@ class CamelModelManager:
         Returns:
             Configuration dictionary compatible with CAMEL configs
         """
-        # Extract base parameters from config
-        base_params = {
-            "temperature": model_config.get("temperature", 1.0),
-            "max_tokens": model_config.get("max_tokens", 8192),
-        }
         
         # Apply override parameters
         if override_params:
-            base_params.update(override_params)
+            model_config.update(override_params)
             logger.debug(f"Applied parameter overrides: {override_params}")
         
         # Create platform-specific configuration object
-        config = self._create_platform_config(platform, base_params)
+        config = self._create_platform_config(platform, model_config)
         
         return config.as_dict()
     
@@ -171,23 +166,70 @@ class CamelModelManager:
             Platform-specific config object (AnthropicConfig, ChatGPTConfig, etc.)
         """
         if platform == ModelPlatformType.ANTHROPIC:
-            return AnthropicConfig(**params)
+            ANTHROPIC_PARAMS = {
+                'max_tokens', 'stop_sequences', 'temperature', 
+                'top_p', 'top_k', 'stream', 'metadata', 
+                'tool_choice', 'extra_headers', 'extra_body'
+            }
+            filtered_params = {
+                k: v for k, v in params.items() 
+                if k in ANTHROPIC_PARAMS
+            }
+            return AnthropicConfig(**filtered_params)
         
         elif platform == ModelPlatformType.OPENAI:
-            return ChatGPTConfig(**params)
+            OPENAI_PARAMS = {
+                'temperature', 'top_p', 'n', 'stream', 'stop',
+                'max_tokens', 'presence_penalty', 'frequency_penalty',
+                'logit_bias', 'user', 'response_format', 'seed',
+                'tools', 'tool_choice', 'logprobs', 'top_logprobs'
+            }
+            filtered_params = {
+                k: v for k, v in params.items() 
+                if k in OPENAI_PARAMS
+            }
+            return ChatGPTConfig(**filtered_params)
         
         elif platform == ModelPlatformType.GEMINI:
-            return GeminiConfig(**params)
+            GEMINI_PARAMS = {
+                'temperature', 'top_p', 'top_k', 'max_tokens',
+                'max_output_tokens', 'candidate_count', 'stop_sequences',
+                'safety_settings', 'response_mime_type'
+            }
+            filtered_params = {
+                k: v for k, v in params.items() 
+                if k in GEMINI_PARAMS
+            }
+            return GeminiConfig(**filtered_params)
         
         elif platform == ModelPlatformType.MISTRAL:
-            return MistralConfig(**params)
+            MISTRAL_PARAMS = {
+                'temperature', 'top_p', 'max_tokens', 'min_tokens',
+                'stream', 'stop', 'random_seed', 'safe_mode',
+                'safe_prompt', 'tools', 'tool_choice', 'response_format'
+            }
+            filtered_params = {
+                k: v for k, v in params.items() 
+                if k in MISTRAL_PARAMS
+            }
+            return MistralConfig(**filtered_params)
         
         else:
-            # Fallback to AnthropicConfig for unknown platforms
+            # Fallback: try ChatGPTConfig as it's most widely compatible
             logger.warning(
-                f"Unknown platform {platform}, using AnthropicConfig as fallback"
+                f"Unknown platform {platform}, using ChatGPTConfig as fallback"
             )
-            return AnthropicConfig(**params)
+            OPENAI_PARAMS = {
+                'temperature', 'top_p', 'n', 'stream', 'stop',
+                'max_tokens', 'presence_penalty', 'frequency_penalty',
+                'logit_bias', 'user', 'response_format', 'seed',
+                'tools', 'tool_choice', 'logprobs', 'top_logprobs'
+            }
+            filtered_params = {
+                k: v for k, v in params.items() 
+                if k in OPENAI_PARAMS
+            }
+            return ChatGPTConfig(**filtered_params)
     
     def get_or_create_model(
         self,

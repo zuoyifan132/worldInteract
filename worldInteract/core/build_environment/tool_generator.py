@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.parser_utils import extract_python_code_from_text, extract_json_from_text, extract_requirements_from_text
 

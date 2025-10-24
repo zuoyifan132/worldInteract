@@ -9,7 +9,7 @@ from textwrap import dedent
 from typing import Dict, Any, List, Optional, Tuple
 
 from worldInteract.agents import ReactAgent
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.utils.parser_utils import extract_python_code_from_text, extract_json_from_text
 from worldInteract.core.sandbox import CodeExecutor
@@ -61,9 +61,9 @@ class CodeAgent:
         # Generate initial code and test cases
         system_prompt = self._create_generation_system_prompt()
         user_prompt = self._create_initial_user_prompt(tool_desc, schema, initial_state, domain)
-        
+
         thinking_content, answer_text, function_calls = generate(
-            model_key=self.model_config["model"],
+            config_key=self.model_config["model"],
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=self.model_config.get("temperature", 0.3),

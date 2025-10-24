@@ -2,11 +2,50 @@
 # Pipeline Flow: Scenario Collection → Tool Domain Graph Modeling → Function Schema Programmatic Materialization
 
 # =============================================================================
+# AVAILABLE MODEL OPTIONS
+# =============================================================================
+# You can use any of the following model names in the "model" field below.
+# These names map to specific models from different providers via CAMEL.
+#
+# Anthropic Claude Series:
+#   - claude_3d7          : Claude 3.7 Sonnet (latest)
+#   - claude_sonnet_4     : Claude Sonnet 4
+#   - claude_opus_4       : Claude Opus 4
+#   - claude_opus_4_1     : Claude Opus 4.1
+#   - claude_3_5_sonnet   : Claude 3.5 Sonnet
+#   - claude_3_5_haiku    : Claude 3.5 Haiku
+#   - claude_3_opus       : Claude 3 Opus
+#   - claude_3_sonnet     : Claude 3 Sonnet
+#   - claude_3_haiku      : Claude 3 Haiku
+#
+# OpenAI GPT Series:
+#   - openai_gpt          : GPT-4o (default OpenAI model)
+#   - gpt4o               : GPT-4o
+#   - gpt4o_mini          : GPT-4o Mini
+#   - gpt4_turbo          : GPT-4 Turbo
+#   - gpt4                : GPT-4
+#   - gpt3_5_turbo        : GPT-3.5 Turbo
+#
+# OpenAI O1 Series:
+#   - o1                  : O1
+#   - o1_mini             : O1 Mini
+#   - o1_preview          : O1 Preview
+#
+# Google Gemini Series:
+#   - gemini_2_5_pro      : Gemini 2.5 Pro
+#   - gemini_2_5_flash    : Gemini 2.5 Flash
+#   - gemini_2_0_flash    : Gemini 2.0 Flash (Experimental)
+#   - gemini_1_5_pro      : Gemini 1.5 Pro
+#   - gemini_1_5_flash    : Gemini 1.5 Flash
+#
+# =============================================================================
+
+# =============================================================================
 # PHASE 1: SCENARIO COLLECTION
 # Raw API processing, cleaning, and standardization
 # =============================================================================
 scenario_collection:
-  model: "openai_gpt"
+  model: "gpt4o_mini"
   temperature: 1.0
   max_tokens: 8124
   retry_attempts: 3
@@ -16,9 +55,9 @@ scenario_collection:
 # Domain clustering and domain analysis
 # =============================================================================
 domain_graph:
-  model: "openai_gpt"
-  temperature: 0.1
-  max_tokens: 4096
+  model: "o1_mini"
+  temperature: 1.0
+  max_tokens: 12384
   retry_attempts: 3
 
 # =============================================================================
@@ -28,52 +67,35 @@ domain_graph:
 
 # Schema generation configuration
 schema_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8124
+  model: "gpt4o_mini"
+  temperature: 0.6
+  max_tokens: 12384
   retry_attempts: 3
 
 # Tool implementation configuration
 tool_generation:
-  model: "claude_3d7"
+  model: "gpt4o_mini"
   temperature: 1.0
   max_tokens: 12384
   retry_attempts: 3
 
 # Initial state generation configuration
 state_generation:
-  model: "claude_3d7"
+  model: "gpt4o_mini"
   temperature: 1.0
   max_tokens: 12384
   retry_attempts: 3
 
-# =============================================================================
-# QUALITY ASSURANCE AND TESTING
-# Validation, testing, and quality control
-# =============================================================================
-
-# Tool validation configuration
-validation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8214
-  retry_attempts: 3
-
-# Test case generation configuration
-test_generation:
-  model: "claude_3d7"
-  temperature: 1.0
-  max_tokens: 8124
-  retry_attempts: 3
-
-# Validation agent configuration - REMOVED (functionality moved to code_agent)
-
-# Code agent configuration (replaces tool generation + validation)
+# Code agent configuration
 code_agent:
-  model: "claude_3d7"
-  temperature: 0.3
-  max_tokens: 12288
+  model: "claude_sonnet_4"
+  temperature: 1.0
+  max_tokens: 6500
   retry_attempts: 3
+  extra_body:
+    thinking:
+      type: enabled
+      budget_tokens: 4096
 
 # =============================================================================
 # PHASE 4: TASK GRAPH GENERATION AND TRAJECTORY SYNTHESIS
@@ -83,7 +105,7 @@ code_agent:
 # Edge validation configuration
 # Validates matching_pairs between function outputs and inputs using LLM
 edge_validation:
-  model: "openai_gpt"
+  model: "gpt4o_mini"
   temperature: 0.1
   max_tokens: 8124
   retry_attempts: 3
@@ -103,9 +125,9 @@ embedding:
 # Generate complete interaction trajectories from random walks using ReAct agent
 # =============================================================================
 trajectory_generation:
-  model: "claude_3d7"
+  model: "claude_sonnet_4"
   temperature: 0.7
-  max_tokens: 8192
+  max_tokens: 12288
   retry_attempts: 3
 
 # =============================================================================
@@ -113,8 +135,8 @@ trajectory_generation:
 # Used when task-specific configuration is not available
 # =============================================================================
 default:
-  model: "claude_3d7"
+  model: "gpt4o_mini"
   temperature: 1.0
-  max_tokens: 8124
+  max_tokens: 12288
   retry_attempts: 3
 

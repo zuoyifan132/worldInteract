@@ -17,7 +17,7 @@ from loguru import logger
 from tqdm import tqdm
 
 from worldInteract.utils.config_manager import config_manager
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.io_utils import extract_json
 
 
@@ -106,8 +106,8 @@ class RandomWalker:
         
         # Edge validation configuration
         self.enable_edge_validation = self.config.get('enable_edge_validation', True)
-        edge_validation_model_config = self.config_manager.get_model_config("edge_validation")
-        self.edge_validation_model = edge_validation_model_config.get('model', 'claude_3d7')
+        self.edge_validation_model_config = self.config_manager.get_model_config("edge_validation")
+        self.edge_validation_model = self.edge_validation_model_config["model"]
         self.min_matching_score = self.config.get('min_matching_score', 0.5)
         
         logger.info("Random walker initialization completed")
@@ -999,9 +999,11 @@ If INVALID: Set example_usage to empty string ""."""
             
             # Call LLM
             thinking_content, answer_text, function_calls = generate(
-                model_key=self.edge_validation_model,
+                config_key=self.edge_validation_model,
                 system_prompt=system_prompt,
-                user_prompt=user_prompt
+                user_prompt=user_prompt,
+                temperature=self.edge_validation_model_config.get("temperature", 0.1),
+                max_tokens=self.edge_validation_model_config.get("max_tokens", 4096)
             )
             
             # Parse response

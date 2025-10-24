@@ -7,7 +7,7 @@ import json
 import copy
 import os
 from loguru import logger
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from pathlib import Path
 
 from worldInteract.trajectories.prepare_task import TaskPreparer
@@ -83,6 +83,10 @@ class TrajectoryGenerator:
             "state": copy.deepcopy(current_state)
         })
         
+        # Get all available tools from domain
+        all_tools = [tool["name"] for tool in self.domain_tools.get("tools", [])]
+        logger.info(f"All available tools: {all_tools}")
+        
         for idx, query_info in enumerate(user_queries):
             node_id = query_info["node_id"]
             user_query = query_info["user_query"]
@@ -90,10 +94,10 @@ class TrajectoryGenerator:
             logger.info(f"Executing query {idx+1}/{len(user_queries)} for node: {node_id}")
             logger.info(f"User query: {user_query}")
             
-            # Execute task with ReAct agent
+            # Execute task with ReAct agent - provide all tools
             task_history, new_state = self.task_agent.execute_task(
                 user_query=user_query,
-                available_tools=[node_id],  # Only make this tool available for this step
+                available_tools=all_tools,  # Make all tools available
                 current_state=current_state
             )
             
@@ -146,7 +150,7 @@ class TrajectoryGenerator:
             # Random walk information
             "sequence": random_walk["sequence"],
             "dag_structure": random_walk.get("dag_structure", {}),
-            "walk_metadata": random_walk.get("metadata", {}),
+            # "walk_metadata": random_walk.get("metadata", {}),
             
             # User queries
             "user_queries": user_queries,
@@ -155,83 +159,158 @@ class TrajectoryGenerator:
             "interaction_history": self._format_history(complete_history),
             
             # State snapshots
-            "state_snapshots": state_snapshots,
-            
-            # Statistics
-            "statistics": {
-                "num_nodes": len(random_walk["sequence"]),
-                "num_user_queries": len(user_queries),
-                "num_interactions": len(complete_history),
-                "num_state_changes": len(state_snapshots) - 1,  # Exclude initial state
-            }
+            "state_snapshots": state_snapshots
         }
         
         return trajectory
     
+    def _extract_tool_calls_from_content(self, content: str) -> Tuple[str, List[Dict[str, Any]]]:
+        """
+        Extract tool calls from content string and return clean content + tool_calls.
+        
+        Args:
+            content: Content string that may contain embedded tool calls
+            
+        Returns:
+            Tuple of (clean_content, tool_calls):
+            - clean_content: Content with [Tool Calls] section removed
+            - tool_calls: List of tool calls in OpenAI format
+        """
+        tool_calls = []
+        
+        # Check if content contains tool calls marker
+        if "\n\n[Tool Calls]\n" in content:
+            # Split content at the marker
+            parts = content.split("\n\n[Tool Calls]\n", 1)
+            clean_content = parts[0].strip()
+            
+            if len(parts) > 1:
+                try:
+                    # Parse the JSON part
+                    function_calls_json = parts[1].strip()
+                    function_calls = json.loads(function_calls_json)
+                    
+                    # Convert to OpenAI format
+                    for func_call in function_calls:
+                        # Parse arguments if it's a string
+                        arguments = func_call.get("arguments", {})
+                        if isinstance(arguments, str):
+                            try:
+                                arguments = json.loads(arguments)
+                            except json.JSONDecodeError:
+                                pass  # Keep as string if parsing fails
+                        
+                        tool_calls.append({
+                            "id": func_call.get("id", ""),
+                            "type": "function",
+                            "function": {
+                                "name": func_call.get("name", ""),
+                                "arguments": arguments
+                            }
+                        })
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse tool calls JSON: {e}")
+                    # If parsing fails, keep original content
+                    return content, []
+            
+            return clean_content, tool_calls
+        else:
+            # No tool calls in content
+            return content, []
+    
     def _format_history(self, history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Format interaction history for better readability."""
+        """Format interaction history to standard format."""
         formatted_history = []
         
         for item in history:
             role = item["role"]
             content = item["content"]
             
-            # Check if this is a tool result message and change role to "tool_response"
-            is_tool_result = False
-            if role == "user" and isinstance(content, list):
-                # Check if content contains tool_result
+            # Handle user messages (simple string content)
+            if role == "user" and isinstance(content, str):
+                formatted_history.append({
+                    "role": "user",
+                    "content": content
+                })
+            
+            # Handle tool result messages (convert to "tool" role)
+            elif role == "user" and isinstance(content, list):
+                # Extract tool results and create separate tool messages
                 for block in content:
                     if isinstance(block, dict) and block.get("type") == "tool_result":
-                        is_tool_result = True
-                        break
+                        formatted_history.append({
+                            "role": "tool",
+                            "tool_call_id": block.get("tool_use_id", ""),
+                            "content": block.get("content", "")
+                        })
             
-            formatted_item = {
-                "role": "tool_response" if is_tool_result else role
-            }
-            
-            # Format content based on type
-            if isinstance(content, str):
-                formatted_item["content"] = content
-            elif isinstance(content, list):
-                # Handle content blocks (thinking, text, tool_use, tool_result)
-                formatted_content = []
-                for block in content:
-                    if hasattr(block, 'type'):
-                        # ContentBlock from anthropic
-                        formatted_block = self._format_content_block(block)
-                        formatted_content.append(formatted_block)
-                    elif isinstance(block, dict):
-                        # Already a dict
-                        formatted_content.append(block)
-                    else:
-                        formatted_content.append(str(block))
+            # Handle assistant messages (extract reasoning, content, tool_calls)
+            elif role == "assistant" and isinstance(content, list):
+                formatted_item = {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": ""
+                }
                 
-                formatted_item["content"] = formatted_content
-            else:
-                formatted_item["content"] = str(content)
+                tool_calls = []
+                
+                for block in content:
+                    # Handle ContentBlock from anthropic API
+                    if hasattr(block, 'type'):
+                        if block.type == "thinking":
+                            formatted_item["reasoning_content"] = block.thinking if hasattr(block, 'thinking') else ""
+                        elif block.type == "text":
+                            formatted_item["content"] = block.text if hasattr(block, 'text') else ""
+                        elif block.type == "tool_use":
+                            tool_calls.append({
+                                "id": block.id,
+                                "function": {
+                                    "name": block.name,
+                                    "arguments": block.input  # JSON object
+                                },
+                                "type": "function"
+                            })
+                    # Handle dict blocks
+                    elif isinstance(block, dict):
+                        if block.get("type") == "thinking":
+                            formatted_item["reasoning_content"] = block.get("thinking", "")
+                        elif block.get("type") == "text":
+                            formatted_item["content"] = block.get("text", "")
+                        elif block.get("type") == "tool_use":
+                            tool_use_info = block.get("tool_use", {})
+                            tool_calls.append({
+                                "id": tool_use_info.get("id", ""),
+                                "function": {
+                                    "name": tool_use_info.get("name", ""),
+                                    "arguments": tool_use_info.get("input", {})
+                                },
+                                "type": "function"
+                            })
+                
+                # Add tool_calls only if there are any
+                if tool_calls:
+                    formatted_item["tool_calls"] = tool_calls
+                
+                formatted_history.append(formatted_item)
             
-            formatted_history.append(formatted_item)
+            # Handle simple assistant messages (string content)
+            elif role == "assistant" and isinstance(content, str):
+                # Extract tool calls from content if embedded
+                clean_content, tool_calls = self._extract_tool_calls_from_content(content)
+                
+                formatted_item = {
+                    "role": "assistant",
+                    "content": clean_content,
+                    "reasoning_content": ""
+                }
+                
+                # Add tool_calls in OpenAI format if present
+                if tool_calls:
+                    formatted_item["tool_calls"] = tool_calls
+                
+                formatted_history.append(formatted_item)
         
         return formatted_history
-    
-    def _format_content_block(self, block) -> Dict[str, Any]:
-        """Format ContentBlock from anthropic API."""
-        formatted = {
-            "type": block.type
-        }
-        
-        if block.type == "text":
-            formatted["text"] = block.text
-        elif block.type == "thinking":
-            formatted["thinking"] = block.thinking if hasattr(block, 'thinking') else ""
-        elif block.type == "tool_use":
-            formatted["tool_use"] = {
-                "id": block.id,
-                "name": block.name,
-                "input": block.input
-            }
-        
-        return formatted
     
     def generate_trajectories_batch(
         self,

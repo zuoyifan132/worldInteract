@@ -9,7 +9,7 @@ from loguru import logger
 from typing import Dict, Any, List, Tuple, Optional
 from textwrap import dedent
 
-from worldInteract.utils.model_manager import react_generate
+from worldInteract.agents import ReactAgent
 from worldInteract.utils.config_manager import config_manager
 from worldInteract.core.sandbox import CodeExecutor
 
@@ -31,6 +31,9 @@ class TaskAgent:
         self.domain_tools = domain_tools
         self.env_path = env_path
         self.max_rounds = self.config.get("max_react_rounds", 15)
+        
+        # Create ReactAgent for task execution
+        self.agent = ReactAgent(config_key="trajectory_generation")
         
         # Load environment components
         self._load_environment()
@@ -66,7 +69,7 @@ class TaskAgent:
         current_state: Dict[str, Any]
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
-        Execute a user task using ReAct pattern.
+        Execute a user task using ReAct pattern with ReactAgent.
         
         Args:
             user_query: User's question or task
@@ -80,17 +83,15 @@ class TaskAgent:
         """
         logger.info(f"Executing task: {user_query[:100]}...")
         
-        # Initialize conversation history
-        history = []
-        
-        # Create system prompt with available tools
-        system_prompt = self._create_system_prompt(available_tools)
+        # Create system prompt with available tools and initial state
+        system_prompt = self._create_system_prompt(available_tools, current_state)
+        self.agent.set_system_prompt(system_prompt)
         
         # Add initial user query
-        history.append({
-            "role": "user",
-            "content": user_query
-        })
+        self.agent.add_user_message(user_query)
+        
+        # Format tools for API
+        formatted_tools = self._format_tools_for_api(available_tools)
         
         # ReAct loop
         rounds = 0
@@ -102,29 +103,30 @@ class TaskAgent:
             
             try:
                 # Get model response (Thought + Action)
-                thinking_block, answer_block, function_blocks = react_generate(
-                    model_key=self.model_config["model"],
-                    messages=[{"role": "system", "content": system_prompt}] + history,
-                    temperature=self.model_config.get("temperature", 0.7),
-                    max_tokens=self.model_config.get("max_tokens", 8192),
-                    tools=self._format_tools_for_api(available_tools)
-                )
-
-                history.append({
-                    "role": "assistant", 
-                    "content": [item for item in [thinking_block, answer_block, *function_blocks] if item]
-                })
+                thinking, answer_text, function_calls = self.agent.step(tools=formatted_tools)
+                
+                logger.info(f"ReAct model response length: {len(answer_text)} chars")
+                if thinking:
+                    logger.debug(f"Agent thinking: {thinking[:100]}...")
                 
                 # Check if task is complete (no function calls)
-                if not function_blocks:
+                if not function_calls:
                     logger.info("Task complete - no function calls")
                     break
                 
                 # Execute each function call (Observation)
-                for func_block in function_blocks:
-                    tool_name = func_block.name
-                    tool_params = func_block.input
-                    tool_id = func_block.id
+                for func_call in function_calls:
+                    tool_name = func_call.get("name")
+                    tool_params = func_call.get("arguments", {})
+                    tool_id = func_call.get("id")
+                    
+                    # Parse arguments if they are JSON string
+                    if isinstance(tool_params, str):
+                        try:
+                            tool_params = json.loads(tool_params)
+                        except json.JSONDecodeError:
+                            logger.error(f"Failed to parse tool parameters: {tool_params}")
+                            tool_params = {}
                     
                     logger.info(f"Executing tool: {tool_name} with params: {tool_params}")
                     
@@ -137,27 +139,17 @@ class TaskAgent:
                     if success:
                         working_state = new_state
                     
-                    # Add tool result to history
-                    history.append({
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": tool_id,
-                                "content": json.dumps(result, ensure_ascii=False)
-                            }
-                        ]
-                    })
+                    # Add tool result to agent history
+                    self.agent.add_observation(json.dumps(result, ensure_ascii=False))
                     
                     logger.info(f"Tool execution {'succeeded' if success else 'failed'}")
                 
             except Exception as e:
                 logger.error(f"Error in ReAct round {rounds}: {e}")
-                # Add error to history and continue
-                history.append({
-                    "role": "user",
-                    "content": f"Error occurred: {str(e)}. Please try again or complete the task."
-                })
+                # Add error as observation and continue
+                self.agent.add_observation(
+                    f"Error occurred: {str(e)}. Please try again or complete the task."
+                )
                 # Break on error to avoid infinite loops
                 break
         
@@ -165,6 +157,13 @@ class TaskAgent:
             logger.warning(f"Task execution reached max rounds ({self.max_rounds})")
         
         logger.info(f"Task execution completed in {rounds} rounds")
+        
+        # Get final history from agent
+        history = self.agent.get_history()
+        
+        # Reset agent for next task
+        self.agent.reset()
+        
         return history, working_state
     
     def _execute_tool(
@@ -224,8 +223,17 @@ class TaskAgent:
             logger.error(f"Tool execution error: {e}")
             return False, {"success": False, "error": str(e)}, current_state
     
-    def _create_system_prompt(self, available_tools: List[str]) -> str:
-        """Create system prompt for ReAct agent."""
+    def _create_system_prompt(self, available_tools: List[str], initial_state: Dict[str, Any]) -> str:
+        """
+        Create system prompt for ReAct agent including initial state information.
+        
+        Args:
+            available_tools: List of available tool names
+            initial_state: Initial database/environment state
+            
+        Returns:
+            System prompt string
+        """
         domain = self.domain_tools.get("domain", "unknown")
         domain_desc = self.domain_tools.get("description", "")
         
@@ -235,12 +243,21 @@ class TaskAgent:
             if tool["name"] in available_tools:
                 tools_desc.append(f"- **{tool['name']}**: {tool['description']}")
         
+        # Format initial state for display
+        state_str = json.dumps(initial_state, ensure_ascii=False, indent=2)
+        
         return dedent(
             f"""You are an intelligent task assistant capable of using provided tools to complete user tasks.
 
             ## Domain Information
             **Domain**: {domain}
             **Description**: {domain_desc}
+
+            ## Current Environment State
+            The current state of the environment is:
+            ```json
+            {state_str}
+            ```
 
             ## Available Tools
             {chr(10).join(tools_desc)}
@@ -259,14 +276,31 @@ class TaskAgent:
 
             ## Important Notes
             - Carefully read tool descriptions and parameter requirements
+            - Pay attention to the current environment state when making decisions
             - Decide next steps based on tool execution results
             - If errors occur, try alternative approaches or inform the user
             - Keep conversations natural and friendly
+            - You don't need to clarify anything at start
             - Must stop calling tools after task completion"""
         )
     
     def _format_tools_for_api(self, available_tools: List[str]) -> List[Dict[str, Any]]:
-        """Format tools for Claude API tool calling."""
+        """
+        Format tools to generic format.
+        
+        Returns tools in generic format (Anthropic-style) which will be automatically
+        converted to platform-specific format by ReactAgent.format_tools().
+        
+        Generic format: {
+            "name": str,
+            "description": str,
+            "input_schema": {
+                "type": "object",
+                "properties": {...},
+                "required": [...]
+            }
+        }
+        """
         formatted_tools = []
         
         for tool in self.domain_tools.get("tools", []):
@@ -300,6 +334,10 @@ class TaskAgent:
                     "required": required
                 }
             }
+            
+            # Preserve returns information if present
+            if "returns" in tool:
+                formatted_tool["returns"] = tool["returns"]
             
             formatted_tools.append(formatted_tool)
         

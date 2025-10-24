@@ -12,7 +12,7 @@ from .schema_generator import SchemaGenerator
 from .tool_generator import ToolGenerator
 from .code_agent import CodeAgent
 from worldInteract.utils.config_manager import config_manager
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.parser_utils import extract_json_from_text, normalize_api_collection
 
 
@@ -72,6 +72,7 @@ class EnvironmentManager:
             schema = self.schema_generator.generate_schema(api_collection)
             
             # Step 2: Generate initial state
+
             logger.info("Step 2: Generating initial database state...")
             initial_state = self.generate_initial_state(schema, api_collection)
             
@@ -155,7 +156,7 @@ class EnvironmentManager:
         
         try:
             thinking_content, answer_text, function_calls = generate(
-                model_key=self.state_config["model"],
+                config_key=self.state_config["model"],
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.state_config.get("temperature", 0.4),

@@ -263,9 +263,6 @@ def main():
                     logger.info(f"    Sequence: {' → '.join(traj['sequence'][:5])}")
                     if len(traj['sequence']) > 5:
                         logger.info(f"              ... ({len(traj['sequence'])-5} more)")
-                    logger.info(f"    Interactions: {traj['statistics']['num_interactions']}")
-                    logger.info(f"    State changes: {traj['statistics']['num_state_changes']}")
-        
         else:
             logger.error("Please specify either --random-walk or --random-walks")
             return

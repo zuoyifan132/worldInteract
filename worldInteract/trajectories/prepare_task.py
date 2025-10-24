@@ -9,7 +9,7 @@ from multiprocessing import Value
 from typing import Dict, Any, List, Tuple
 from textwrap import dedent
 
-from worldInteract.utils.model_manager import generate
+from worldInteract.utils.camel_generator import generate
 from worldInteract.utils.config_manager import config_manager
 
 
@@ -59,7 +59,7 @@ class TaskPreparer:
         # Generate queries using LLM
         try:
             thinking_content, answer_text, function_calls = generate(
-                model_key=self.model_config["model"],
+                config_key=self.model_config["model"],
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.model_config.get("temperature", 0.7),
@@ -252,9 +252,9 @@ class TaskPreparer:
                 "user_query": query_item.get("user_query", ""),
                 "domain": node_info.get("domain", ""),
                 "domain_description": node_info.get("domain_description", ""),
-                "tool_description": node_info.get("description", ""),
-                "parameters": node_info.get("parameters", {}),
-                "returns": node_info.get("returns", {})
+                # "tool_description": node_info.get("description", ""),
+                # "parameters": node_info.get("parameters", {}),
+                # "returns": node_info.get("returns", {})
             }
             enriched_queries.append(enriched_query)
         

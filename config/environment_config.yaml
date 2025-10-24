@@ -21,7 +21,7 @@ scenario_collection:
 # Domain clustering and domain analysis
 # =============================================================================
 domain_graph:
-  save_original_domain: true # Save the original tool set without building similarity graph and community detection
+  save_original_domain: false # Save the original tool set without building similarity graph and community detection
   similarity_threshold: 0.5  # Cosine similarity threshold for creating edges
   min_community_size: 2      # Minimum tools per domain
   max_community_size: 20     # Maximum tools per domain
@@ -72,7 +72,7 @@ task_generation:
   max_subgraph_nodes: 20               # Maximum number of nodes in a subgraph
   num_subgraphs_per_graph: 3           # Number of subgraphs to sample per task graph
   subgraph_diversity_threshold: 0.3    # Diversity threshold for subgraph sampling (lower = more diverse)
-  save_original_subgraph: true         # If true, save the original task graph as-is without sampling subgraphs
+  save_original_subgraph: false        # If true, save the original task graph as-is without sampling subgraphs
   sampling_strategies:                 # Subgraph sampling strategies to use
     random: 0.15                       # Random node selection
     bfs: 0.2                           # Breadth-first search

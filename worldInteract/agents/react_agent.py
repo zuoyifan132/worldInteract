@@ -13,11 +13,12 @@ from anthropic.types import ContentBlock
 from camel.messages import BaseMessage
 from camel.memories import ChatHistoryMemory, MemoryRecord
 from camel.memories.context_creators import ScoreBasedContextCreator
-from camel.types import OpenAIBackendRole, RoleType, ModelType
+from camel.types import OpenAIBackendRole, RoleType, ModelType, ModelPlatformType
 from camel.utils import OpenAITokenCounter
 
 from worldInteract.utils.camel_model_manager import camel_model_manager
 from worldInteract.utils.config_manager import config_manager
+from worldInteract.utils.model_mapping import get_model_info
 
 
 class ReactAgent:
@@ -71,16 +72,21 @@ class ReactAgent:
         self.config_key = config_key
         self.model_config_override = model_config_override or {}
         
+        # Get model configuration to determine platform and token limit
+        model_config = config_manager.get_model_config(config_key)
+        model_name = model_config.get("model", "claude_3d7")
+        
+        # Get platform information for tool formatting
+        self.model_platform, self.model_type = get_model_info(model_name)
+        
         # Create model using CAMEL model manager
         self.model = camel_model_manager.create_model(
             config_key=self.config_key,
             override_params=self.model_config_override
         )
         
-        # Get model configuration to determine token limit
-        model_config = config_manager.get_model_config(config_key)
         max_tokens = model_config.get("max_tokens", 8192)
-        token_limit = max_tokens * 3  # Set context limit to ~3x max_tokens for safety
+        token_limit = max_tokens
         
         # Create token counter (using GPT-4 as default for compatibility)
         token_counter = OpenAITokenCounter(ModelType.GPT_4O_MINI)
@@ -100,7 +106,12 @@ class ReactAgent:
         # Timestamp counter to ensure proper message ordering
         self.timestamp_counter = 0.0
         
-        logger.info(f"ReactAgent initialized with config_key='{config_key}', token_limit={token_limit}")
+        logger.info(
+            f"ReactAgent initialized with config_key='{config_key}', "
+            f"platform={self.model_platform.value}, "
+            f"model={self.model_type.value}, "
+            f"token_limit={token_limit}"
+        )
     
     def _get_next_timestamp(self) -> float:
         """
@@ -194,25 +205,184 @@ class ReactAgent:
         self.add_user_message(observation)
         logger.debug("Added observation to history")
     
-    def step(
-        self,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
-    ) -> Tuple[str, str, List[Dict[str, Any]]]:
+    def add_tool_result(self, tool_use_id: str, result: str):
+        """
+        Add a tool execution result to history.
+        
+        This method is used to provide the result of a tool/function call
+        back to the model in the proper format based on the model platform.
+        
+        Args:
+            tool_use_id: The ID of the tool call being responded to
+            result: The result of the tool execution (as JSON string)
+            
+        Example:
+            >>> agent.add_tool_result("toolu_123", json.dumps({"success": True}))
+        """
+        if self.model_platform == ModelPlatformType.ANTHROPIC:
+            # Anthropic format: tool_result content block
+            message = BaseMessage.make_user_message(
+                role_name="User",
+                content=[{
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": result
+                }]
+            )
+        elif self.model_platform in [ModelPlatformType.OPENAI, ModelPlatformType.GEMINI]:
+            # OpenAI/Gemini format: tool message with tool_call_id
+            # Note: CAMEL may handle this differently, storing as regular user message
+            message = BaseMessage.make_user_message(
+                role_name="Tool",
+                content=result,
+                meta_dict={"tool_call_id": tool_use_id}
+            )
+        else:
+            # Fallback: simple user message
+            message = BaseMessage.make_user_message(
+                role_name="User",
+                content=f"Tool result for {tool_use_id}: {result}"
+            )
+        
+        self.memory.write_record(
+            MemoryRecord(
+                message=message,
+                role_at_backend=OpenAIBackendRole.USER,
+                timestamp=self._get_next_timestamp(),
+                agent_id="react_agent"
+            )
+        )
+        
+        logger.debug(f"Added tool result for {tool_use_id}")
+    
+    def format_tools(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Format tools according to the model platform requirements.
+        
+        Different model platforms require different tool schema formats:
+        - Anthropic: {name, description, input_schema}
+        - OpenAI/Gemini: {type: "function", function: {name, description, parameters}}
+        
+        Args:
+            tools: List of tool definitions in generic format
+                   Expected format: {
+                       "name": str,
+                       "description": str,
+                       "input_schema": {
+                           "type": "object",
+                           "properties": {...},
+                           "required": [...]
+                       }
+                   }
+        
+        Returns:
+            List of tools formatted for the specific model platform
+            
+        Example:
+            >>> tools = [{
+            ...     "name": "get_user",
+            ...     "description": "Get user info",
+            ...     "input_schema": {
+            ...         "type": "object",
+            ...         "properties": {"user_id": {"type": "string"}},
+            ...         "required": ["user_id"]
+            ...     }
+            ... }]
+            >>> formatted = agent.format_tools(tools)
+        """
+        if not tools:
+            return []
+        
+        formatted_tools = []
+        
+        for tool in tools:
+            if self.model_platform == ModelPlatformType.ANTHROPIC:
+                # Anthropic format: now uses OpenAI-style structure with function wrapper
+                formatted_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "parameters": tool.get("input_schema", {
+                            "type": "object",
+                            "properties": {},
+                            "required": []
+                        })
+                    }
+                }
+            
+            elif self.model_platform == ModelPlatformType.OPENAI:
+                # OpenAI format: wrap in function type
+                formatted_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "parameters": tool.get("input_schema", {
+                            "type": "object",
+                            "properties": {},
+                            "required": []
+                        })
+                    }
+                }
+            
+            elif self.model_platform == ModelPlatformType.GEMINI:
+                # Gemini format: similar to OpenAI
+                formatted_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "parameters": tool.get("input_schema", {
+                            "type": "object",
+                            "properties": {},
+                            "required": []
+                        })
+                    }
+                }
+            
+            else:
+                # Default: use Anthropic format as fallback
+                logger.warning(f"Unknown platform {self.model_platform}, using Anthropic format as fallback")
+                formatted_tool = {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "input_schema": tool.get("input_schema", {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    })
+                }
+            
+            formatted_tools.append(formatted_tool)
+        
+        logger.debug(f"Formatted {len(formatted_tools)} tools for platform {self.model_platform.value}")
+        return formatted_tools
+    
+    def step(self, tools: Optional[List[Dict[str, Any]]] = None) -> Tuple[str, str, List[Dict[str, Any]]]:
         """
         Execute one step of ReAct reasoning following CAMEL's standard pattern.
         
         This method:
         1. Retrieves conversation history from memory
-        2. Calls the model
-        3. Extracts response components (thinking, content, function_calls)
-        4. Stores response in memory using CAMEL's standard BaseMessage format
-        5. Returns the extracted components
+        2. Formats tools according to model platform (if provided)
+        3. Calls the model
+        4. Extracts response components (thinking, content, function_calls)
+        5. Stores response in memory using CAMEL's standard BaseMessage format
+        6. Returns the extracted components
         
         Args:
-            temperature: Optional temperature override for this step
-            max_tokens: Optional max_tokens override for this step
-            
+            tools: Optional list of tool definitions in generic format.
+                   Expected format: [{
+                       "name": str,
+                       "description": str,
+                       "input_schema": {
+                           "type": "object",
+                           "properties": {...},
+                           "required": [...]
+                       }
+                   }]
+        
         Returns:
             Tuple of (thinking, content, function_calls):
                 - thinking: Thinking/reasoning text (empty string if not available)
@@ -231,35 +401,43 @@ class ReactAgent:
         
         logger.debug(f"Calling model with {len(messages)} messages in history")
         
-        # Prepare model parameters
-        model_params = {}
-        if temperature is not None:
-            model_params["temperature"] = temperature
-        if max_tokens is not None:
-            model_params["max_tokens"] = max_tokens
+        # Format tools according to platform if provided
+        formatted_tools = None
+        if tools:
+            formatted_tools = self.format_tools(tools)
         
         # Call model
         try:
-            # TODO: pass tool
-            response = self.model.run(messages=messages)
+            response = self.model.run(messages=messages, tools=formatted_tools)
         except Exception as e:
             logger.error(f"Model call failed: {e}")
+            if formatted_tools:
+                logger.error(f"Tools that were sent: {formatted_tools}")
             raise
         
         # Parse response and extract components
         thinking, content, function_calls = self._parse_response(response)
         
-        # Create assistant message following CAMEL's standard pattern
-        # Store thinking and function_calls in meta_dict (CAMEL's way of storing metadata)
+        # Create assistant message with function calls embedded in content
+        # This ensures the model can see tool calling history in subsequent rounds
+        final_content = content or ""
+        
+        # If there are function calls, append them to content as JSON
+        if function_calls:
+            import json
+            tool_calls_json = json.dumps(function_calls, ensure_ascii=False, indent=2)
+            final_content = f"{final_content}\n\n[Tool Calls]\n{tool_calls_json}"
+        
+        # Store thinking in meta_dict for our own tracking
         meta_dict = {}
         if thinking:
             meta_dict["thinking"] = thinking
         if function_calls:
-            meta_dict["function_calls"] = function_calls
+            meta_dict["function_calls"] = function_calls  # Keep for reference
         
         assistant_message = BaseMessage.make_assistant_message(
             role_name="Assistant",
-            content=content,  # Store clean content without thinking
+            content=final_content,
             meta_dict=meta_dict if meta_dict else None
         )
         
