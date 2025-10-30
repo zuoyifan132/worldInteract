@@ -7,6 +7,7 @@ import re
 from loguru import logger
 from textwrap import dedent
 from typing import Dict, Any, List, Optional, Tuple
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from worldInteract.agents import ReactAgent
 from worldInteract.utils.camel_generator import generate
@@ -36,6 +37,13 @@ class CodeAgent:
         validation_system_prompt = self._create_validation_system_prompt()
         self.agent.set_system_prompt(validation_system_prompt)
         
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Retry attempt {retry_state.attempt_number}/3 for generate_code_and_tests"
+        )
+    )
     def generate_code_and_tests(
         self,
         tool_desc: Dict[str, Any],
@@ -44,7 +52,7 @@ class CodeAgent:
         domain: str
     ) -> Tuple[str, List[str], List[Dict[str, Any]]]:
         """
-        Pre-generate tool code and test cases.
+        Pre-generate tool code and test cases with automatic retry (max 3 attempts).
         
         Args:
             tool_desc: Tool description from API collection
@@ -74,9 +82,11 @@ class CodeAgent:
         code, requirements, test_cases = self._extract_code_requirements_tests(answer_text)
   
         if not code:
+            logger.error(f"Failed to generate initial code for tool: {tool_name}")
             raise ValueError(f"Failed to generate initial code for tool: {tool_name}")
         
         if not test_cases:
+            logger.error(f"Failed to generate test cases for tool: {tool_name}")
             raise ValueError(f"Failed to generate test cases for tool: {tool_name}")
         
         logger.info(f"Successfully pre-generated code and {len(test_cases)} test cases for {tool_name}")
@@ -251,8 +261,8 @@ class CodeAgent:
             ## Guidelines:
             ### Code Generation:
             - Include proper error handling in code
-            - Your code implementation should directly manipulate the input `data` parameter for any database changes
-            - Focus on business logic and return meaningful results
+            - Your code implementation should directly manipulate the input `data` parameter for any database changes instead of using a simulation
+            - Focus on business logic and return meaningful results 
             - Be thorough but concise in your implementations
             - Make sure the requirements are compatible with the code you generate
 
@@ -338,11 +348,14 @@ class CodeAgent:
         # Format parameters
         param_info = []
         for param_name, param_def in parameters.items():
-            param_type = param_def.get("type", "Any")
-            param_desc = param_def.get("description", "")
-            default = param_def.get("default")
-            default_info = f" (default: {default})" if default is not None else ""
-            param_info.append(f"  - {param_name} ({param_type}): {param_desc}{default_info}")
+            if param_name != "required":
+                param_type = param_def.get("type", "Any")
+                param_desc = param_def.get("description", "")
+                default = param_def.get("default")
+                default_info = f" (default: {default})" if default is not None else ""
+                param_info.append(f"  - {param_name} ({param_type}): {param_desc}{default_info}")
+            else:
+                param_info.append(f"  - {param_name}: {param_def}")
         
         # Format schema information
         schema_info = []

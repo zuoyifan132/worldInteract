@@ -25,15 +25,16 @@ class TaskAgent:
             domain_tools: Domain tools information (from domain json file)
             env_path: Path to environment directory with tools.py, schema, initial_state
         """
-        self.config = config_manager.get_environment_config("trajectory_generation")
-        self.model_config = config_manager.get_model_config("trajectory_generation")
+        self.config_key = "trajectory_generation"
+        self.config = config_manager.get_environment_config(self.config_key)
+        self.model_config = config_manager.get_model_config(self.config_key)
         
         self.domain_tools = domain_tools
         self.env_path = env_path
         self.max_rounds = self.config.get("max_react_rounds", 15)
         
         # Create ReactAgent for task execution
-        self.agent = ReactAgent(config_key="trajectory_generation")
+        self.agent = ReactAgent(config_key=self.config_key)
         
         # Load environment components
         self._load_environment()
@@ -312,18 +313,42 @@ class TaskAgent:
             required = []
             
             for param_name, param_info in tool.get("parameters", {}).items():
-                properties[param_name] = {
-                    "type": param_info.get("type", "string"),
-                    "description": param_info.get("description", "")
-                }
-                
-                # Add default if present
-                if "default" in param_info:
-                    properties[param_name]["default"] = param_info["default"]
-                
-                # Check if required (no default means required)
-                if "default" not in param_info:
-                    required.append(param_name)
+                if param_name != "required":
+                    # Convert type to JSON Schema compatible type
+                    param_type = param_info.get("type", "string")
+                    # Map Python types to JSON Schema types
+                    type_mapping = {
+                        "dict": "object",
+                        "list": "array"
+                    }
+                    param_type = type_mapping.get(param_type, param_type)
+                    
+                    param_schema = {
+                        "type": param_type,
+                        "description": param_info.get("description", "")
+                    }
+                    
+                    # Add default if present
+                    if "default" in param_info:
+                        param_schema["default"] = param_info["default"]
+                    
+                    # Handle nested properties for object types
+                    if "properties" in param_info:
+                        nested_properties = {}
+                        for nested_name, nested_info in param_info["properties"].items():
+                            nested_type = nested_info.get("type", "string")
+                            nested_type = type_mapping.get(nested_type, nested_type)
+                            nested_properties[nested_name] = {
+                                "type": nested_type,
+                                "description": nested_info.get("description", "")
+                            }
+                        param_schema["properties"] = nested_properties
+                    
+                    properties[param_name] = param_schema
+                    
+                # Get required field (param_info is already a list)
+                else:
+                    required = param_info
             
             formatted_tool = {
                 "name": tool["name"],

@@ -202,11 +202,12 @@ class TaskGraphBuilder:
                 parameters = tool.get("parameters", {})
                 
                 for param_name, param_info in parameters.items():
-                    param_desc = param_info.get("description", "")
-                    param_type = param_info.get("type", "")
+                    if param_name != "required":
+                        param_desc = param_info.get("description", "")
+                        param_type = param_info.get("type", "")
                     
-                    # Create a rich description for embedding
-                    full_desc = f"{param_type}: {param_desc}" if param_desc else param_type
+                        # Create a rich description for embedding
+                        full_desc = f"{param_type}: {param_desc}" if param_desc else param_type
                     
                     if full_desc:
                         embedding = self.embeddings.embed_text(full_desc)

@@ -21,8 +21,9 @@ class TaskPreparer:
     
     def __init__(self):
         """Initialize TaskPreparer."""
-        self.config = config_manager.get_environment_config("trajectory_generation")
-        self.model_config = config_manager.get_model_config("trajectory_generation")
+        self.config_key = "trajectory_generation"
+        self.config = config_manager.get_environment_config(self.config_key)
+        self.model_config = config_manager.get_model_config(self.config_key)
         
     def generate_user_queries(
         self,
@@ -59,7 +60,7 @@ class TaskPreparer:
         # Generate queries using LLM
         try:
             thinking_content, answer_text, function_calls = generate(
-                config_key=self.model_config["model"],
+                config_key=self.config_key,
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.model_config.get("temperature", 0.7),

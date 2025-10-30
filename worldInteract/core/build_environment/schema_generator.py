@@ -26,6 +26,7 @@ class SchemaGenerator:
             config_dir: Directory containing configuration files
         """
         self.config_manager = config_manager
+        self.config_key = "schema_generation"
         self.model_config = self.config_manager.get_model_config("schema_generation")
     
     def generate_schema(self, api_collection: Dict[str, Any]) -> Dict[str, Any]:
@@ -84,7 +85,7 @@ class SchemaGenerator:
         
         try:
             thinking_content, answer_text, function_calls = generate(
-                config_key=self.model_config["model"],
+                config_key=self.config_key,
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.model_config.get("temperature", 0.3),

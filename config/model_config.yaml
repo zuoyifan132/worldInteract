@@ -67,21 +67,21 @@ domain_graph:
 
 # Schema generation configuration
 schema_generation:
-  model: "gpt4o_mini"
-  temperature: 0.6
+  model: "gpt4o"
+  temperature: 0.4
   max_tokens: 12384
   retry_attempts: 3
 
 # Tool implementation configuration
 tool_generation:
-  model: "gpt4o_mini"
+  model: "gpt4o"
   temperature: 1.0
   max_tokens: 12384
   retry_attempts: 3
 
 # Initial state generation configuration
 state_generation:
-  model: "gpt4o_mini"
+  model: "gpt4o"
   temperature: 1.0
   max_tokens: 12384
   retry_attempts: 3
@@ -90,8 +90,20 @@ state_generation:
 code_agent:
   model: "claude_sonnet_4"
   temperature: 1.0
-  max_tokens: 6500
+  max_tokens: 12384
   retry_attempts: 3
+  extra_body:
+    thinking:
+      type: enabled
+      budget_tokens: 4096
+
+# Tool refinement configuration
+# Refines generated tools for consistency across the tool suite
+tool_refinement:
+  model: "claude_sonnet_4"
+  temperature: 1.0
+  max_tokens: 32768
+  retry_attempts: 2
   extra_body:
     thinking:
       type: enabled
@@ -105,7 +117,7 @@ code_agent:
 # Edge validation configuration
 # Validates matching_pairs between function outputs and inputs using LLM
 edge_validation:
-  model: "gpt4o_mini"
+  model: "gpt4o"
   temperature: 0.1
   max_tokens: 8124
   retry_attempts: 3

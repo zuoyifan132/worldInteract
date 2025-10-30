@@ -106,7 +106,8 @@ class RandomWalker:
         
         # Edge validation configuration
         self.enable_edge_validation = self.config.get('enable_edge_validation', True)
-        self.edge_validation_model_config = self.config_manager.get_model_config("edge_validation")
+        self.edge_validation_config_key = "edge_validation"
+        self.edge_validation_model_config = self.config_manager.get_model_config(self.edge_validation_config_key)
         self.edge_validation_model = self.edge_validation_model_config["model"]
         self.min_matching_score = self.config.get('min_matching_score', 0.5)
         
@@ -999,7 +1000,7 @@ If INVALID: Set example_usage to empty string ""."""
             
             # Call LLM
             thinking_content, answer_text, function_calls = generate(
-                config_key=self.edge_validation_model,
+                config_key=self.edge_validation_config_key,
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.edge_validation_model_config.get("temperature", 0.1),

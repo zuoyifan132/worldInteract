@@ -5,6 +5,7 @@ Environment manager that orchestrates the entire environment construction pipeli
 import json
 import logging
 import random
+from textwrap import dedent
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -35,8 +36,9 @@ class EnvironmentManager:
         self.code_agent = CodeAgent()  # New integrated code generation and validation
         
         # Get state generation config
-        self.state_config = self.config_manager.get_model_config("state_generation")
-        self.state_env_config = self.config_manager.get_environment_config("state_generation")
+        self.state_config_key = "state_generation"
+        self.state_config = self.config_manager.get_model_config(self.state_config_key)
+        self.state_env_config = self.config_manager.get_environment_config(self.state_config_key)
     
     def create_environment(
         self,
@@ -84,6 +86,19 @@ class EnvironmentManager:
                 )
             else:
                 raise NotImplementedError("Please set use_code_agent to True to enable agent mode to generate code")
+
+            # Step 4: Refine all tools for consistency
+            logger.info("Step 4: Refining tools for consistency across the suite...")
+            refined_tools, refinement_changes = self.tool_generator.refine_tools(
+                tools, api_collection, schema, initial_state, test_cases, requirements
+            )
+            
+            # Use refined tools if refinement succeeded, otherwise use original tools
+            if refined_tools != tools:
+                logger.info("Tool refinement completed successfully")
+                tools = refined_tools
+            else:
+                logger.warning("Tool refinement failed or was skipped, using original tools")
             
             # Step 5: Save all generated components
             if output_dir is None:
@@ -91,7 +106,8 @@ class EnvironmentManager:
                 output_dir = project_root / "data" / "generated_env" / "domains" / domain
             
             self._save_environment(
-                domain, schema, initial_state, tools, validation_results, output_dir, requirements, test_cases
+                domain, schema, initial_state, tools, validation_results, output_dir, 
+                requirements, test_cases, refinement_changes
             )
             
             environment_info = {
@@ -102,6 +118,7 @@ class EnvironmentManager:
                 "requirements": requirements,
                 "validation_results": validation_results,
                 "test_cases": test_cases,
+                "refinement_changes": refinement_changes,
                 "output_dir": str(output_dir)
             }
             
@@ -156,7 +173,7 @@ class EnvironmentManager:
         
         try:
             thinking_content, answer_text, function_calls = generate(
-                config_key=self.state_config["model"],
+                config_key=self.state_config_key,
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=self.state_config.get("temperature", 0.4),
@@ -186,41 +203,43 @@ class EnvironmentManager:
     
     def _create_state_generation_system_prompt(self) -> str:
         """Create system prompt for initial state generation."""
-        return """You are a database state generator that creates realistic initial data for testing environments.
+        return dedent(
+            """You are a database state generator that creates realistic initial data for testing environments.
 
-Your task is to generate diverse, realistic initial data that follows the provided schema and supports comprehensive testing of the tools.
+            Your task is to generate diverse, realistic initial data that follows the provided schema and supports comprehensive testing of the tools.
 
-Requirements:
-1. **Schema Compliance**: Follow the exact schema structure and field types
-2. **Realistic Data**: Generate data that resembles real-world usage
-3. **Diversity**: Include varied data to test different scenarios
-4. **Relationships**: Maintain proper relationships between entities
-5. **Completeness**: Provide enough data for meaningful tool testing
+            Requirements:
+            1. **Schema Compliance**: Follow the exact schema structure and field types
+            2. **Realistic Data**: Generate data that resembles real-world usage
+            3. **Diversity**: Include varied data to test different scenarios
+            4. **Relationships**: Maintain proper relationships between entities
+            5. **Completeness**: Provide enough data for meaningful tool testing
 
-Data Generation Guidelines:
-- Generate desired number of records per table (depending on table importance)
-- Use realistic names, dates, IDs, and values
-- Include both typical and edge cases in the data
-- Maintain referential integrity across related tables
-- Include some records with different states/statuses
+            Data Generation Guidelines:
+            - Generate desired number of records per table (depending on table importance)
+            - Use realistic names, dates, IDs, and values
+            - Include both typical and edge cases in the data
+            - Maintain referential integrity across related tables
+            - Include some records with different states/statuses
 
-Output Format:
-Return ONLY a valid JSON object where each top-level key matches a table name from the schema:
-```json
-{
-  "table_name": {
-    "record_id_1": {
-      "field1": "value1",
-      "field2": "value2",
-      ...
-    },
-    "record_id_2": { ... }
-  },
-  "another_table": {
-    ...
-  }
-}
-```"""
+            Output Format:
+            Return ONLY a valid JSON object where each top-level key matches a table name from the schema:
+            ```json
+            {
+            "table_name": {
+                "record_id_1": {
+                "field1": "value1",
+                "field2": "value2",
+                ...
+                },
+                "record_id_2": { ... }
+            },
+            "another_table": {
+                ...
+            }
+            }
+            ```"""
+        )
     
     def _create_state_generation_user_prompt(
         self,
@@ -253,23 +272,25 @@ Return ONLY a valid JSON object where each top-level key matches a table name fr
                     rel_info.append(f"{field} -> {rel.get('table', '')}")
                 schema_info.append(f"  Relationships: {rel_info}")
         
-        return f"""Generate realistic initial data for the **{domain}** domain.
+        return dedent(
+            f"""Generate realistic initial data for the **{domain}** domain.
 
-**Database Schema**:
-{chr(10).join(schema_info)}
+            **Database Schema**:
+            {chr(10).join(schema_info)}
 
-**Domain**: {domain}
-**Records per table**: {records_per_table}
+            **Domain**: {domain}
+            **Records per table**: {records_per_table}
 
-**Requirements**:
-1. Generate diverse, realistic data appropriate for the {domain} domain
-2. Follow the exact schema structure and data types
-3. Maintain relationships between tables where specified
-4. Include realistic IDs, names, dates, and status values
-5. Ensure data supports comprehensive testing of domain tools
-6. Include some edge cases and varied scenarios
+            **Requirements**:
+            1. Generate diverse, realistic data appropriate for the {domain} domain
+            2. Follow the exact schema structure and data types
+            3. Maintain relationships between tables where specified
+            4. Include realistic IDs, names, dates, and status values
+            5. Ensure data supports comprehensive testing of domain tools
+            6. Include some edge cases and varied scenarios
 
-Generate a complete initial database state that provides a solid foundation for tool testing in this domain."""
+            Generate a complete initial database state that provides a solid foundation for tool testing in this domain."""
+        )
     
     def _validate_initial_state(self, initial_state: Dict[str, Any], schema: Dict[str, Any]) -> None:
         """
@@ -306,7 +327,8 @@ Generate a complete initial database state that provides a solid foundation for 
         validation_results: Dict[str, bool],
         output_dir: Path,
         requirements: Optional[List[str]] = None,
-        test_cases: Optional[Dict[str, List[Dict[str, Any]]]] = None
+        test_cases: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+        refinement_changes: Optional[Dict[str, List[str]]] = None
     ) -> None:
         """Save all environment components to files."""
         output_path = Path(output_dir)
@@ -338,6 +360,13 @@ Generate a complete initial database state that provides a solid foundation for 
                 json.dump(test_cases, f, indent=2, ensure_ascii=False)
             logger.info(f"Test cases saved to: {test_cases_file}")
         
+        # Save refinement changes
+        if refinement_changes:
+            refinement_file = output_path / "refinement_changes.json"
+            with open(refinement_file, 'w', encoding='utf-8') as f:
+                json.dump(refinement_changes, f, indent=2, ensure_ascii=False)
+            logger.info(f"Refinement changes saved to: {refinement_file}")
+        
         # Save validation report
         if validation_results:
             self.save_validation_report(validation_results, domain, output_path)
@@ -351,11 +380,13 @@ Generate a complete initial database state that provides a solid foundation for 
             "tools_file": "tools.py",
             "requirements_file": "requirements.txt" if requirements else None,
             "test_cases_file": "test_cases.json" if test_cases else None,
+            "refinement_changes_file": "refinement_changes.json" if refinement_changes else None,
             "validation_report": "validation_report.json",
             "created_at": str(__import__('datetime').datetime.now()),
             "tool_count": len(tools),
             "requirements_count": len(requirements) if requirements else 0,
             "test_cases_count": len(test_cases) if test_cases else 0,
+            "tools_refined": len(refinement_changes) if refinement_changes else 0,
             "validation_passed": sum(1 for result in validation_results.values() if result) if validation_results else 0
         }
         
